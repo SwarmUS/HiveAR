@@ -7,4 +7,5 @@
     <color name="brown_dark">#6B4701</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="wrong_entry">#FF0000</color>
 </resources>

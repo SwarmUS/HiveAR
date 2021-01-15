@@ -19,15 +19,20 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = findViewById(R.id.toARButton);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent goToAR = new Intent(getApplicationContext(), ARActivity.class);
-                goToAR.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                goToAR.addFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION);
-                startActivity(goToAR);
-            }
+        FloatingActionButton toARButton = findViewById(R.id.toARButton);
+        toARButton.setOnClickListener(view -> {
+            Intent goToAR = new Intent(getApplicationContext(), ARActivity.class);
+            goToAR.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            goToAR.addFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION);
+            startActivity(goToAR);
+        });
+
+        FloatingActionButton toDevicesButton = findViewById(R.id.toDevicesButton);
+        toDevicesButton.setOnClickListener(view -> {
+            Intent gotoDevices = new Intent(getApplicationContext(), DeviceActivity.class);
+            gotoDevices.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            gotoDevices.addFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION);
+            startActivity(gotoDevices);
         });
     }
 }

@@ -8,4 +8,7 @@
     <string name="settings">Settings</string>
     <string name="send_to_command_view">Send to Command View</string>
     <string name="switch_to_ar_view_layout">Switch to AR view layout</string>
+    <string name="clear">Clear</string>
+    <string name="connected_devices">Connected Devices</string>
+    <string name="serial_data">Serial Data</string>
 </resources>
