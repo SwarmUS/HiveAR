@@ -65,41 +65,33 @@ public class DeviceActivity extends AppCompatActivity {
         Button clearDataButton = findViewById(R.id.clearSerialDataButton);
         clearDataButton.setOnClickListener(v -> deviceSerialData.setText(""));
 
-        Button upButton = findViewById(R.id.upButton);
-        upButton.setOnClickListener(v -> {
-            if (serial != null) {
-                byte[] data = ("Up"+'\n').getBytes();
-                serial.write(data);
-            }
-        });
-        Button leftButton = findViewById(R.id.leftButton);
-        leftButton.setOnClickListener(v -> {
-            if (serial != null) {
-                byte[] data = ("Left"+'\n').getBytes();
-                serial.write(data);
-            }
-        });
-        Button rightButton = findViewById(R.id.rightButton);
-        rightButton.setOnClickListener(v -> {
-            if (serial != null) {
-                byte[] data = ("Right"+'\n').getBytes();
-                serial.write(data);
-            }
-        });
-        Button downButton = findViewById(R.id.downButton);
-        downButton.setOnClickListener(v -> {
-            if (serial != null) {
-                byte[] data = ("Down"+'\n').getBytes();
-                serial.write(data);
-            }
-        });
-        Button stopButton = findViewById(R.id.stopButton);
-        stopButton.setOnClickListener(v -> {
-            if (serial != null) {
-                byte[] data = ("Stop"+'\n').getBytes();
-                serial.write(data);
-            }
-        });
+        if (serial != null) {
+            Button upButton = findViewById(R.id.upButton);
+            upButton.setOnClickListener(v -> {
+                    byte[] data = ("Up"+'\n').getBytes();
+                    serial.write(data);
+            });
+            Button leftButton = findViewById(R.id.leftButton);
+            leftButton.setOnClickListener(v -> {
+                    byte[] data = ("Left"+'\n').getBytes();
+                    serial.write(data);
+            });
+            Button rightButton = findViewById(R.id.rightButton);
+            rightButton.setOnClickListener(v -> {
+                    byte[] data = ("Right"+'\n').getBytes();
+                    serial.write(data);
+            });
+            Button downButton = findViewById(R.id.downButton);
+            downButton.setOnClickListener(v -> {
+                    byte[] data = ("Down"+'\n').getBytes();
+                    serial.write(data);
+            });
+            Button stopButton = findViewById(R.id.stopButton);
+            stopButton.setOnClickListener(v -> {
+                    byte[] data = ("Stop"+'\n').getBytes();
+                    serial.write(data);
+            });
+        }
 
         usbReceiver = new UsbReceiver(this);
         IntentFilter usbDeviceFilter = new IntentFilter();
