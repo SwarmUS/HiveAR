@@ -11,7 +11,7 @@
         android:theme="@style/Theme.HiveAR">
         <activity
             android:name=".MainActivity"
-            android:label="@string/title_activity_main"
+            android:label="@string/app_name"
             android:theme="@style/Theme.HiveAR.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
