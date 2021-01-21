@@ -29,15 +29,15 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 public class DeviceActivity extends AppCompatActivity {
-    PendingIntent permissionIntent;
-    TextView deviceListingText;
-    TextView deviceSerialData;
-    TextView currentDevice;
-    UsbDevice device;
-    UsbManager manager;
-    UsbDeviceConnection connection;
-    UsbSerialDevice serial;
-    UsbReceiver usbReceiver;
+    private PendingIntent permissionIntent;
+    private TextView deviceListingText;
+    private TextView deviceSerialData;
+    private TextView currentDevice;
+    private UsbDevice device;
+    private UsbManager manager;
+    private UsbDeviceConnection connection;
+    private UsbSerialDevice serial;
+    private UsbReceiver usbReceiver;
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final String ACTION_USE_PERMISSION = "com.swarmus.usbcomm.USB_PERMISSION";
