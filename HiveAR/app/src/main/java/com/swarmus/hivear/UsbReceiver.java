@@ -9,6 +9,8 @@ import android.util.Log;
 public class UsbReceiver extends BroadcastReceiver {
 
     private static final String logTag = "UsbReceiver";
+    private static final String USB_CONNECTION_INTENT = "CONNECTION_INTENT";
+    private static final String USB_DECONNECTION_INTENT = "DECONNECTION_INTENT";
     private DeviceActivity deviceActivity;
 
     public UsbReceiver() {
@@ -24,11 +26,13 @@ public class UsbReceiver extends BroadcastReceiver {
         String action = intent.getAction();
         if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
             Log.d(logTag, "USB device connected");
-            deviceActivity.newUsbConnection();
+            //deviceActivity.newUsbConnection();
+            context.sendBroadcast(new Intent(USB_CONNECTION_INTENT));
         }
         else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
             Log.d(logTag, "USB device disconnected");
-            deviceActivity.endUsbConnection();
+            //deviceActivity.endUsbConnection();
+            context.sendBroadcast(new Intent(USB_DECONNECTION_INTENT));
         }
     }
 }

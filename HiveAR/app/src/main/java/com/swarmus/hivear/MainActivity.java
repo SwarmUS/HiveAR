@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
 
         FloatingActionButton toDevicesButton = findViewById(R.id.toDevicesButton);
         toDevicesButton.setOnClickListener(view -> {
-            Intent gotoDevices = new Intent(getApplicationContext(), DeviceActivity.class);
+            Intent gotoDevices = new Intent(getApplicationContext(), TestActivity.class);
             gotoDevices.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             gotoDevices.addFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION);
             startActivity(gotoDevices);

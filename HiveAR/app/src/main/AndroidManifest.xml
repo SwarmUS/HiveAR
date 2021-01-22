@@ -14,6 +14,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HiveAR"
         tools:ignore="AllowBackup">
+        <activity
+            android:name=".TestActivity"
+            android:label="@string/title_activity_test"></activity>
+
         <receiver
             android:name=".UsbReceiver"
             android:enabled="true"
