@@ -1,4 +1,4 @@
-package com.swarmus.hivear;
+package com.swarmus.hivear.models;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,7 +7,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
-public class Client {
+public class TCPDevice implements CommunicationDevice {
     private Socket socket;
     private OutputStream socketOutput;
     private BufferedReader socketInput;
@@ -16,12 +16,17 @@ public class Client {
     private int port;
     private ClientCallback listener=null;
 
-    public Client(String ip, int port){
+    public TCPDevice(String ip, int port){
         this.ip=ip;
         this.port=port;
     }
 
-    public void connect(){
+    @Override
+    public void init() {
+    }
+
+    @Override
+    public void establishConnection() {
         new Thread(() -> {
             socket = new Socket();
             InetSocketAddress socketAddress = new InetSocketAddress(ip, port);
@@ -41,7 +46,8 @@ public class Client {
         }).start();
     }
 
-    public void disconnect(){
+    @Override
+    public void endConnection() {
         try {
             socket.close();
         } catch (IOException e) {
@@ -50,13 +56,31 @@ public class Client {
         }
     }
 
-    public void send(String message){
+    @Override
+    public void sendData(byte[] data) {
         try {
-            socketOutput.write(message.getBytes());
+            socketOutput.write(data);
         } catch (IOException e) {
             if(listener!=null)
                 listener.onDisconnect(socket, e.getMessage());
         }
+    }
+
+    @Override
+    public void removeReadCallBack() {
+        this.listener=null;
+    }
+
+    public void setIp(String ip) {
+        this.ip=ip;
+        endConnection();
+        establishConnection();
+    }
+
+    public void setPort(int port) {
+        this.port=port;
+        endConnection();
+        establishConnection();
     }
 
     private class ReceiveThread extends Thread implements Runnable{
@@ -78,10 +102,6 @@ public class Client {
         this.listener=listener;
     }
 
-    public void removeClientCallback(){
-        this.listener=null;
-    }
-
     public interface ClientCallback {
         void onMessage(String message);
         void onConnect(Socket socket);
@@ -89,32 +109,3 @@ public class Client {
         void onConnectError(Socket socket, String message);
     }
 }
-
-// Example of TCP client inside of Activity
-/*
-        Client client = new Client("192.168.0.26", 3000);
-        client.setClientCallback(new Client.ClientCallback () {
-            @Override
-            public void onMessage(String message) {
-                Log.d("HEY", "new message: "+message);
-            }
-
-            @Override
-            public void onConnect(Socket socket) {
-                Log.d("HEY", "new connection");
-            }
-
-            @Override
-            public void onDisconnect(Socket socket, String message) {
-                Log.d("HEY", "new disconnect: "+message);
-                client.connect();
-            }
-
-            @Override
-            public void onConnectError(Socket socket, String message) {
-                Log.d("HEY", "Can't connect: "+message);
-            }
-        });
-
-        client.connect();
- */

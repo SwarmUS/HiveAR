@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    tools:context=".TcpSettings"
+    tools:context=".fragments.TcpSettingsFragment"
     android:baselineAligned="false">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -23,7 +23,9 @@
                 android:id="@+id/IPTextInputEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/ip_address" />
+                android:hint="@string/ip_address"
+                android:inputType="phone"
+                android:autofillHints="XXX.XXX.XXX.XXX"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout

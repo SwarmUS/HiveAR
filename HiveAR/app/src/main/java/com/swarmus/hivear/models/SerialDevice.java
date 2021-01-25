@@ -1,4 +1,4 @@
-package com.swarmus.hivear;
+package com.swarmus.hivear.models;
 
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -20,17 +20,16 @@ import java.util.Iterator;
 
 public class SerialDevice implements CommunicationDevice {
     private UsbSerialInterface.UsbReadCallback readCB;
-    private Context context;
+    private final Context context;
     private PendingIntent permissionIntent;
     private UsbDevice device;
     private UsbManager manager;
-    private UsbDeviceConnection connection;
     private UsbSerialDevice serial;
-    private SerialDevice.UsbReceiver usbReceiver;
+
+    private static final String ACTION_USE_PERMISSION = "com.swarmus.hivear.USB_PERMISSION";
 
     public static final String ACTION_SERIAL_DEVICE_CHANGED = "com.swarmus.hivear.SERIAL_DEVICE_CHANGED";
     public static final String EXTRA_SERIAL_DEVICE_CHANGED = "deviceName";
-    private static final String ACTION_USE_PERMISSION = "com.swarmus.hivear.USB_PERMISSION";
 
     public SerialDevice(Context context) { this.context = context; }
 
@@ -38,13 +37,12 @@ public class SerialDevice implements CommunicationDevice {
     public void init() {
         if (context != null)
         {
-            usbReceiver = new SerialDevice.UsbReceiver();
+            UsbReceiver usbReceiver = new UsbReceiver();
             IntentFilter usbDeviceFilter = new IntentFilter();
             usbDeviceFilter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
             usbDeviceFilter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
             context.getApplicationContext().registerReceiver(usbReceiver, usbDeviceFilter);
 
-            // Load devices
             manager = (UsbManager) context.getApplicationContext().getSystemService(Context.USB_SERVICE);
             permissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(
                     ACTION_USE_PERMISSION), 0);
@@ -60,7 +58,9 @@ public class SerialDevice implements CommunicationDevice {
         String i = "";
         while(deviceIterator.hasNext()) {
             device = deviceIterator.next();
-            manager.requestPermission(device, permissionIntent);
+            if (!manager.hasPermission(device)) {
+                manager.requestPermission(device, permissionIntent);
+            }
             i += "\n" + "DeviceID: " + device.getDeviceId() + "\n"
                     + "DeviceName: " + device.getDeviceName() + "\n"
                     + "DeviceClass: " + device.getDeviceClass() + " - "
@@ -89,13 +89,12 @@ public class SerialDevice implements CommunicationDevice {
     }
 
     @Override
-    public byte[] getData() {
-        return new byte[0];
+    public void removeReadCallBack() {
+        this.readCB=null;
     }
 
     public void setReadCB(UsbSerialInterface.UsbReadCallback readCB) {this.readCB = readCB;}
 
-    @Nullable
     private void changeDeviceName(@Nullable String deviceName) {
         Intent intent = new Intent();
         intent.setAction(ACTION_SERIAL_DEVICE_CHANGED);
@@ -112,6 +111,7 @@ public class SerialDevice implements CommunicationDevice {
             String action = intent.getAction();
             if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
                 Log.d(logTag, "USB device connected");
+                endConnection();
                 establishConnection();
             }
             else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
@@ -139,7 +139,7 @@ public class SerialDevice implements CommunicationDevice {
     }
 
     private void startSerialConnection(UsbManager usbManager, UsbDevice device) {
-        connection = usbManager.openDevice(device);
+        UsbDeviceConnection connection = usbManager.openDevice(device);
         serial = UsbSerialDevice.createUsbSerialDevice(device, connection);
 
         if (serial != null && serial.open()) {
@@ -155,7 +155,6 @@ public class SerialDevice implements CommunicationDevice {
     private void stopSerialConnection(UsbSerialDevice serial) {
         if (serial != null && serial.open()) {
             serial.close();
-            readCB = null;
         }
     }
 

@@ -24,7 +24,4 @@
 
     <style name="Theme.HiveAR.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
-    <style name="Theme.noAnimTheme" parent="android:Theme">
-        <item name="android:windowAnimationStyle">@null</item>
-    </style>
 </resources>
