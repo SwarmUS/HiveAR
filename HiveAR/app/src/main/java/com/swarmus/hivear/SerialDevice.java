@@ -10,6 +10,8 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
 import com.felhr.usbserial.UsbSerialDevice;
 import com.felhr.usbserial.UsbSerialInterface;
 
@@ -25,9 +27,10 @@ public class SerialDevice implements CommunicationDevice {
     private UsbDeviceConnection connection;
     private UsbSerialDevice serial;
     private SerialDevice.UsbReceiver usbReceiver;
-    private String deviceName;
 
-    private static final String ACTION_USE_PERMISSION = "com.swarmus.usbcomm.USB_PERMISSION";
+    public static final String ACTION_SERIAL_DEVICE_CHANGED = "com.swarmus.hivear.SERIAL_DEVICE_CHANGED";
+    public static final String EXTRA_SERIAL_DEVICE_CHANGED = "deviceName";
+    private static final String ACTION_USE_PERMISSION = "com.swarmus.hivear.USB_PERMISSION";
 
     public SerialDevice(Context context) { this.context = context; }
 
@@ -68,13 +71,14 @@ public class SerialDevice implements CommunicationDevice {
         }
         Log.d("INFO", "I: " + i);
         if (device != null) {
-            deviceName = device.getProductName();
+            changeDeviceName(device.getProductName());
             listenToSerial();
         }
     }
 
     @Override
     public void endConnection() {
+        changeDeviceName(null);
         stopListenToSerial();
     }
 
@@ -90,6 +94,14 @@ public class SerialDevice implements CommunicationDevice {
     }
 
     public void setReadCB(UsbSerialInterface.UsbReadCallback readCB) {this.readCB = readCB;}
+
+    @Nullable
+    private void changeDeviceName(@Nullable String deviceName) {
+        Intent intent = new Intent();
+        intent.setAction(ACTION_SERIAL_DEVICE_CHANGED);
+        intent.putExtra(EXTRA_SERIAL_DEVICE_CHANGED, deviceName);
+        context.sendBroadcast(intent);
+    }
 
     private class UsbReceiver extends BroadcastReceiver {
 

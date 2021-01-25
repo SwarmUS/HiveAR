@@ -24,7 +24,7 @@ public class UartSettings extends Fragment {
     }
 
     @Nullable
-    private void setDeviceName(@Nullable String deviceName) {
+    public void setDeviceName(@Nullable String deviceName) {
         if (deviceNameTextView != null) {
             if (deviceName != null) {
                 deviceNameTextView.setText(deviceName);

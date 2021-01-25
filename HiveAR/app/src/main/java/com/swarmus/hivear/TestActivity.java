@@ -1,6 +1,9 @@
 package com.swarmus.hivear;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -44,13 +47,13 @@ public class TestActivity extends AppCompatActivity {
 
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
+        ft.add(R.id.communicationContainer, tcpSettingsFrag);
         ft.add(R.id.communicationContainer, uartSettingsFrag);
         ft.commit();
 
         FloatingActionButton switchCommunicationButton = findViewById(R.id.switchCommunication);
         switchCommunicationButton.setOnClickListener(view -> {
-            Fragment currentCommunicationFrag = getSupportFragmentManager().findFragmentById(R.id.communicationContainer);
-            if (currentCommunicationFrag instanceof UartSettings) {
+            if (currentCommunicationDevice instanceof SerialDevice) {
                 switchCommunication(tcpSettingsFrag);
                 switchCommunicationButton.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.wifi_icon));
                 view.invalidate();
@@ -73,6 +76,8 @@ public class TestActivity extends AppCompatActivity {
 
         currentCommunicationDevice = serialDevice = new SerialDevice(this);
         serialDevice.init();
+        IntentFilter filter = new IntentFilter(SerialDevice.ACTION_SERIAL_DEVICE_CHANGED);
+        registerReceiver(serialDeviceChangedReceiver, filter);
 
         tcpDevice = new TCPDevice(DEFAULT_IP_ADDRESS, DEFAULT_PORT);
         tcpDevice.init();
@@ -82,27 +87,36 @@ public class TestActivity extends AppCompatActivity {
 
     private void setSerialDeviceName(String deviceName) {
         if (uartSettingsFrag != null) {
-            Bundle bundle = new Bundle();
+            /*Bundle bundle = new Bundle();
             bundle.putString("serialDeviceName", deviceName);
-            uartSettingsFrag.setArguments(bundle);
+            uartSettingsFrag.setArguments(bundle);*/
+            uartSettingsFrag.setDeviceName(deviceName);
         }
     }
 
     private void switchCommunication(Fragment toShow) {
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        ft.replace(R.id.communicationContainer, toShow);
-        ft.commit();
         if (toShow instanceof TcpSettings) {
+            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            //ft.replace(R.id.communicationContainer, toShow);
+            ft.hide(uartSettingsFrag);
+            ft.show(toShow);
+            ft.commit();
             currentCommunicationDevice.endConnection();
             ((TCPDevice)tcpDevice).setClientCallback(tcpCallBack);
             currentCommunicationDevice = tcpDevice;
             currentCommunicationDevice.establishConnection();
         } else if (toShow instanceof UartSettings) {
+            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            //ft.replace(R.id.communicationContainer, toShow);
+            ft.hide(tcpSettingsFrag);
+            ft.show(toShow);
+            ft.commit();
             currentCommunicationDevice.endConnection();
             ((SerialDevice)serialDevice).setReadCB(usbReadCallback);
             currentCommunicationDevice = serialDevice;
             currentCommunicationDevice.establishConnection();
         }
+        dataReceived.setText("");
     }
 
     TCPDevice.ClientCallback tcpCallBack = new TCPDevice.ClientCallback() {
@@ -151,4 +165,14 @@ public class TestActivity extends AppCompatActivity {
             }
         }
     }
+
+    public final BroadcastReceiver serialDeviceChangedReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (SerialDevice.ACTION_SERIAL_DEVICE_CHANGED.equals(action)) {
+                setSerialDeviceName(intent.getStringExtra(SerialDevice.EXTRA_SERIAL_DEVICE_CHANGED));
+            }
+        }
+    };
 }
