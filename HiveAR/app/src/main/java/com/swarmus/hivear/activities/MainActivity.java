@@ -1,14 +1,13 @@
-package com.swarmus.hivear;
+package com.swarmus.hivear.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.swarmus.hivear.R;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-
-import android.view.View;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -29,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
 
         FloatingActionButton toDevicesButton = findViewById(R.id.toDevicesButton);
         toDevicesButton.setOnClickListener(view -> {
-            Intent gotoDevices = new Intent(getApplicationContext(), DeviceActivity.class);
+            Intent gotoDevices = new Intent(getApplicationContext(), TestActivity.class);
             gotoDevices.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             gotoDevices.addFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION);
             startActivity(gotoDevices);
