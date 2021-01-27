@@ -141,23 +141,24 @@ public class TestActivity extends AppCompatActivity {
 
         @Override
         public void onConnect(Socket socket) {
-            // Show status somewhere
+            // TODO Show status somewhere
             Log.d(TAG, "New TCP Connection");
         }
 
         @Override
         public void onDisconnect(Socket socket, String message) {
-            // Show status somewhere
+            // TODO Show status somewhere
             Log.d(TAG, "End of TCP Connection");
         }
 
         @Override
         public void onConnectError(Socket socket, String message) {
-            // Show status somewhere
+            // TODO Show status somewhere
         }
     };
 
     final UsbSerialInterface.UsbReadCallback usbReadCallback = (data) -> {
+        // TODO future messages will have a different data structure than String
         String dataStr = new String(data, StandardCharsets.UTF_8);
         if (dataReceived != null) {
             appendTextAndScroll(dataReceived, dataStr);

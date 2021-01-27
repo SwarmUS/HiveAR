@@ -27,6 +27,7 @@ public class SerialDevice implements CommunicationDevice {
     private UsbSerialDevice serial;
 
     private static final String ACTION_USE_PERMISSION = "com.swarmus.hivear.USB_PERMISSION";
+    private static final String DEVICE_INFO_LOG_TAG = "DeviceInformation";
 
     public static final String ACTION_SERIAL_DEVICE_CHANGED = "com.swarmus.hivear.SERIAL_DEVICE_CHANGED";
     public static final String EXTRA_SERIAL_DEVICE_CHANGED = "deviceName";
@@ -69,7 +70,7 @@ public class SerialDevice implements CommunicationDevice {
                     + "ProductID: " + device.getProductId() + "\n"
                     + "Protocol: " + device.getDeviceProtocol() + "\n";
         }
-        Log.d("INFO", "I: " + i);
+        Log.d(DEVICE_INFO_LOG_TAG, i);
         if (device != null) {
             changeDeviceName(device.getProductName());
             listenToSerial();
@@ -84,6 +85,7 @@ public class SerialDevice implements CommunicationDevice {
 
     @Override
     public void sendData(byte[] data) {
+        // TODO In the future, data must be changed for length+crc+data
         if (serial != null)
             serial.write(data);
     }
@@ -104,18 +106,18 @@ public class SerialDevice implements CommunicationDevice {
 
     private class UsbReceiver extends BroadcastReceiver {
 
-        private static final String logTag = "UsbReceiver";
+        private static final String USB_RECEIVER_LOG_TAG = "UsbReceiver";
 
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
-                Log.d(logTag, "USB device connected");
+                Log.d(USB_RECEIVER_LOG_TAG, "USB device connected");
                 endConnection();
                 establishConnection();
             }
             else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
-                Log.d(logTag, "USB device disconnected");
+                Log.d(USB_RECEIVER_LOG_TAG, "USB device disconnected");
                 endConnection();
             }
         }
@@ -143,7 +145,7 @@ public class SerialDevice implements CommunicationDevice {
         serial = UsbSerialDevice.createUsbSerialDevice(device, connection);
 
         if (serial != null && serial.open()) {
-            serial.setBaudRate(9600);
+            serial.setBaudRate(115200);
             serial.setDataBits(UsbSerialInterface.DATA_BITS_8);
             serial.setStopBits(UsbSerialInterface.STOP_BITS_1);
             serial.setParity(UsbSerialInterface.PARITY_NONE);
@@ -165,11 +167,7 @@ public class SerialDevice implements CommunicationDevice {
             if (ACTION_USE_PERMISSION.equals(action)) {
                 synchronized (this) {
                     UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                        if (device != null) {
-                            // call method to set up device communication
-                        }
-                    } else {
+                    if (!intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                         Log.d("ERROR", "permission denied for device " + device);
                     }
                 }

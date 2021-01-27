@@ -8,6 +8,8 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 
 public class TCPDevice implements CommunicationDevice {
+    private Thread connectionThread;
+
     private Socket socket;
     private OutputStream socketOutput;
     private BufferedReader socketInput;
@@ -27,6 +29,12 @@ public class TCPDevice implements CommunicationDevice {
 
     @Override
     public void establishConnection() {
+        // Reset socket for new connection
+        if (socket.isConnected())
+        {
+            // Ends previous thread by closing socket
+            endConnection();
+        }
         new Thread(() -> {
             socket = new Socket();
             InetSocketAddress socketAddress = new InetSocketAddress(ip, port);
@@ -87,6 +95,7 @@ public class TCPDevice implements CommunicationDevice {
         public void run(){
             String message;
             try {
+                // TODO binary data won't contain \n in the future, invalidating readline() call here
                 while((message = socketInput.readLine()) != null) {   // each line must end with a \n to be received
                     if(listener!=null)
                         listener.onMessage(message);
