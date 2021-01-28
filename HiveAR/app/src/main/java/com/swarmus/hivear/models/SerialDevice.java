@@ -14,13 +14,13 @@ import androidx.annotation.Nullable;
 
 import com.felhr.usbserial.UsbSerialDevice;
 import com.felhr.usbserial.UsbSerialInterface;
+import com.swarmus.hivear.enums.ConnectionStatus;
 
 import java.util.HashMap;
 import java.util.Iterator;
 
-public class SerialDevice implements CommunicationDevice {
+public class SerialDevice extends CommunicationDevice {
     private UsbSerialInterface.UsbReadCallback readCB;
-    private final Context context;
     private PendingIntent permissionIntent;
     private UsbDevice device;
     private UsbManager manager;
@@ -32,10 +32,9 @@ public class SerialDevice implements CommunicationDevice {
     public static final String ACTION_SERIAL_DEVICE_CHANGED = "com.swarmus.hivear.SERIAL_DEVICE_CHANGED";
     public static final String EXTRA_SERIAL_DEVICE_CHANGED = "deviceName";
 
-    public SerialDevice(Context context) { this.context = context; }
-
     @Override
-    public void init() {
+    public void init(Context context) {
+        this.context = context;
         if (context != null)
         {
             UsbReceiver usbReceiver = new UsbReceiver();
@@ -54,6 +53,7 @@ public class SerialDevice implements CommunicationDevice {
 
     @Override
     public void establishConnection() {
+        broadCastConnectionStatus(ConnectionStatus.connecting);
         HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
         Iterator<UsbDevice> deviceIterator = deviceList.values().iterator();
         String i = "";
@@ -75,12 +75,16 @@ public class SerialDevice implements CommunicationDevice {
             changeDeviceName(device.getProductName());
             listenToSerial();
         }
+        else {
+            changeDeviceName(null);
+        }
     }
 
     @Override
     public void endConnection() {
         changeDeviceName(null);
         stopListenToSerial();
+        broadCastConnectionStatus(ConnectionStatus.notConnected);
     }
 
     @Override
@@ -113,13 +117,14 @@ public class SerialDevice implements CommunicationDevice {
             String action = intent.getAction();
             if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
                 Log.d(USB_RECEIVER_LOG_TAG, "USB device connected");
-                endConnection();
-                establishConnection();
             }
             else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
                 Log.d(USB_RECEIVER_LOG_TAG, "USB device disconnected");
-                endConnection();
+                device = null;
             }
+            broadCastConnectionStatus(ConnectionStatus.notConnected);
+            endConnection();
+            changeDeviceName(null);
         }
     }
 
@@ -145,6 +150,7 @@ public class SerialDevice implements CommunicationDevice {
         serial = UsbSerialDevice.createUsbSerialDevice(device, connection);
 
         if (serial != null && serial.open()) {
+            broadCastConnectionStatus(ConnectionStatus.connected);
             serial.setBaudRate(115200);
             serial.setDataBits(UsbSerialInterface.DATA_BITS_8);
             serial.setStopBits(UsbSerialInterface.STOP_BITS_1);

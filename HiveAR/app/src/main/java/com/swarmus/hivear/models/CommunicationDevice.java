@@ -1,10 +1,28 @@
 package com.swarmus.hivear.models;
 
+import android.content.Context;
+import android.content.Intent;
+
+import com.swarmus.hivear.enums.ConnectionStatus;
+
 // Interface to be used by SerialDevice/TCPDevice
-public interface CommunicationDevice {
-    void init();
-    void establishConnection();
-    void endConnection();
-    void sendData(byte[] data);
-    void removeReadCallBack();
+abstract public class CommunicationDevice {
+    static public final String CONNECTION_STATUS_RESULT = "com.swarmus.hivear.CONNECTION_STATUS_RESULT";
+    static public final String EXTRA_CONNECTION_STATUS_RESULT = "connectionStatusResult";
+
+    protected Context context;
+
+    public void init(Context context){this.context=context;}
+    abstract public void establishConnection();
+    abstract public void endConnection();
+    abstract public void sendData(byte[] data);
+    abstract public void removeReadCallBack();
+    protected void broadCastConnectionStatus(ConnectionStatus connectionStatus) {
+        if (context != null) {
+            Intent intent = new Intent();
+            intent.setAction(CONNECTION_STATUS_RESULT);
+            intent.putExtra(EXTRA_CONNECTION_STATUS_RESULT, connectionStatus);
+            context.sendBroadcast(intent);
+        }
+    }
 }

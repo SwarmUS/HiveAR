@@ -8,4 +8,7 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="wrong_entry">#FF0000</color>
+    <color name="connection_pending">#0027FF</color>
+    <color name="connection_established">#00FF0A</color>
+    <color name="connection_none">#FF0000</color>
 </resources>
