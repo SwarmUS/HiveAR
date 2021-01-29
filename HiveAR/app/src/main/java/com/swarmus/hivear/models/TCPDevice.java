@@ -1,5 +1,7 @@
 package com.swarmus.hivear.models;
 
+import com.swarmus.hivear.enums.ConnectionStatus;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -7,9 +9,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
-public class TCPDevice implements CommunicationDevice {
-    private Thread connectionThread;
-
+public class TCPDevice extends CommunicationDevice {
     private Socket socket;
     private OutputStream socketOutput;
     private BufferedReader socketInput;
@@ -24,16 +24,14 @@ public class TCPDevice implements CommunicationDevice {
     }
 
     @Override
-    public void init() {
-    }
-
-    @Override
     public void establishConnection() {
+        broadCastConnectionStatus(ConnectionStatus.connecting);
         // Reset socket for new connection
-        if (socket.isConnected())
+        if (socket != null && socket.isConnected())
         {
             // Ends previous thread by closing socket
             endConnection();
+            broadCastConnectionStatus(ConnectionStatus.notConnected);
         }
         new Thread(() -> {
             socket = new Socket();
@@ -42,6 +40,7 @@ public class TCPDevice implements CommunicationDevice {
                 socket.connect(socketAddress);
                 socketOutput = socket.getOutputStream();
                 socketInput = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                broadCastConnectionStatus(ConnectionStatus.connected);
 
                 new ReceiveThread().start();
 
@@ -56,6 +55,7 @@ public class TCPDevice implements CommunicationDevice {
 
     @Override
     public void endConnection() {
+        broadCastConnectionStatus(ConnectionStatus.notConnected);
         try {
             socket.close();
         } catch (IOException e) {
@@ -79,17 +79,9 @@ public class TCPDevice implements CommunicationDevice {
         this.listener=null;
     }
 
-    public void setIp(String ip) {
-        this.ip=ip;
-        endConnection();
-        establishConnection();
-    }
+    public void setIp(String ip) {this.ip=ip;}
 
-    public void setPort(int port) {
-        this.port=port;
-        endConnection();
-        establishConnection();
-    }
+    public void setPort(int port) {this.port=port;}
 
     private class ReceiveThread extends Thread implements Runnable{
         public void run(){
@@ -103,6 +95,7 @@ public class TCPDevice implements CommunicationDevice {
             } catch (IOException e) {
                 if(listener!=null)
                     listener.onDisconnect(socket, e.getMessage());
+                broadCastConnectionStatus(ConnectionStatus.notConnected);
             }
         }
     }

@@ -19,9 +19,11 @@ import androidx.lifecycle.ViewModelProvider;
 import android.text.Layout;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.felhr.usbserial.UsbSerialInterface;
+import com.swarmus.hivear.enums.ConnectionStatus;
 import com.swarmus.hivear.models.CommunicationDevice;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.models.SerialDevice;
@@ -72,6 +74,20 @@ public class TestActivity extends AppCompatActivity {
             view.invalidate();
         });
 
+        IntentFilter filterConnectionStatus = new IntentFilter(CommunicationDevice.CONNECTION_STATUS_RESULT);
+        registerReceiver(deviceConnectionStatusReceiver, filterConnectionStatus);
+
+        findViewById(R.id.connectButton).setOnClickListener(view -> {
+            if(currentCommunicationDevice!=null){
+                currentCommunicationDevice.establishConnection();
+            }
+        });
+        findViewById(R.id.disconnectButton).setOnClickListener(view -> {
+            if(currentCommunicationDevice!=null){
+                currentCommunicationDevice.endConnection();
+            }
+        });
+
         dataReceived = findViewById(R.id.dataReceived);
         dataReceived.setMovementMethod(new ScrollingMovementMethod());
 
@@ -82,13 +98,13 @@ public class TestActivity extends AppCompatActivity {
             startActivity(goToCommand);
         });
 
-        currentCommunicationDevice = serialDevice = new SerialDevice(this);
-        serialDevice.init();
+        currentCommunicationDevice = serialDevice = new SerialDevice();
+        serialDevice.init(this);
         IntentFilter filter = new IntentFilter(SerialDevice.ACTION_SERIAL_DEVICE_CHANGED);
         registerReceiver(serialDeviceChangedReceiver, filter);
 
         tcpDevice = new TCPDevice(DEFAULT_IP_ADDRESS, DEFAULT_PORT);
-        tcpDevice.init();
+        tcpDevice.init(this);
 
         TcpSettingsViewModel tcpSettingsViewModel = new ViewModelProvider(this).get(TcpSettingsViewModel.class);
         final Observer<String> ipAddressObserver = s -> ((TCPDevice)tcpDevice).setIp(s);
@@ -116,7 +132,6 @@ public class TestActivity extends AppCompatActivity {
             serialDevice.removeReadCallBack();
             ((TCPDevice)tcpDevice).setClientCallback(tcpCallBack);
             currentCommunicationDevice = tcpDevice;
-            currentCommunicationDevice.establishConnection();
         } else if (toShow instanceof UartSettingsFragment) {
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             ft.hide(tcpSettingsFrag);
@@ -126,8 +141,8 @@ public class TestActivity extends AppCompatActivity {
             tcpDevice.removeReadCallBack();
             ((SerialDevice)serialDevice).setReadCB(usbReadCallback);
             currentCommunicationDevice = serialDevice;
-            currentCommunicationDevice.establishConnection();
         }
+        ((ImageView)findViewById(R.id.connectionStatusImage)).setColorFilter(getColor(R.color.connection_none));
         dataReceived.setText("");
     }
 
@@ -180,12 +195,33 @@ public class TestActivity extends AppCompatActivity {
         }
     }
 
-    public final BroadcastReceiver serialDeviceChangedReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver serialDeviceChangedReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (SerialDevice.ACTION_SERIAL_DEVICE_CHANGED.equals(action)) {
                 setSerialDeviceName(intent.getStringExtra(SerialDevice.EXTRA_SERIAL_DEVICE_CHANGED));
+            }
+        }
+    };
+
+    private final BroadcastReceiver deviceConnectionStatusReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (CommunicationDevice.CONNECTION_STATUS_RESULT.equals(action)) {
+                ConnectionStatus connectionStatus = (ConnectionStatus) intent.getExtras().get(CommunicationDevice.EXTRA_CONNECTION_STATUS_RESULT);
+                switch (connectionStatus) {
+                    case connected:
+                        ((ImageView)findViewById(R.id.connectionStatusImage)).setColorFilter(getColor(R.color.connection_established));
+                        break;
+                    case notConnected:
+                        ((ImageView)findViewById(R.id.connectionStatusImage)).setColorFilter(getColor(R.color.connection_none));
+                        break;
+                    case connecting:
+                        ((ImageView)findViewById(R.id.connectionStatusImage)).setColorFilter(getColor(R.color.connection_pending));
+                        break;
+                }
             }
         }
     };

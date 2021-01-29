@@ -9,4 +9,7 @@
     <string name="port">Port</string>
     <string name="title_activity_test">TestActivity</string>
     <string name="switchcommunicationtype">switchCommunicationType</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="connect">Connect</string>
+    <string name="connectionstatus">connectionStatus</string>
 </resources>
