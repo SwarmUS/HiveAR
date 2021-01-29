@@ -57,7 +57,7 @@ public class TCPDevice extends CommunicationDevice {
     public void endConnection() {
         broadCastConnectionStatus(ConnectionStatus.notConnected);
         try {
-            socket.close();
+            if (socket != null) {socket.close();}
         } catch (IOException e) {
             if(listener!=null)
                 listener.onDisconnect(socket, e.getMessage());
