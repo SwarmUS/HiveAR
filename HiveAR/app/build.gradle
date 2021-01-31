@@ -42,7 +42,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 }
 
-// Dépendances faites par https://nimblehq.co/public/downloads/android-bangkok-conference-2020-protobuf-android-nimble.pdf
+// Dependancies from https://nimblehq.co/public/downloads/android-bangkok-conference-2020-protobuf-android-nimble.pdf
 protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:3.14.0"
