@@ -1,0 +1,3 @@
+[submodule "HiveAR/app\\src\\extern\\pheromone"]
+	path = HiveAR/app\\src\\extern\\pheromone
+	url = https://github.com/SwarmUS/Pheromones

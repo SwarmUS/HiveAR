@@ -30,35 +30,14 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-}
-
-task downloadDirectoryGitHub {
-    doLast {
-        project.delete(files("$projectDir/src/main/proto"))
-        // download directory listing via GitHub API
-        def dir = 'https://api.github.com/repos/SwarmUS/Pheromones/contents/hivemind-host/proto/'
-        def contentsFile = new File(buildDir, "directory_contents.json")
-        download {
-            src dir
-            dest contentsFile
+    sourceSets {
+        main {
+            proto {
+                srcDir 'src/extern/pheromone/hivemind-host/proto'
+            }
         }
-
-        // parse directory listing
-        def contents = new JsonSlurper().parseFile(contentsFile, "utf-8")
-        def urls = contents.collect { it.download_url }
-
-        // download files
-        download {
-            src urls
-            dest "$projectDir/src/main/proto"
-        }
-
-        // delete downloaded directory listing
-        contentsFile.delete()
     }
 }
-
-defaultTasks 'downloadDirectoryGithub'
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])

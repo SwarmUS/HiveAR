@@ -1,2 +1,0 @@
-FunctionCallRequest.function_name max_length:32
-FunctionCallRequest.arguments max_count:16
