@@ -1,0 +1,17 @@
+syntax = "proto3";
+import "generic.proto";
+
+message FunctionArgument {
+    oneof argument{
+        int64 int_arg = 1;
+    }
+}
+
+message FunctionCallRequest {
+    string function_name = 1;
+    repeated FunctionArgument arguments = 2;
+}
+
+message FunctionCallResponse {
+    GenericResponse response = 1;
+}
