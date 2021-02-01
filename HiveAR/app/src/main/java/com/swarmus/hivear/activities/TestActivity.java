@@ -27,6 +27,7 @@ import com.swarmus.hivear.enums.ConnectionStatus;
 import com.swarmus.hivear.models.CommunicationDevice;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.models.SerialDevice;
+import com.swarmus.hivear.models.SerialSettingsViewModel;
 import com.swarmus.hivear.models.TCPDevice;
 import com.swarmus.hivear.fragments.TcpSettingsFragment;
 import com.swarmus.hivear.fragments.UartSettingsFragment;
@@ -34,6 +35,7 @@ import com.swarmus.hivear.models.TcpSettingsViewModel;
 
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 
 public class TestActivity extends AppCompatActivity {
     private TextView dataReceived;
@@ -48,10 +50,14 @@ public class TestActivity extends AppCompatActivity {
     private TcpSettingsFragment tcpSettingsFrag;
     private UartSettingsFragment uartSettingsFrag;
 
+    private SerialSettingsViewModel serialSettingsViewModel;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_debug);
+
+        serialSettingsViewModel = new ViewModelProvider(this).get(SerialSettingsViewModel.class);
 
         tcpSettingsFrag = new TcpSettingsFragment();
         uartSettingsFrag = new UartSettingsFragment();
@@ -76,6 +82,10 @@ public class TestActivity extends AppCompatActivity {
 
         IntentFilter filterConnectionStatus = new IntentFilter(CommunicationDevice.CONNECTION_STATUS_RESULT);
         registerReceiver(deviceConnectionStatusReceiver, filterConnectionStatus);
+
+        serialSettingsViewModel.getSelectedDevice().observe(this, deviceName -> {
+            ((SerialDevice)serialDevice).setSelectedUsbDeviceName(deviceName);
+        });
 
         findViewById(R.id.connectButton).setOnClickListener(view -> {
             if(currentCommunicationDevice!=null){
@@ -114,12 +124,6 @@ public class TestActivity extends AppCompatActivity {
         tcpSettingsViewModel.getPort().observe(this, portObserver);
 
         switchCommunication(uartSettingsFrag);
-    }
-
-    private void setSerialDeviceName(String deviceName) {
-        if (uartSettingsFrag != null) {
-            uartSettingsFrag.setDeviceName(deviceName);
-        }
     }
 
     private void switchCommunication(Fragment toShow) {
@@ -200,7 +204,9 @@ public class TestActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (SerialDevice.ACTION_SERIAL_DEVICE_CHANGED.equals(action)) {
-                setSerialDeviceName(intent.getStringExtra(SerialDevice.EXTRA_SERIAL_DEVICE_CHANGED));
+                if (serialSettingsViewModel != null) {
+                    serialSettingsViewModel.getDevices().setValue((HashMap<String, String>)intent.getSerializableExtra(SerialDevice.EXTRA_SERIAL_DEVICE_CHANGED));
+                }
             }
         }
     };

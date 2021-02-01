@@ -10,8 +10,6 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.hardware.usb.UsbManager;
 import android.util.Log;
 
-import androidx.annotation.Nullable;
-
 import com.felhr.usbserial.UsbSerialDevice;
 import com.felhr.usbserial.UsbSerialInterface;
 import com.swarmus.hivear.enums.ConnectionStatus;
@@ -25,6 +23,8 @@ public class SerialDevice extends CommunicationDevice {
     private UsbDevice device;
     private UsbManager manager;
     private UsbSerialDevice serial;
+
+    private String selectedDeviceName;
 
     private static final String ACTION_USE_PERMISSION = "com.swarmus.hivear.USB_PERMISSION";
     private static final String DEVICE_INFO_LOG_TAG = "DeviceInformation";
@@ -55,34 +55,12 @@ public class SerialDevice extends CommunicationDevice {
     public void establishConnection() {
         broadCastConnectionStatus(ConnectionStatus.connecting);
         HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
-        Iterator<UsbDevice> deviceIterator = deviceList.values().iterator();
-        String i = "";
-        while(deviceIterator.hasNext()) {
-            device = deviceIterator.next();
-            if (!manager.hasPermission(device)) {
-                manager.requestPermission(device, permissionIntent);
-            }
-            i += "\n" + "DeviceID: " + device.getDeviceId() + "\n"
-                    + "DeviceName: " + device.getDeviceName() + "\n"
-                    + "DeviceClass: " + device.getDeviceClass() + " - "
-                    + "DeviceSubClass: " + device.getDeviceSubclass() + "\n"
-                    + "VendorID: " + device.getVendorId() + "\n"
-                    + "ProductID: " + device.getProductId() + "\n"
-                    + "Protocol: " + device.getDeviceProtocol() + "\n";
-        }
-        Log.d(DEVICE_INFO_LOG_TAG, i);
-        if (device != null) {
-            changeDeviceName(device.getProductName());
-            listenToSerial();
-        }
-        else {
-            changeDeviceName(null);
-        }
+        device = deviceList.get(selectedDeviceName);
+        listenToSerial();
     }
 
     @Override
     public void endConnection() {
-        changeDeviceName(null);
         stopListenToSerial();
         broadCastConnectionStatus(ConnectionStatus.notConnected);
     }
@@ -99,32 +77,39 @@ public class SerialDevice extends CommunicationDevice {
         this.readCB=null;
     }
 
-    public void setReadCB(UsbSerialInterface.UsbReadCallback readCB) {this.readCB = readCB;}
-
-    private void changeDeviceName(@Nullable String deviceName) {
-        Intent intent = new Intent();
-        intent.setAction(ACTION_SERIAL_DEVICE_CHANGED);
-        intent.putExtra(EXTRA_SERIAL_DEVICE_CHANGED, deviceName);
-        context.sendBroadcast(intent);
+    public void setSelectedUsbDeviceName(String deviceName) {
+        if (!deviceName.equals(selectedDeviceName)) { endConnection(); }
+        selectedDeviceName = deviceName;
     }
 
-    private class UsbReceiver extends BroadcastReceiver {
+    public void setReadCB(UsbSerialInterface.UsbReadCallback readCB) {this.readCB = readCB;}
 
+    private class UsbReceiver extends BroadcastReceiver {
         private static final String USB_RECEIVER_LOG_TAG = "UsbReceiver";
 
         @Override
-        public void onReceive(Context context, Intent intent) {
+        public void onReceive(Context inputContext, Intent intent) {
             String action = intent.getAction();
             if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
                 Log.d(USB_RECEIVER_LOG_TAG, "USB device connected");
             }
             else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
                 Log.d(USB_RECEIVER_LOG_TAG, "USB device disconnected");
-                device = null;
             }
-            broadCastConnectionStatus(ConnectionStatus.notConnected);
+            if (manager!=null) {
+                Intent connectedDevicesIntent = new Intent();
+                connectedDevicesIntent.setAction(ACTION_SERIAL_DEVICE_CHANGED);
+                HashMap<String, String> devicesName = new HashMap<>();
+                Iterator<UsbDevice> deviceIterator = manager.getDeviceList().values().iterator();
+                while(deviceIterator.hasNext()) {
+                    device = deviceIterator.next();
+                    devicesName.put(device.getProductName(), device.getDeviceName());
+                }
+                connectedDevicesIntent.putExtra(EXTRA_SERIAL_DEVICE_CHANGED, devicesName);
+                context.sendBroadcast(connectedDevicesIntent);
+                logConnectedDevices();
+            }
             endConnection();
-            changeDeviceName(null);
         }
     }
 
@@ -132,11 +117,13 @@ public class SerialDevice extends CommunicationDevice {
         if (device != null && manager != null) {
             if (manager.hasPermission(device)) {
                 startSerialConnection(manager, device);
+                return;
             }
             else {
                 Log.d("Serial", "Device doesn't have permissions");
             }
         }
+        broadCastConnectionStatus(ConnectionStatus.notConnected);
     }
 
     private void stopListenToSerial() {
@@ -158,12 +145,37 @@ public class SerialDevice extends CommunicationDevice {
             serial.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
             serial.read(readCB);
         }
+        else {
+            broadCastConnectionStatus(ConnectionStatus.notConnected);
+        }
     }
 
     private void stopSerialConnection(UsbSerialDevice serial) {
         if (serial != null && serial.open()) {
             serial.close();
         }
+    }
+
+    private void logConnectedDevices() {
+        HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
+        device = deviceList.get(selectedDeviceName);
+        listenToSerial();
+        Iterator<UsbDevice> deviceIterator = deviceList.values().iterator();
+        String i = "";
+        while(deviceIterator.hasNext()) {
+            device = deviceIterator.next();
+            if (!manager.hasPermission(device)) {
+                manager.requestPermission(device, permissionIntent);
+            }
+            i += "\n" + "DeviceID: " + device.getDeviceId() + "\n"
+                    + "DeviceName: " + device.getDeviceName() + "\n"
+                    + "DeviceClass: " + device.getDeviceClass() + " - "
+                    + "DeviceSubClass: " + device.getDeviceSubclass() + "\n"
+                    + "VendorID: " + device.getVendorId() + "\n"
+                    + "ProductID: " + device.getProductId() + "\n"
+                    + "Protocol: " + device.getDeviceProtocol() + "\n";
+        }
+        Log.d(DEVICE_INFO_LOG_TAG, i);
     }
 
     private final BroadcastReceiver usbReceiverPermission = new BroadcastReceiver() {
