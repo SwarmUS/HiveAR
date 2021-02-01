@@ -13,7 +13,7 @@ First, clone the repo with command:
 git clone --recursive https://github.com/SwarmUS/HiveAR
 ```
 Recursive argument will also clone the project's submodules.
-In the case where revursive argument is forgot, it is possible to load the submodule with command:
+In the case where recursive argument is forgotten, it is possible to load the submodule with command:
 ```
 git submodule update --init
 ```
