@@ -1,6 +1,9 @@
+import groovy.json.JsonSlurper
+
 plugins {
     id 'com.android.application'
     id "com.google.protobuf" version "0.8.14"
+    id "de.undercouch.download" version "4.1.1"
 }
 
 android {
@@ -27,6 +30,13 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    sourceSets {
+        main {
+            proto {
+                srcDir 'src/extern/pheromone/hivemind-host/proto'
+            }
+        }
+    }
 }
 
 dependencies {
@@ -42,7 +52,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 }
 
-// Dependancies from https://nimblehq.co/public/downloads/android-bangkok-conference-2020-protobuf-android-nimble.pdf
+// Dependencies from https://nimblehq.co/public/downloads/android-bangkok-conference-2020-protobuf-android-nimble.pdf
 protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:3.14.0"
