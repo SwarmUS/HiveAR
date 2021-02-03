@@ -31,9 +31,9 @@ import com.swarmus.hivear.models.SerialSettingsViewModel;
 import com.swarmus.hivear.models.TCPDevice;
 import com.swarmus.hivear.fragments.TcpSettingsFragment;
 import com.swarmus.hivear.fragments.UartSettingsFragment;
+import com.swarmus.hivear.models.TcpClient;
 import com.swarmus.hivear.models.TcpSettingsViewModel;
 
-import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
@@ -83,9 +83,7 @@ public class TestActivity extends AppCompatActivity {
         IntentFilter filterConnectionStatus = new IntentFilter(CommunicationDevice.CONNECTION_STATUS_RESULT);
         registerReceiver(deviceConnectionStatusReceiver, filterConnectionStatus);
 
-        serialSettingsViewModel.getSelectedDevice().observe(this, deviceName -> {
-            ((SerialDevice)serialDevice).setSelectedUsbDeviceName(deviceName);
-        });
+        serialSettingsViewModel.getSelectedDevice().observe(this, deviceName -> ((SerialDevice)serialDevice).setSelectedUsbDeviceName(deviceName));
 
         findViewById(R.id.connectButton).setOnClickListener(view -> {
             if(currentCommunicationDevice!=null){
@@ -117,11 +115,27 @@ public class TestActivity extends AppCompatActivity {
         tcpDevice.init(this);
 
         TcpSettingsViewModel tcpSettingsViewModel = new ViewModelProvider(this).get(TcpSettingsViewModel.class);
-        final Observer<String> ipAddressObserver = s -> ((TCPDevice)tcpDevice).setIp(s);
+        final Observer<String> ipAddressObserver = s -> ((TCPDevice)tcpDevice).setServerIP(s);
         tcpSettingsViewModel.getIpAddress().observe(this, ipAddressObserver);
 
-        final Observer<Integer> portObserver = p -> ((TCPDevice)tcpDevice).setPort(p);
+        final Observer<Integer> portObserver = p -> ((TCPDevice)tcpDevice).setServerPort(p);
         tcpSettingsViewModel.getPort().observe(this, portObserver);
+
+        findViewById(R.id.upButton).setOnClickListener(view -> {
+            if (currentCommunicationDevice != null) { currentCommunicationDevice.sendData("UP");}
+        });
+        findViewById(R.id.downButton).setOnClickListener(view -> {
+            if (currentCommunicationDevice != null) { currentCommunicationDevice.sendData("DOWN");}
+        });
+        findViewById(R.id.leftButton).setOnClickListener(view -> {
+            if (currentCommunicationDevice != null) { currentCommunicationDevice.sendData("LEFT");}
+        });
+        findViewById(R.id.rightButton).setOnClickListener(view -> {
+            if (currentCommunicationDevice != null) { currentCommunicationDevice.sendData("RIGHT");}
+        });
+        findViewById(R.id.stopButton).setOnClickListener(view -> {
+            if (currentCommunicationDevice != null) { currentCommunicationDevice.sendData("STOP");}
+        });
 
         switchCommunication(uartSettingsFrag);
     }
@@ -150,7 +164,7 @@ public class TestActivity extends AppCompatActivity {
         dataReceived.setText("");
     }
 
-    final TCPDevice.ClientCallback tcpCallBack = new TCPDevice.ClientCallback() {
+    final TcpClient.ClientCallback tcpCallBack = new TcpClient.ClientCallback() {
         @Override
         public void onMessage(String message) {
             if (dataReceived != null) {
@@ -159,20 +173,20 @@ public class TestActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onConnect(Socket socket) {
-            // TODO Show status somewhere
+        public void onConnect() {
             Log.d(TAG, "New TCP Connection");
+            currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.connected);
         }
 
         @Override
-        public void onDisconnect(Socket socket, String message) {
-            // TODO Show status somewhere
+        public void onDisconnect() {
             Log.d(TAG, "End of TCP Connection");
+            currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.notConnected);
         }
 
         @Override
-        public void onConnectError(Socket socket, String message) {
-            // TODO Show status somewhere
+        public void onConnectError() {
+            currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.notConnected);
         }
     };
 

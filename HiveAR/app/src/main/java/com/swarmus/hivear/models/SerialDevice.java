@@ -14,6 +14,7 @@ import com.felhr.usbserial.UsbSerialDevice;
 import com.felhr.usbserial.UsbSerialInterface;
 import com.swarmus.hivear.enums.ConnectionStatus;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -73,6 +74,11 @@ public class SerialDevice extends CommunicationDevice {
     }
 
     @Override
+    public void sendData(String data) {
+        byte[] encodedData = getSerializedFromString(data);
+        sendData(encodedData);
+    }
+
     public void removeReadCallBack() {
         this.readCB=null;
     }
@@ -100,9 +106,8 @@ public class SerialDevice extends CommunicationDevice {
                 Intent connectedDevicesIntent = new Intent();
                 connectedDevicesIntent.setAction(ACTION_SERIAL_DEVICE_CHANGED);
                 HashMap<String, String> devicesName = new HashMap<>();
-                Iterator<UsbDevice> deviceIterator = manager.getDeviceList().values().iterator();
-                while(deviceIterator.hasNext()) {
-                    device = deviceIterator.next();
+                for (UsbDevice usbDevice : manager.getDeviceList().values()) {
+                    device = usbDevice;
                     devicesName.put(device.getProductName(), device.getDeviceName());
                 }
                 connectedDevicesIntent.putExtra(EXTRA_SERIAL_DEVICE_CHANGED, devicesName);
@@ -177,6 +182,42 @@ public class SerialDevice extends CommunicationDevice {
         }
         Log.d(DEVICE_INFO_LOG_TAG, i);
     }
+
+    private static byte[] getSerializedFromString(String msg) {
+        byte[] msgB = msg.getBytes();
+        byte[] lengthOfMsg = ByteBuffer.allocate(4).putInt(msgB.length).array();
+        int crc32 = crc32_mpeg_2(msgB, 0, msg.length());
+        byte[] crc32B = ByteBuffer.allocate(4).putInt(crc32).array();
+        ByteBuffer newMsg = ByteBuffer.allocate(lengthOfMsg.length + msgB.length + crc32B.length);
+        newMsg.put(lengthOfMsg);
+        newMsg.put(msgB);
+        newMsg.put(crc32B);
+        return newMsg.array();
+    }
+
+    private static int crc32_mpeg_2(byte[] data,int offset, int length){
+        byte i;
+        int crc = 0xffffffff;  // Initial value
+        length += offset;
+        for(int j=offset;j<length;j++) {
+            crc ^= data[j] << 24;
+            for (i = 0; i < 8; ++i)
+            {
+                if ( (crc & 0x80000000) != 0)
+                    crc = (crc << 1) ^ 0x04C11DB7;
+                else
+                    crc <<= 1;
+            }
+        }
+        return crc;
+    }
+
+    // TODO at reception decode bytes
+    /*public static String getStringFromSerialized(byte[] serializedMsg) {
+        byte[] lenghtOfMsg = serializedMsg[0:3];
+        byte[] crc32B = serializedMsg[serializedMsg.length-34:serializedMsg.length-1];
+        byte[] msgB = serializedMsg[4:serializedMsg.length-35];
+    }*/
 
     private final BroadcastReceiver usbReceiverPermission = new BroadcastReceiver() {
         @Override
