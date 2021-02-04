@@ -192,11 +192,12 @@ public class TestActivity extends AppCompatActivity {
 
     final UsbSerialInterface.UsbReadCallback usbReadCallback = (data) -> {
         // TODO future messages will have a different data structure than String
-        String dataStr = new String(data, StandardCharsets.UTF_8);
+        /*String dataStr = new String(data, StandardCharsets.UTF_8);
+        dataStr += "\n";
         if (dataReceived != null) {
             appendTextAndScroll(dataReceived, dataStr);
         }
-        Log.i(TAG, "Data received: " + dataStr);
+        Log.i(TAG, "Data received: " + dataStr);*/
     };
 
     private void appendTextAndScroll(TextView tv, String text)

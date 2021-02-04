@@ -14,9 +14,19 @@ import com.felhr.usbserial.UsbSerialDevice;
 import com.felhr.usbserial.UsbSerialInterface;
 import com.swarmus.hivear.enums.ConnectionStatus;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.stream.Stream;
+
+import static com.swarmus.hivear.utils.CRC.CalculateCRC32;
+import static com.swarmus.hivear.utils.Serialization.int16ToBytes;
+
 
 public class SerialDevice extends CommunicationDevice {
     private UsbSerialInterface.UsbReadCallback readCB;
@@ -68,15 +78,24 @@ public class SerialDevice extends CommunicationDevice {
 
     @Override
     public void sendData(byte[] data) {
-        // TODO In the future, data must be changed for length+crc+data
-        if (serial != null)
-            serial.write(data);
+        // TODO: Check for length limit and cut message into different packets if bigger than max size
+        try {
+            ByteArrayOutputStream msg = encodeMessage(data);
+            byte[] msgBytes = msg.toByteArray();
+
+            if (serial != null)
+                serial.write(msgBytes);
+        }
+        catch (IOException e) {
+            Log.e(DEVICE_INFO_LOG_TAG, "Error converting message to byte array");
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void sendData(String data) {
-        byte[] encodedData = getSerializedFromString(data);
-        sendData(encodedData);
+        byte[] msg = data.getBytes();
+        sendData(msg);
     }
 
     public void removeReadCallBack() {
@@ -88,7 +107,9 @@ public class SerialDevice extends CommunicationDevice {
         selectedDeviceName = deviceName;
     }
 
-    public void setReadCB(UsbSerialInterface.UsbReadCallback readCB) {this.readCB = readCB;}
+    public void setReadCB(UsbSerialInterface.UsbReadCallback readCB) {
+        this.readCB = readCB;
+    }
 
     private class UsbReceiver extends BroadcastReceiver {
         private static final String USB_RECEIVER_LOG_TAG = "UsbReceiver";
@@ -183,33 +204,16 @@ public class SerialDevice extends CommunicationDevice {
         Log.d(DEVICE_INFO_LOG_TAG, i);
     }
 
-    private static byte[] getSerializedFromString(String msg) {
-        byte[] msgB = msg.getBytes();
-        byte[] lengthOfMsg = ByteBuffer.allocate(4).putInt(msgB.length).array();
-        int crc32 = crc32_mpeg_2(msgB, 0, msg.length());
-        byte[] crc32B = ByteBuffer.allocate(4).putInt(crc32).array();
-        ByteBuffer newMsg = ByteBuffer.allocate(lengthOfMsg.length + msgB.length + crc32B.length);
-        newMsg.put(lengthOfMsg);
-        newMsg.put(msgB);
-        newMsg.put(crc32B);
-        return newMsg.array();
-    }
+    private static ByteArrayOutputStream encodeMessage(byte[] payload) throws IOException {
+        byte[] length = int16ToBytes((short) payload.length);
+        byte[] crc = CalculateCRC32(payload, payload.length);
 
-    private static int crc32_mpeg_2(byte[] data,int offset, int length){
-        byte i;
-        int crc = 0xffffffff;  // Initial value
-        length += offset;
-        for(int j=offset;j<length;j++) {
-            crc ^= data[j] << 24;
-            for (i = 0; i < 8; ++i)
-            {
-                if ( (crc & 0x80000000) != 0)
-                    crc = (crc << 1) ^ 0x04C11DB7;
-                else
-                    crc <<= 1;
-            }
-        }
-        return crc;
+        ByteArrayOutputStream msg = new ByteArrayOutputStream();
+        msg.write(length);
+        msg.write(crc);
+        msg.write(payload);
+
+        return msg;
     }
 
     // TODO at reception decode bytes
