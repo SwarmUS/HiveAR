@@ -9,7 +9,7 @@ import static com.swarmus.hivear.utils.Serialization.int32ToBytes;
 public final class CRC {
     private CRC() {}
 
-    public static byte[] CalculateCRC32(byte[] data, int length)
+    public static byte[] CalculateCRC32(byte[] data)
     {
         int i, j;
         IntBuffer intBuf =
