@@ -2,6 +2,8 @@ package com.swarmus.hivear.models;
 
 import android.os.AsyncTask;
 
+import java.io.InputStream;
+
 public class TCPDevice extends CommunicationDevice {
     private TcpClient tcpClient;
     private String serverIP;
@@ -38,6 +40,11 @@ public class TCPDevice extends CommunicationDevice {
     @Override
     public void removeReadCallBack() {
         this.listener = null;
+    }
+
+    @Override
+    public InputStream getDataStream() {
+        return null;
     }
 
     public void setClientCallback(TcpClient.ClientCallback clientCallback) {

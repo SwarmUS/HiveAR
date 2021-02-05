@@ -34,6 +34,8 @@ import com.swarmus.hivear.fragments.UartSettingsFragment;
 import com.swarmus.hivear.models.TcpClient;
 import com.swarmus.hivear.models.TcpSettingsViewModel;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
@@ -191,13 +193,21 @@ public class TestActivity extends AppCompatActivity {
     };
 
     final UsbSerialInterface.UsbReadCallback usbReadCallback = (data) -> {
+        InputStream stream = currentCommunicationDevice.getDataStream();
         // TODO future messages will have a different data structure than String
-        /*String dataStr = new String(data, StandardCharsets.UTF_8);
+        byte[] dataFromStream = new byte[data.length];
+        try {
+            stream.read(dataFromStream, 0, data.length);
+        } catch (IOException e) {
+            // TODO: Handle
+            e.printStackTrace();
+        }
+        String dataStr = new String(dataFromStream, StandardCharsets.UTF_8);
         dataStr += "\n";
         if (dataReceived != null) {
             appendTextAndScroll(dataReceived, dataStr);
         }
-        Log.i(TAG, "Data received: " + dataStr);*/
+        Log.i(TAG, "Data received: " + dataStr);
     };
 
     private void appendTextAndScroll(TextView tv, String text)

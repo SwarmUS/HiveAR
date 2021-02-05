@@ -18,4 +18,13 @@ public final class Serialization {
                 (byte)((data >> 8) & 0xff),
         };
     }
+
+    public static int bytesToInt16(final byte[] data) {
+        return java.nio.ByteBuffer.wrap(data).order(java.nio.ByteOrder.LITTLE_ENDIAN).getShort();
+    }
+
+    public static int bytesToInt32(final byte[] data) {
+        return java.nio.ByteBuffer.wrap(data).order(java.nio.ByteOrder.LITTLE_ENDIAN).getInt();
+    }
 }
+
