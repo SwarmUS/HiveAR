@@ -1,67 +1,129 @@
 package com.swarmus.hivear.models;
 
-import android.os.AsyncTask;
+import android.util.Log;
 
+import com.swarmus.hivear.enums.ConnectionStatus;
+
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.Socket;
 
 public class TCPDevice extends CommunicationDevice {
-    private TcpClient tcpClient;
     private String serverIP;
     private int serverPort;
-    private TcpClient.ClientCallback listener;
+    private ClientCallback messageListener;
+    private Socket socket;
 
-    public TCPDevice(String ip, int port) {
+    private static final String TCP_INFO_LOG_TAG = "TCP";
+
+    public TCPDevice(String ip, int port, ClientCallback messageListener) {
         this.serverIP = ip;
         this.serverPort = port;
+        this.messageListener = messageListener;
     }
 
     @Override
     public void establishConnection() {
         // Close previous connection before creating a new one
         endConnection();
-        new ConnectTask().execute("");
+        broadCastConnectionStatus(ConnectionStatus.connecting);
+        Thread connectionThread = new Thread(new ConnectionRunnable());
+        connectionThread.start();
+    }
+
+    private class ConnectionRunnable implements Runnable {
+        public void run() {
+            try {
+                InetAddress serverAddr = InetAddress.getByName(serverIP);
+
+                Log.d(TCP_INFO_LOG_TAG, "Connecting...");
+
+                socket = new Socket(serverAddr, serverPort);
+
+                if (socket != null && socket.isConnected()) {
+                    messageListener.onConnect();
+                }
+                else {
+                    messageListener.onConnectError();
+                    if (socket!=null) { socket.close(); }
+                }
+
+            } catch (Exception e) {
+                Log.e("TCP", "C: Error", e);
+                messageListener.onConnectError();
+            }
+        }
     }
 
     @Override
     public void endConnection() {
-        if (tcpClient != null) { tcpClient.stopClient(); }
+        if (socket != null) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        messageListener.onDisconnect();
     }
 
     @Override
     public void sendData(byte[] data) {
-        sendData(data.toString());
+        OutputStream outputStream = getSocketOutputStream();
+        if (outputStream != null) {
+            Thread thread = new Thread(() -> {
+                try  {
+                    outputStream.write(data);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
+            thread.start();
+        }
     }
 
     @Override
     public void sendData(String data) {
-        if(tcpClient!=null) {tcpClient.sendMessage(data);}
+        sendData(data.getBytes());
     }
 
     @Override
-    public void removeReadCallBack() {
-        this.listener = null;
-    }
-
-    @Override
-    public InputStream getDataStream() {
+    public InputStream getDataStream()
+    {
+        if (socket != null && socket.isConnected())
+        {
+            try {
+                return socket.getInputStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        broadCastConnectionStatus(ConnectionStatus.notConnected);
         return null;
-    }
-
-    public void setClientCallback(TcpClient.ClientCallback clientCallback) {
-        this.listener=clientCallback;
     }
     public void setServerIP(String ip) {this.serverIP=ip;}
     public void setServerPort(int port) {this.serverPort=port;}
 
-    public class ConnectTask extends AsyncTask<String, String, TcpClient> {
-
-        @Override
-        protected TcpClient doInBackground(String... message) {
-
-            tcpClient = new TcpClient(listener, serverIP, serverPort);
-            tcpClient.run();
-
-            return null;
+    public OutputStream getSocketOutputStream()
+    {
+        if (socket != null && socket.isConnected())
+        {
+            try {
+                return socket.getOutputStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+        broadCastConnectionStatus(ConnectionStatus.notConnected);
+        return null;
+    }
+
+    public interface ClientCallback {
+        void onConnect();
+        void onDisconnect();
+        void onConnectError();
     }
 }
