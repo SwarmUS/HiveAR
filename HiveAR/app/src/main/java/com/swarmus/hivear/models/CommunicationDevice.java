@@ -5,6 +5,8 @@ import android.content.Intent;
 
 import com.swarmus.hivear.enums.ConnectionStatus;
 
+import java.io.InputStream;
+
 // Interface to be used by SerialDevice/TCPDevice
 abstract public class CommunicationDevice {
     static public final String CONNECTION_STATUS_RESULT = "com.swarmus.hivear.CONNECTION_STATUS_RESULT";
@@ -16,8 +18,10 @@ abstract public class CommunicationDevice {
     abstract public void establishConnection();
     abstract public void endConnection();
     abstract public void sendData(byte[] data);
+    abstract public void sendData(String data);
+    abstract public InputStream getDataStream();
     abstract public void removeReadCallBack();
-    protected void broadCastConnectionStatus(ConnectionStatus connectionStatus) {
+    public void broadCastConnectionStatus(ConnectionStatus connectionStatus) {
         if (context != null) {
             Intent intent = new Intent();
             intent.setAction(CONNECTION_STATUS_RESULT);

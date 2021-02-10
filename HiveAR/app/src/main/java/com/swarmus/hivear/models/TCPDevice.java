@@ -1,113 +1,67 @@
 package com.swarmus.hivear.models;
 
-import com.swarmus.hivear.enums.ConnectionStatus;
+import android.os.AsyncTask;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.net.Socket;
+import java.io.InputStream;
 
 public class TCPDevice extends CommunicationDevice {
-    private Socket socket;
-    private OutputStream socketOutput;
-    private BufferedReader socketInput;
+    private TcpClient tcpClient;
+    private String serverIP;
+    private int serverPort;
+    private TcpClient.ClientCallback listener;
 
-    private String ip;
-    private int port;
-    private ClientCallback listener=null;
-
-    public TCPDevice(String ip, int port){
-        this.ip=ip;
-        this.port=port;
+    public TCPDevice(String ip, int port) {
+        this.serverIP = ip;
+        this.serverPort = port;
     }
 
     @Override
     public void establishConnection() {
-        broadCastConnectionStatus(ConnectionStatus.connecting);
-        // Reset socket for new connection
-        if (socket != null && socket.isConnected())
-        {
-            // Ends previous thread by closing socket
-            endConnection();
-            broadCastConnectionStatus(ConnectionStatus.notConnected);
-        }
-        new Thread(() -> {
-            socket = new Socket();
-            InetSocketAddress socketAddress = new InetSocketAddress(ip, port);
-            try {
-                socket.connect(socketAddress);
-                socketOutput = socket.getOutputStream();
-                socketInput = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                broadCastConnectionStatus(ConnectionStatus.connected);
-
-                new ReceiveThread().start();
-
-                if(listener!=null)
-                    listener.onConnect(socket);
-            } catch (IOException e) {
-                if(listener!=null)
-                    listener.onConnectError(socket, e.getMessage());
-            }
-        }).start();
+        // Close previous connection before creating a new one
+        endConnection();
+        new ConnectTask().execute("");
     }
 
     @Override
     public void endConnection() {
-        broadCastConnectionStatus(ConnectionStatus.notConnected);
-        try {
-            if (socket != null) {socket.close();}
-        } catch (IOException e) {
-            if(listener!=null)
-                listener.onDisconnect(socket, e.getMessage());
-        }
+        if (tcpClient != null) { tcpClient.stopClient(); }
     }
 
     @Override
     public void sendData(byte[] data) {
-        try {
-            socketOutput.write(data);
-        } catch (IOException e) {
-            if(listener!=null)
-                listener.onDisconnect(socket, e.getMessage());
-        }
+        sendData(data.toString());
+    }
+
+    @Override
+    public void sendData(String data) {
+        if(tcpClient!=null) {tcpClient.sendMessage(data);}
     }
 
     @Override
     public void removeReadCallBack() {
-        this.listener=null;
+        this.listener = null;
     }
 
-    public void setIp(String ip) {this.ip=ip;}
+    @Override
+    public InputStream getDataStream() {
+        return null;
+    }
 
-    public void setPort(int port) {this.port=port;}
+    public void setClientCallback(TcpClient.ClientCallback clientCallback) {
+        this.listener=clientCallback;
+    }
+    public void setServerIP(String ip) {this.serverIP=ip;}
+    public void setServerPort(int port) {this.serverPort=port;}
 
-    private class ReceiveThread extends Thread implements Runnable{
-        public void run(){
-            String message;
-            try {
-                // TODO binary data won't contain \n in the future, invalidating readline() call here
-                while((message = socketInput.readLine()) != null) {   // each line must end with a \n to be received
-                    if(listener!=null)
-                        listener.onMessage(message);
-                }
-            } catch (IOException e) {
-                if(listener!=null)
-                    listener.onDisconnect(socket, e.getMessage());
-                broadCastConnectionStatus(ConnectionStatus.notConnected);
-            }
+    public class ConnectTask extends AsyncTask<String, String, TcpClient> {
+
+        @Override
+        protected TcpClient doInBackground(String... message) {
+
+            tcpClient = new TcpClient(listener, serverIP, serverPort);
+            tcpClient.run();
+
+            return null;
         }
-    }
-
-    public void setClientCallback(ClientCallback listener){
-        this.listener=listener;
-    }
-
-    public interface ClientCallback {
-        void onMessage(String message);
-        void onConnect(Socket socket);
-        void onDisconnect(Socket socket, String message);
-        void onConnectError(Socket socket, String message);
     }
 }
