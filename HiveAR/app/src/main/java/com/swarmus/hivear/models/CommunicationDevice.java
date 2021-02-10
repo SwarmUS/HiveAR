@@ -13,16 +13,17 @@ abstract public class CommunicationDevice {
     static public final String EXTRA_CONNECTION_STATUS_RESULT = "connectionStatusResult";
 
     protected Context context;
+    protected boolean isActive;
 
     public void init(Context context){this.context=context;}
+    public void setActive(boolean active) {this.isActive = active;}
     abstract public void establishConnection();
     abstract public void endConnection();
     abstract public void sendData(byte[] data);
     abstract public void sendData(String data);
     abstract public InputStream getDataStream();
-    abstract public void removeReadCallBack();
     public void broadCastConnectionStatus(ConnectionStatus connectionStatus) {
-        if (context != null) {
+        if (context != null && isActive) {
             Intent intent = new Intent();
             intent.setAction(CONNECTION_STATUS_RESULT);
             intent.putExtra(EXTRA_CONNECTION_STATUS_RESULT, connectionStatus);

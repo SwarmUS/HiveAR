@@ -14,22 +14,14 @@ import com.felhr.usbserial.UsbSerialDevice;
 import com.felhr.usbserial.UsbSerialInterface;
 import com.swarmus.hivear.enums.ConnectionStatus;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.Console;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.io.SequenceInputStream;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.IntBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.stream.Stream;
 
 import static com.swarmus.hivear.utils.CRC.CalculateCRC32;
 import static com.swarmus.hivear.utils.Serialization.bytesToInt16;
@@ -38,7 +30,6 @@ import static com.swarmus.hivear.utils.Serialization.int16ToBytes;
 
 
 public class SerialDevice extends CommunicationDevice {
-    private UsbSerialInterface.UsbReadCallback readCB;
     private PendingIntent permissionIntent;
     private UsbDevice device;
     private UsbManager manager;
@@ -133,17 +124,9 @@ public class SerialDevice extends CommunicationDevice {
         return pipedInputStream;
     }
 
-    public void removeReadCallBack() {
-        this.readCB=null;
-    }
-
     public void setSelectedUsbDeviceName(String deviceName) {
         if (!deviceName.equals(selectedDeviceName)) { endConnection(); }
         selectedDeviceName = deviceName;
-    }
-
-    public void setReadCB(UsbSerialInterface.UsbReadCallback readCB) {
-        this.readCB = readCB;
     }
 
     private class UsbReceiver extends BroadcastReceiver {
@@ -240,9 +223,6 @@ public class SerialDevice extends CommunicationDevice {
                 if (calculatedCRC == rxCrc) {
                     Log.d(DEVICE_INFO_LOG_TAG, "CRC EQUAL");
                     pipedOutputStream.write(packet);
-
-                    // TODO: Remove once we remove the print in the TestActivity
-                    readCB.onReceivedData(packet);
                 } else {
                     Log.d(DEVICE_INFO_LOG_TAG, "CRC NOT EQUAL");
                 }
@@ -299,13 +279,6 @@ public class SerialDevice extends CommunicationDevice {
 
         return msg;
     }
-
-    // TODO at reception decode bytes
-    /*public static String getStringFromSerialized(byte[] serializedMsg) {
-        byte[] lenghtOfMsg = serializedMsg[0:3];
-        byte[] crc32B = serializedMsg[serializedMsg.length-34:serializedMsg.length-1];
-        byte[] msgB = serializedMsg[4:serializedMsg.length-35];
-    }*/
 
     private final BroadcastReceiver usbReceiverPermission = new BroadcastReceiver() {
         @Override

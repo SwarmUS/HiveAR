@@ -31,7 +31,6 @@ import com.swarmus.hivear.models.SerialSettingsViewModel;
 import com.swarmus.hivear.models.TCPDevice;
 import com.swarmus.hivear.fragments.TcpSettingsFragment;
 import com.swarmus.hivear.fragments.UartSettingsFragment;
-import com.swarmus.hivear.models.TcpClient;
 import com.swarmus.hivear.models.TcpSettingsViewModel;
 
 import java.io.IOException;
@@ -114,7 +113,7 @@ public class TestActivity extends AppCompatActivity {
         currentCommunicationDevice = serialDevice = new SerialDevice();
         serialDevice.init(this);
 
-        tcpDevice = new TCPDevice(DEFAULT_IP_ADDRESS, DEFAULT_PORT);
+        tcpDevice = new TCPDevice(DEFAULT_IP_ADDRESS, DEFAULT_PORT, tcpCallBack);
         tcpDevice.init(this);
 
         TcpSettingsViewModel tcpSettingsViewModel = new ViewModelProvider(this).get(TcpSettingsViewModel.class);
@@ -150,51 +149,44 @@ public class TestActivity extends AppCompatActivity {
             ft.show(toShow);
             ft.commit();
             currentCommunicationDevice.endConnection();
-            serialDevice.removeReadCallBack();
-            ((TCPDevice)tcpDevice).setClientCallback(tcpCallBack);
+            serialDevice.setActive(false);
             currentCommunicationDevice = tcpDevice;
+            tcpDevice.setActive(true);
         } else if (toShow instanceof UartSettingsFragment) {
             FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             ft.hide(tcpSettingsFrag);
             ft.show(toShow);
             ft.commit();
             currentCommunicationDevice.endConnection();
-            tcpDevice.removeReadCallBack();
-            ((SerialDevice)serialDevice).setReadCB(usbReadCallback);
+            tcpDevice.setActive(false);
             currentCommunicationDevice = serialDevice;
+            serialDevice.setActive(true);
         }
         ((ImageView)findViewById(R.id.connectionStatusImage)).setColorFilter(getColor(R.color.connection_none));
         dataReceived.setText("");
     }
 
-    final TcpClient.ClientCallback tcpCallBack = new TcpClient.ClientCallback() {
-        @Override
-        public void onMessage(String message) {
-            if (dataReceived != null) {
-                appendTextAndScroll(dataReceived, message+"\n");
-            }
-        }
-
+    final TCPDevice.ClientCallback tcpCallBack = new TCPDevice.ClientCallback() {
         @Override
         public void onConnect() {
             Log.d(TAG, "New TCP Connection");
-            currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.connected);
+            tcpDevice.broadCastConnectionStatus(ConnectionStatus.connected);
         }
 
         @Override
         public void onDisconnect() {
             Log.d(TAG, "End of TCP Connection");
-            currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.notConnected);
+            tcpDevice.broadCastConnectionStatus(ConnectionStatus.notConnected);
         }
 
         @Override
         public void onConnectError() {
-            currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.notConnected);
+            tcpDevice.broadCastConnectionStatus(ConnectionStatus.notConnected);
         }
     };
 
     final UsbSerialInterface.UsbReadCallback usbReadCallback = (data) -> {
-        InputStream stream = currentCommunicationDevice.getDataStream();
+        InputStream stream = serialDevice.getDataStream();
         // TODO future messages will have a different data structure than String
         byte[] dataFromStream = new byte[data.length];
         try {
