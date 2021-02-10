@@ -107,19 +107,6 @@ public class TCPDevice extends CommunicationDevice {
     public void setServerIP(String ip) {this.serverIP=ip;}
     public void setServerPort(int port) {this.serverPort=port;}
 
-    public InputStream getSocketInputStream()
-    {
-        if (socket != null && socket.isConnected())
-        {
-            try {
-                return socket.getInputStream();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return null;
-    }
-
     public OutputStream getSocketOutputStream()
     {
         if (socket != null && socket.isConnected())
