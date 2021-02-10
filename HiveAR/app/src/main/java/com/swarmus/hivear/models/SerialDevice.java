@@ -88,6 +88,7 @@ public class SerialDevice extends CommunicationDevice {
                     ACTION_USE_PERMISSION), 0);
             IntentFilter filter = new IntentFilter(ACTION_USE_PERMISSION);
             context.getApplicationContext().registerReceiver(usbReceiverPermission, filter);
+            listConnectedDevices();
         }
     }
 
@@ -157,19 +158,25 @@ public class SerialDevice extends CommunicationDevice {
             else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
                 Log.d(USB_RECEIVER_LOG_TAG, "USB device disconnected");
             }
-            if (manager!=null) {
-                Intent connectedDevicesIntent = new Intent();
-                connectedDevicesIntent.setAction(ACTION_SERIAL_DEVICE_CHANGED);
-                HashMap<String, String> devicesName = new HashMap<>();
-                for (UsbDevice usbDevice : manager.getDeviceList().values()) {
-                    device = usbDevice;
-                    devicesName.put(device.getProductName(), device.getDeviceName());
-                }
-                connectedDevicesIntent.putExtra(EXTRA_SERIAL_DEVICE_CHANGED, devicesName);
-                context.sendBroadcast(connectedDevicesIntent);
-                logConnectedDevices();
-            }
+            listConnectedDevices();
             endConnection();
+        }
+    }
+
+    private void listConnectedDevices()
+    {
+        if (manager!=null) {
+            HashMap<String, String> devicesName = new HashMap<>();
+            for (UsbDevice usbDevice : manager.getDeviceList().values()) {
+                device = usbDevice;
+                devicesName.put(device.getProductName(), device.getDeviceName());
+            }
+
+            Intent connectedDevicesIntent = new Intent();
+            connectedDevicesIntent.setAction(ACTION_SERIAL_DEVICE_CHANGED);
+            connectedDevicesIntent.putExtra(EXTRA_SERIAL_DEVICE_CHANGED, devicesName);
+            context.sendBroadcast(connectedDevicesIntent);
+            logConnectedDevices();
         }
     }
 

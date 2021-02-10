@@ -108,10 +108,11 @@ public class TestActivity extends AppCompatActivity {
             startActivity(goToCommand);
         });
 
-        currentCommunicationDevice = serialDevice = new SerialDevice();
-        serialDevice.init(this);
         IntentFilter filter = new IntentFilter(SerialDevice.ACTION_SERIAL_DEVICE_CHANGED);
         registerReceiver(serialDeviceChangedReceiver, filter);
+
+        currentCommunicationDevice = serialDevice = new SerialDevice();
+        serialDevice.init(this);
 
         tcpDevice = new TCPDevice(DEFAULT_IP_ADDRESS, DEFAULT_PORT);
         tcpDevice.init(this);
