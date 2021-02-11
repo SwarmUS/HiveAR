@@ -53,7 +53,6 @@ public class TcpSettingsFragment extends Fragment {
             };
             ipInputEditText.setFilters(filters);
 
-            // TODO set ip on exit textedit
             ipInputEditText.setOnKeyListener((view1, keyCode, keyEvent) -> {
                 if ((keyEvent.getAction() == KeyEvent.ACTION_DOWN) &&
                         (keyCode == KeyEvent.KEYCODE_ENTER)) {
@@ -64,7 +63,6 @@ public class TcpSettingsFragment extends Fragment {
 
         }
 
-        // TODO ime_action_next set port, set port on exit editor
         TextInputEditText portInputEditText = view.findViewById(R.id.PortTextInputEditText);
         if (portInputEditText!=null){
             portInputEditText.setOnEditorActionListener((textView, i, keyEvent) -> {

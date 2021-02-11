@@ -12,7 +12,6 @@ import android.util.Log;
 
 import com.felhr.usbserial.UsbSerialDevice;
 import com.felhr.usbserial.UsbSerialInterface;
-import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.enums.ConnectionStatus;
 
 import java.io.ByteArrayOutputStream;
@@ -118,15 +117,6 @@ public class SerialDevice extends CommunicationDevice {
     public void sendData(String data) {
         byte[] msg = data.getBytes();
         sendData(msg);
-    }
-
-    @Override
-    public void sendData(MessageOuterClass.Message protoMessage) {
-        // TODO
-        /*if (protoMessage != null && protoMessage.isInitialized())
-        {
-
-        }*/
     }
 
     @Override

@@ -2,7 +2,6 @@ package com.swarmus.hivear.models;
 
 import android.util.Log;
 
-import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.enums.ConnectionStatus;
 
 import java.io.IOException;
@@ -72,7 +71,6 @@ public class TCPDevice extends CommunicationDevice {
 
     @Override
     public void sendData(byte[] data) {
-        // TODO Verify concurrency
         OutputStream outputStream = getSocketOutputStream();
         if (outputStream != null) {
             Thread thread = new Thread(() -> {
@@ -90,24 +88,6 @@ public class TCPDevice extends CommunicationDevice {
     @Override
     public void sendData(String data) {
         sendData(data.getBytes());
-    }
-
-    @Override
-    public void sendData(MessageOuterClass.Message protoMessage) {
-        // TODO: isRunning variable to not write at the same time
-        OutputStream outputStream = getSocketOutputStream();
-        if (outputStream != null && protoMessage.isInitialized())
-        {
-            Thread thread = new Thread(() -> {
-                try  {
-                    protoMessage.writeDelimitedTo(outputStream);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-
-            thread.start();
-        }
     }
 
     @Override
