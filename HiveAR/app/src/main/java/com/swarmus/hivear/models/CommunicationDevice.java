@@ -3,6 +3,7 @@ package com.swarmus.hivear.models;
 import android.content.Context;
 import android.content.Intent;
 
+import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.enums.ConnectionStatus;
 
 import java.io.InputStream;
@@ -21,6 +22,7 @@ abstract public class CommunicationDevice {
     abstract public void endConnection();
     abstract public void sendData(byte[] data);
     abstract public void sendData(String data);
+    abstract public void sendData(MessageOuterClass.Message protoMessage);
     abstract public InputStream getDataStream();
     public void broadCastConnectionStatus(ConnectionStatus connectionStatus) {
         if (context != null && isActive) {

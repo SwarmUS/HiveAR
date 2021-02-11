@@ -23,6 +23,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.felhr.usbserial.UsbSerialInterface;
+import com.swarmus.hivear.commands.MoveByCommand;
 import com.swarmus.hivear.enums.ConnectionStatus;
 import com.swarmus.hivear.models.CommunicationDevice;
 import com.swarmus.hivear.R;
@@ -52,6 +53,12 @@ public class TestActivity extends AppCompatActivity {
     private UartSettingsFragment uartSettingsFrag;
 
     private SerialSettingsViewModel serialSettingsViewModel;
+
+    private MoveByCommand upCommand;
+    private MoveByCommand downCommand;
+    private MoveByCommand leftCommand;
+    private MoveByCommand rightCommand;
+    private MoveByCommand stopCommand;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,20 +130,40 @@ public class TestActivity extends AppCompatActivity {
         final Observer<Integer> portObserver = p -> ((TCPDevice)tcpDevice).setServerPort(p);
         tcpSettingsViewModel.getPort().observe(this, portObserver);
 
+        upCommand = new MoveByCommand(1,0);
         findViewById(R.id.upButton).setOnClickListener(view -> {
-            if (currentCommunicationDevice != null) { currentCommunicationDevice.sendData("UP");}
+            if (currentCommunicationDevice != null)
+            {
+                currentCommunicationDevice.sendData(upCommand.getCommand());
+            }
         });
+        downCommand = new MoveByCommand(-1,0);
         findViewById(R.id.downButton).setOnClickListener(view -> {
-            if (currentCommunicationDevice != null) { currentCommunicationDevice.sendData("DOWN");}
+            if (currentCommunicationDevice != null)
+            {
+                currentCommunicationDevice.sendData(downCommand.getCommand());
+            }
         });
+        leftCommand = new MoveByCommand(0,1);
         findViewById(R.id.leftButton).setOnClickListener(view -> {
-            if (currentCommunicationDevice != null) { currentCommunicationDevice.sendData("LEFT");}
+            if (currentCommunicationDevice != null)
+            {
+                currentCommunicationDevice.sendData(leftCommand.getCommand());
+            }
         });
+        rightCommand = new MoveByCommand(0,-1);
         findViewById(R.id.rightButton).setOnClickListener(view -> {
-            if (currentCommunicationDevice != null) { currentCommunicationDevice.sendData("RIGHT");}
+            if (currentCommunicationDevice != null)
+            {
+                currentCommunicationDevice.sendData(rightCommand.getCommand());
+            }
         });
+        stopCommand = new MoveByCommand(0,0);
         findViewById(R.id.stopButton).setOnClickListener(view -> {
-            if (currentCommunicationDevice != null) { currentCommunicationDevice.sendData("STOP");}
+            if (currentCommunicationDevice != null)
+            {
+                currentCommunicationDevice.sendData(stopCommand.getCommand());
+            }
         });
 
         switchCommunication(uartSettingsFrag);
