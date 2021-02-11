@@ -35,6 +35,7 @@ public class TcpSettingsFragment extends Fragment {
             public void onFocusChange(View v, boolean hasFocus) {
                 if (!hasFocus) {
                     tcpSettingsViewModel.getIpAddress().setValue(Objects.requireNonNull(ipInputEditText.getText()).toString());
+                    ipInputEditText.clearFocus();
                 }
             }
         });
@@ -68,7 +69,6 @@ public class TcpSettingsFragment extends Fragment {
                 if ((keyEvent.getAction() == KeyEvent.ACTION_DOWN) &&
                         (keyCode == KeyEvent.KEYCODE_ENTER)) {
                     tcpSettingsViewModel.getIpAddress().setValue(Objects.requireNonNull(ipInputEditText.getText()).toString());
-                    ipInputEditText.clearFocus();
                 }
                 return false;
             });
