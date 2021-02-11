@@ -23,6 +23,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.felhr.usbserial.UsbSerialInterface;
+import com.swarmus.hivear.commands.MoveByCommand;
 import com.swarmus.hivear.enums.ConnectionStatus;
 import com.swarmus.hivear.models.CommunicationDevice;
 import com.swarmus.hivear.R;
@@ -52,6 +53,8 @@ public class TestActivity extends AppCompatActivity {
     private UartSettingsFragment uartSettingsFrag;
 
     private SerialSettingsViewModel serialSettingsViewModel;
+
+    private MoveByCommand upCommand;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,8 +126,12 @@ public class TestActivity extends AppCompatActivity {
         final Observer<Integer> portObserver = p -> ((TCPDevice)tcpDevice).setServerPort(p);
         tcpSettingsViewModel.getPort().observe(this, portObserver);
 
+        upCommand = new MoveByCommand(5,0);
         findViewById(R.id.upButton).setOnClickListener(view -> {
-            if (currentCommunicationDevice != null) { currentCommunicationDevice.sendData("UP");}
+            if (currentCommunicationDevice != null)
+            {
+                currentCommunicationDevice.sendData(upCommand.getCommand());
+            }
         });
         findViewById(R.id.downButton).setOnClickListener(view -> {
             if (currentCommunicationDevice != null) { currentCommunicationDevice.sendData("DOWN");}
