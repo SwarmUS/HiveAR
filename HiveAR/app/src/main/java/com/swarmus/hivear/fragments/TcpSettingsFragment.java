@@ -28,17 +28,6 @@ public class TcpSettingsFragment extends Fragment {
         tcpSettingsViewModel = new ViewModelProvider(requireActivity(), new ViewModelProvider.NewInstanceFactory()).get(TcpSettingsViewModel.class);
 
         TextInputEditText ipInputEditText = view.findViewById(R.id.IPTextInputEditText);
-        ipInputEditText.setFocusableInTouchMode(true);
-        ipInputEditText.setFocusable(true);
-        ipInputEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (!hasFocus) {
-                    tcpSettingsViewModel.getIpAddress().setValue(Objects.requireNonNull(ipInputEditText.getText()).toString());
-                    ipInputEditText.clearFocus();
-                }
-            }
-        });
         // IP text input filtering
         if (ipInputEditText != null) {
             InputFilter[] filters = new InputFilter[1];
@@ -64,38 +53,31 @@ public class TcpSettingsFragment extends Fragment {
             };
             ipInputEditText.setFilters(filters);
 
-            // TODO set ip on exit textedit
-            ipInputEditText.setOnKeyListener((view1, keyCode, keyEvent) -> {
-                if ((keyEvent.getAction() == KeyEvent.ACTION_DOWN) &&
-                        (keyCode == KeyEvent.KEYCODE_ENTER)) {
-                    tcpSettingsViewModel.getIpAddress().setValue(Objects.requireNonNull(ipInputEditText.getText()).toString());
+            ipInputEditText.setFocusableInTouchMode(true);
+            ipInputEditText.setFocusable(true);
+            ipInputEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override
+                public void onFocusChange(View v, boolean hasFocus) {
+                    if (!hasFocus) {
+                        tcpSettingsViewModel.getIpAddress().setValue(Objects.requireNonNull(ipInputEditText.getText()).toString());
+                        ipInputEditText.clearFocus();
+                    }
                 }
-                return false;
             });
-
         }
 
-        // TODO ime_action_next set port, set port on exit editor
         TextInputEditText portInputEditText = view.findViewById(R.id.PortTextInputEditText);
-        portInputEditText.setFocusableInTouchMode(true);
-        portInputEditText.setFocusable(true);
-        portInputEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (!hasFocus) {
-                    tcpSettingsViewModel.getPort().setValue(Integer.valueOf(Objects.requireNonNull(portInputEditText.getText()).toString()));
-                    portInputEditText.clearFocus();
-                }
-            }
-        });
         if (portInputEditText!=null){
-            portInputEditText.setOnEditorActionListener((textView, i, keyEvent) -> {
-                if (i == EditorInfo.IME_ACTION_DONE)
-                {
-                    tcpSettingsViewModel.getPort().setValue(Integer.valueOf(Objects.requireNonNull(portInputEditText.getText()).toString()));
-                    portInputEditText.clearFocus();
+            portInputEditText.setFocusableInTouchMode(true);
+            portInputEditText.setFocusable(true);
+            portInputEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override
+                public void onFocusChange(View v, boolean hasFocus) {
+                    if (!hasFocus) {
+                        tcpSettingsViewModel.getPort().setValue(Integer.valueOf(Objects.requireNonNull(portInputEditText.getText()).toString()));
+                        portInputEditText.clearFocus();
+                    }
                 }
-                return false;
             });
         }
 

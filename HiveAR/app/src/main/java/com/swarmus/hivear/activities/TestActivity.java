@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Rect;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -19,6 +20,10 @@ import androidx.lifecycle.ViewModelProvider;
 import android.text.Layout;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -191,6 +196,46 @@ public class TestActivity extends AppCompatActivity {
         }
         ((ImageView)findViewById(R.id.connectionStatusImage)).setColorFilter(getColor(R.color.connection_none));
         dataReceived.setText("");
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if(ev.getAction() == MotionEvent.ACTION_UP) {
+            final View view = getCurrentFocus();
+
+            if(view != null) {
+                final boolean consumed = super.dispatchTouchEvent(ev);
+
+                final View viewTmp = getCurrentFocus();
+                final View viewNew = viewTmp != null ? viewTmp : view;
+
+                if(viewNew.equals(view)) {
+                    final Rect rect = new Rect();
+                    final int[] coordinates = new int[2];
+
+                    view.getLocationOnScreen(coordinates);
+
+                    rect.set(coordinates[0], coordinates[1], coordinates[0] + view.getWidth(), coordinates[1] + view.getHeight());
+
+                    final int x = (int) ev.getX();
+                    final int y = (int) ev.getY();
+
+                    if(rect.contains(x, y)) {
+                        return consumed;
+                    }
+                }
+                else if(viewNew instanceof EditText) {
+                    return consumed;
+                }
+
+                final InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputMethodManager.hideSoftInputFromWindow(viewNew.getWindowToken(), 0);
+                viewNew.clearFocus();
+                return consumed;
+            }
+        }
+
+        return super.dispatchTouchEvent(ev);
     }
 
     final TCPDevice.ClientCallback tcpCallBack = new TCPDevice.ClientCallback() {
