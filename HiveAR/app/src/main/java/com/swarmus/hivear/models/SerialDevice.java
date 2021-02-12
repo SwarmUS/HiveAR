@@ -18,6 +18,7 @@ import com.swarmus.hivear.enums.ConnectionStatus;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.Arrays;
@@ -46,6 +47,8 @@ public class SerialDevice extends CommunicationDevice {
     private PipedInputStream pipedInputStream;
     private PipedOutputStream pipedOutputStream;
 
+    private ByteArrayOutputStream uartOutputStream;
+
     private static final String ACTION_USE_PERMISSION = "com.swarmus.hivear.USB_PERMISSION";
     private static final String DEVICE_INFO_LOG_TAG = "DeviceInformation";
 
@@ -60,6 +63,7 @@ public class SerialDevice extends CommunicationDevice {
         if (context != null)
         {
             rxByteStream = new ByteArrayOutputStream();
+            uartOutputStream = new ByteArrayOutputStream();
 
             pipedInputStream = new PipedInputStream();
             try {
@@ -122,11 +126,16 @@ public class SerialDevice extends CommunicationDevice {
 
     @Override
     public void sendData(MessageOuterClass.Message protoMessage) {
-        // TODO
-        /*if (protoMessage != null && protoMessage.isInitialized())
+        if (protoMessage != null && protoMessage.isInitialized())
         {
-
-        }*/
+            try {
+                protoMessage.writeDelimitedTo(uartOutputStream);
+                sendData(uartOutputStream.toByteArray());
+                uartOutputStream = new ByteArrayOutputStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
