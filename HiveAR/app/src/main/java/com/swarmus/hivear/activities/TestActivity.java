@@ -28,6 +28,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.felhr.usbserial.UsbSerialInterface;
+import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.commands.MoveByCommand;
 import com.swarmus.hivear.enums.ConnectionStatus;
 import com.swarmus.hivear.models.CommunicationDevice;
@@ -64,6 +65,8 @@ public class TestActivity extends AppCompatActivity {
     private MoveByCommand leftCommand;
     private MoveByCommand rightCommand;
     private MoveByCommand stopCommand;
+
+    private MessageOuterClass.Message receivedMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,10 +126,10 @@ public class TestActivity extends AppCompatActivity {
         registerReceiver(serialDeviceChangedReceiver, filter);
 
         currentCommunicationDevice = serialDevice = new SerialDevice();
-        serialDevice.init(this);
+        serialDevice.init(this, connectionCallback);
 
-        tcpDevice = new TCPDevice(DEFAULT_IP_ADDRESS, DEFAULT_PORT, tcpCallBack);
-        tcpDevice.init(this);
+        tcpDevice = new TCPDevice(DEFAULT_IP_ADDRESS, DEFAULT_PORT);
+        tcpDevice.init(this, connectionCallback);
 
         TcpSettingsViewModel tcpSettingsViewModel = new ViewModelProvider(this).get(TcpSettingsViewModel.class);
         final Observer<String> ipAddressObserver = s -> ((TCPDevice)tcpDevice).setServerIP(s);
@@ -238,22 +241,50 @@ public class TestActivity extends AppCompatActivity {
         return super.dispatchTouchEvent(ev);
     }
 
-    final TCPDevice.ClientCallback tcpCallBack = new TCPDevice.ClientCallback() {
+    final CommunicationDevice.ConnectionCallback connectionCallback = new CommunicationDevice.ConnectionCallback() {
         @Override
         public void onConnect() {
-            Log.d(TAG, "New TCP Connection");
-            tcpDevice.broadCastConnectionStatus(ConnectionStatus.connected);
+            Log.d(TAG, "New Connection");
+            currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.connected);
+            InputStream inputStream = currentCommunicationDevice.getDataStream();
+            Thread thread = new Thread(() -> {
+                while (inputStream != null) {
+                    try {
+                        receivedMessage = MessageOuterClass.Message.parseDelimitedFrom(inputStream);
+                        logProtoMessage(receivedMessage);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return;
+                    }
+                }
+            });
+            thread.start();
+        }
+
+        private void logProtoMessage(MessageOuterClass.Message msg)
+        {
+            if (msg != null && dataReceived != null)
+            {
+                appendTextAndScroll(dataReceived, "\n");
+                appendTextAndScroll(dataReceived, "Destination_id: " + msg.getDestinationId() + "\n");
+                appendTextAndScroll(dataReceived, "Source_id: " + msg.getSourceId() + "\n");
+                if (msg.hasRequest()) {appendTextAndScroll(dataReceived, "Request: " + msg.getRequest() + "\n");}
+                else if (msg.hasResponse()) {appendTextAndScroll(dataReceived, "Response: " + msg.getResponse() + "\n");}
+                appendTextAndScroll(dataReceived, "\n");
+            }
         }
 
         @Override
         public void onDisconnect() {
-            Log.d(TAG, "End of TCP Connection");
-            tcpDevice.broadCastConnectionStatus(ConnectionStatus.notConnected);
+            Log.d(TAG, "End of Connection");
+            currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.notConnected);
+            if (receivedMessage != null) {receivedMessage.toBuilder().clear();}
         }
 
         @Override
         public void onConnectError() {
-            tcpDevice.broadCastConnectionStatus(ConnectionStatus.notConnected);
+            currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.notConnected);
+            if (receivedMessage != null) {receivedMessage.toBuilder().clear();}
         }
     };
 

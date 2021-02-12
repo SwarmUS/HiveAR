@@ -15,8 +15,13 @@ abstract public class CommunicationDevice {
 
     protected Context context;
     protected boolean isActive;
+    protected ConnectionCallback connectionCallback;
 
-    public void init(Context context){this.context=context;}
+    public void init(Context context, ConnectionCallback connectionCallback)
+    {
+        this.context = context;
+        this.connectionCallback = connectionCallback;
+    }
     public void setActive(boolean active) {this.isActive = active;}
     abstract public void establishConnection();
     abstract public void endConnection();
@@ -31,5 +36,11 @@ abstract public class CommunicationDevice {
             intent.putExtra(EXTRA_CONNECTION_STATUS_RESULT, connectionStatus);
             context.sendBroadcast(intent);
         }
+    }
+
+    public interface ConnectionCallback {
+        void onConnect();
+        void onDisconnect();
+        void onConnectError();
     }
 }
