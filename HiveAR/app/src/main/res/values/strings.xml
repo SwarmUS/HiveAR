@@ -11,4 +11,10 @@
     <string name="connection">Connection</string>
     <string name="ar">AR</string>
     <string name="swarm_summary">Swarm Summary</string>
+    <string name="roboticon">robotIcon</string>
+    <string name="robotname">RobotName</string>
+    <string name="uid">#UID</string>
+    <string name="x_offset">X offset</string>
+    <string name="offset">Offset</string>
+    <string name="y_offset">Y offset</string>
 </resources>
