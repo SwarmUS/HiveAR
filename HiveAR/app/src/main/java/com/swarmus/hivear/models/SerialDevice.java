@@ -224,7 +224,7 @@ public class SerialDevice extends CommunicationDevice {
             try {
                 pipedOutputStream = new PipedOutputStream(pipedInputStream);
             } catch (IOException e) {
-                Log.e(DEVICE_INFO_LOG_TAG, "Could open pipe for UART data stream");
+                Log.e(DEVICE_INFO_LOG_TAG, "Could not open pipe for UART data stream");
                 e.printStackTrace();
             }
         }

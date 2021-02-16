@@ -13,12 +13,12 @@ public class MoveByCommand extends GenericCommand{
     {
         this.x = x;
         this.y = y;
-        this.moveByMessage = MessageOuterClass.Message.getDefaultInstance();
+        this.message = MessageOuterClass.Message.getDefaultInstance();
     }
 
     @Override
     public MessageOuterClass.Message getCommand() {
-        if (!moveByMessage.hasRequest())
+        if (!message.hasRequest())
         {
             FunctionCall.FunctionArgument argX = FunctionCall.FunctionArgument.newBuilder()
                     .setFloatArg(x)
@@ -31,20 +31,22 @@ public class MoveByCommand extends GenericCommand{
                     .addArguments(argY)
                     .setFunctionName(MOVE_BY_FUNCTION_NAME)
                     .build();
-            UserCall.UserCallDestination userCallDestination = UserCall.UserCallDestination.HOST;
+            UserCall.UserCallTarget userCallDestination = UserCall.UserCallTarget.HOST;
+            UserCall.UserCallTarget userCallSource = UserCall.UserCallTarget.HOST;
             UserCall.UserCallRequest userCallRequest = UserCall.UserCallRequest.newBuilder()
                     .setDestination(userCallDestination)
+                    .setSource(userCallSource)
                     .setFunctionCall(request)
                     .build();
             MessageOuterClass.Request moveByRequest = MessageOuterClass.Request.newBuilder()
                     .setUserCall(userCallRequest)
                     .build();
-            moveByMessage = MessageOuterClass.Message.newBuilder()
+            message = MessageOuterClass.Message.newBuilder()
                     .setRequest(moveByRequest)
                     .setDestinationId(1) // TODO temp for now
                     .setSourceId(42) // TODO temp for now
                     .build();
         }
-        return moveByMessage;
+        return message;
     }
 }

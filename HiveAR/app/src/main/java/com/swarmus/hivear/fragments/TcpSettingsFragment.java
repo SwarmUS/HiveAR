@@ -26,20 +26,10 @@ public class TcpSettingsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_tcp_settings, container, false);
 
         tcpSettingsViewModel = new ViewModelProvider(requireActivity(), new ViewModelProvider.NewInstanceFactory()).get(TcpSettingsViewModel.class);
-
         TextInputEditText ipInputEditText = view.findViewById(R.id.IPTextInputEditText);
-        ipInputEditText.setFocusableInTouchMode(true);
-        ipInputEditText.setFocusable(true);
-        ipInputEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (!hasFocus) {
-                    tcpSettingsViewModel.getIpAddress().setValue(Objects.requireNonNull(ipInputEditText.getText()).toString());
-                }
-            }
-        });
-        // IP text input filtering
+
         if (ipInputEditText != null) {
+            // IP text input filtering
             InputFilter[] filters = new InputFilter[1];
             filters[0] = (source, start, end, dest, dstart, dend) -> {
                 if (end > start) {
