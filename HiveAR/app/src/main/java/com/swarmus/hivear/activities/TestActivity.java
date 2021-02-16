@@ -78,6 +78,7 @@ public class TestActivity extends AppCompatActivity {
         tcpSettingsFrag = new TcpSettingsFragment();
         uartSettingsFrag = new UartSettingsFragment();
 
+        // TODO CODE FOR ConnectionViewFragment
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
         ft.add(R.id.communicationContainer, tcpSettingsFrag);

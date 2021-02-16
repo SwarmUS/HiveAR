@@ -12,4 +12,7 @@
     <string name="disconnect">Disconnect</string>
     <string name="connect">Connect</string>
     <string name="connectionstatus">connectionStatus</string>
+    <string name="connection">Connection</string>
+    <string name="ar">AR</string>
+    <string name="swarm_summary">Swarm Summary</string>
 </resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/connectionViewFragment"
+        android:title="@string/connection"
+        android:icon="@drawable/ic_action_name"/>
+    <item android:id="@+id/swarmSummaryViewFragment"
+        android:title="@string/swarm_summary"
+        android:icon="@android:drawable/ic_menu_info_details" />
+    <item android:id="@+id/ARViewFragment"
+        android:title="@string/ar"
+        android:icon="@android:drawable/ic_menu_camera"/>
+</menu>
