@@ -12,11 +12,13 @@ import android.util.Log;
 
 import com.felhr.usbserial.UsbSerialDevice;
 import com.felhr.usbserial.UsbSerialInterface;
+import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.enums.ConnectionStatus;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.Arrays;
@@ -45,6 +47,8 @@ public class SerialDevice extends CommunicationDevice {
     private PipedInputStream pipedInputStream;
     private PipedOutputStream pipedOutputStream;
 
+    private ByteArrayOutputStream uartOutputStream;
+
     private static final String ACTION_USE_PERMISSION = "com.swarmus.hivear.USB_PERMISSION";
     private static final String DEVICE_INFO_LOG_TAG = "DeviceInformation";
 
@@ -54,19 +58,13 @@ public class SerialDevice extends CommunicationDevice {
     private static final int FIXED_HEADER_SIZE = 6;
 
     @Override
-    public void init(Context context) {
+    public void init(Context context, ConnectionCallback connectionCallback) {
         this.context = context;
+        this.connectionCallback = connectionCallback;
         if (context != null)
         {
             rxByteStream = new ByteArrayOutputStream();
-
-            pipedInputStream = new PipedInputStream();
-            try {
-                pipedOutputStream = new PipedOutputStream(pipedInputStream);
-            } catch (IOException e) {
-                Log.e(DEVICE_INFO_LOG_TAG, "Could open pipe for UART data stream");
-                e.printStackTrace();
-            }
+            uartOutputStream = new ByteArrayOutputStream();
 
             UsbReceiver usbReceiver = new UsbReceiver();
             IntentFilter usbDeviceFilter = new IntentFilter();
@@ -85,6 +83,7 @@ public class SerialDevice extends CommunicationDevice {
 
     @Override
     public void establishConnection() {
+        endConnection();
         broadCastConnectionStatus(ConnectionStatus.connecting);
         HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
         device = deviceList.get(selectedDeviceName);
@@ -94,7 +93,8 @@ public class SerialDevice extends CommunicationDevice {
     @Override
     public void endConnection() {
         stopListenToSerial();
-        broadCastConnectionStatus(ConnectionStatus.notConnected);
+        setStreamsActive(false);
+        connectionCallback.onDisconnect();
     }
 
     @Override
@@ -117,6 +117,20 @@ public class SerialDevice extends CommunicationDevice {
     public void sendData(String data) {
         byte[] msg = data.getBytes();
         sendData(msg);
+    }
+
+    @Override
+    public void sendData(MessageOuterClass.Message protoMessage) {
+        if (protoMessage != null && protoMessage.isInitialized())
+        {
+            try {
+                protoMessage.writeDelimitedTo(uartOutputStream);
+                sendData(uartOutputStream.toByteArray());
+                uartOutputStream = new ByteArrayOutputStream();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -173,7 +187,7 @@ public class SerialDevice extends CommunicationDevice {
                 Log.d("Serial", "Device doesn't have permissions");
             }
         }
-        broadCastConnectionStatus(ConnectionStatus.notConnected);
+        connectionCallback.onConnectError();
     }
 
     private void stopListenToSerial() {
@@ -187,16 +201,52 @@ public class SerialDevice extends CommunicationDevice {
         serial = UsbSerialDevice.createUsbSerialDevice(device, connection);
 
         if (serial != null && serial.open()) {
-            broadCastConnectionStatus(ConnectionStatus.connected);
             serial.setBaudRate(115200);
             serial.setDataBits(UsbSerialInterface.DATA_BITS_8);
             serial.setStopBits(UsbSerialInterface.STOP_BITS_1);
             serial.setParity(UsbSerialInterface.PARITY_NONE);
             serial.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
             serial.read(usbReadCallback);
+            setStreamsActive(true);
+            connectionCallback.onConnect();
         }
         else {
-            broadCastConnectionStatus(ConnectionStatus.notConnected);
+            setStreamsActive(false);
+            connectionCallback.onConnectError();
+        }
+    }
+
+    private void setStreamsActive(boolean active)
+    {
+        if (active)
+        {
+            pipedInputStream = new PipedInputStream();
+            try {
+                pipedOutputStream = new PipedOutputStream(pipedInputStream);
+            } catch (IOException e) {
+                Log.e(DEVICE_INFO_LOG_TAG, "Could not open pipe for UART data stream");
+                e.printStackTrace();
+            }
+        }
+        else {
+            if (pipedOutputStream != null)
+            {
+                try {
+                    pipedOutputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                pipedOutputStream = null;
+            }
+            if (pipedInputStream != null)
+            {
+                try {
+                    pipedInputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                pipedInputStream = null;
+            }
         }
     }
 
@@ -220,11 +270,12 @@ public class SerialDevice extends CommunicationDevice {
                 int calculatedCRC = bytesToInt32(CalculateCRC32(packet));
 
                 // TODO: Send Ack/Nack depending on CRC
-                if (calculatedCRC == rxCrc) {
+                if (calculatedCRC == rxCrc && pipedOutputStream != null) {
                     Log.d(DEVICE_INFO_LOG_TAG, "CRC EQUAL");
                     pipedOutputStream.write(packet);
                 } else {
                     Log.d(DEVICE_INFO_LOG_TAG, "CRC NOT EQUAL");
+                    Log.d(DEVICE_INFO_LOG_TAG, "Received: " + packet.toString());
                 }
 
                 // Reset internal buffer and copy bytes that weren't part of the current packet into it

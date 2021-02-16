@@ -2,6 +2,7 @@ package com.swarmus.hivear.models;
 
 import android.util.Log;
 
+import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.enums.ConnectionStatus;
 
 import java.io.IOException;
@@ -13,15 +14,13 @@ import java.net.Socket;
 public class TCPDevice extends CommunicationDevice {
     private String serverIP;
     private int serverPort;
-    private ClientCallback messageListener;
     private Socket socket;
 
     private static final String TCP_INFO_LOG_TAG = "TCP";
 
-    public TCPDevice(String ip, int port, ClientCallback messageListener) {
+    public TCPDevice(String ip, int port) {
         this.serverIP = ip;
         this.serverPort = port;
-        this.messageListener = messageListener;
     }
 
     @Override
@@ -43,16 +42,16 @@ public class TCPDevice extends CommunicationDevice {
                 socket = new Socket(serverAddr, serverPort);
 
                 if (socket != null && socket.isConnected()) {
-                    messageListener.onConnect();
+                    connectionCallback.onConnect();
                 }
                 else {
-                    messageListener.onConnectError();
+                    connectionCallback.onConnectError();
                     if (socket!=null) { socket.close(); }
                 }
 
             } catch (Exception e) {
                 Log.e("TCP", "C: Error", e);
-                messageListener.onConnectError();
+                connectionCallback.onConnectError();
             }
         }
     }
@@ -66,11 +65,12 @@ public class TCPDevice extends CommunicationDevice {
                 e.printStackTrace();
             }
         }
-        messageListener.onDisconnect();
+        connectionCallback.onDisconnect();
     }
 
     @Override
     public void sendData(byte[] data) {
+        // TODO Verify concurrency
         OutputStream outputStream = getSocketOutputStream();
         if (outputStream != null) {
             Thread thread = new Thread(() -> {
@@ -91,6 +91,24 @@ public class TCPDevice extends CommunicationDevice {
     }
 
     @Override
+    public void sendData(MessageOuterClass.Message protoMessage) {
+        // TODO: isRunning variable to not write at the same time
+        OutputStream outputStream = getSocketOutputStream();
+        if (outputStream != null && protoMessage.isInitialized())
+        {
+            Thread thread = new Thread(() -> {
+                try  {
+                    protoMessage.writeDelimitedTo(outputStream);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
+            thread.start();
+        }
+    }
+
+    @Override
     public InputStream getDataStream()
     {
         if (socket != null && socket.isConnected())
@@ -101,7 +119,7 @@ public class TCPDevice extends CommunicationDevice {
                 e.printStackTrace();
             }
         }
-        broadCastConnectionStatus(ConnectionStatus.notConnected);
+        connectionCallback.onConnectError();
         return null;
     }
     public void setServerIP(String ip) {this.serverIP=ip;}
@@ -117,13 +135,7 @@ public class TCPDevice extends CommunicationDevice {
                 e.printStackTrace();
             }
         }
-        broadCastConnectionStatus(ConnectionStatus.notConnected);
+        connectionCallback.onConnectError();
         return null;
-    }
-
-    public interface ClientCallback {
-        void onConnect();
-        void onDisconnect();
-        void onConnectError();
     }
 }

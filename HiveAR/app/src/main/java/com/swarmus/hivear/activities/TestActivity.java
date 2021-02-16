@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Rect;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -19,10 +20,16 @@ import androidx.lifecycle.ViewModelProvider;
 import android.text.Layout;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.felhr.usbserial.UsbSerialInterface;
+import com.swarmus.hivear.MessageOuterClass;
+import com.swarmus.hivear.commands.MoveByCommand;
 import com.swarmus.hivear.enums.ConnectionStatus;
 import com.swarmus.hivear.models.CommunicationDevice;
 import com.swarmus.hivear.R;
@@ -52,6 +59,14 @@ public class TestActivity extends AppCompatActivity {
     private UartSettingsFragment uartSettingsFrag;
 
     private SerialSettingsViewModel serialSettingsViewModel;
+
+    private MoveByCommand upCommand;
+    private MoveByCommand downCommand;
+    private MoveByCommand leftCommand;
+    private MoveByCommand rightCommand;
+    private MoveByCommand stopCommand;
+
+    private MessageOuterClass.Message receivedMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,10 +126,10 @@ public class TestActivity extends AppCompatActivity {
         registerReceiver(serialDeviceChangedReceiver, filter);
 
         currentCommunicationDevice = serialDevice = new SerialDevice();
-        serialDevice.init(this);
+        serialDevice.init(this, connectionCallback);
 
-        tcpDevice = new TCPDevice(DEFAULT_IP_ADDRESS, DEFAULT_PORT, tcpCallBack);
-        tcpDevice.init(this);
+        tcpDevice = new TCPDevice(DEFAULT_IP_ADDRESS, DEFAULT_PORT);
+        tcpDevice.init(this, connectionCallback);
 
         TcpSettingsViewModel tcpSettingsViewModel = new ViewModelProvider(this).get(TcpSettingsViewModel.class);
         final Observer<String> ipAddressObserver = s -> ((TCPDevice)tcpDevice).setServerIP(s);
@@ -123,20 +138,40 @@ public class TestActivity extends AppCompatActivity {
         final Observer<Integer> portObserver = p -> ((TCPDevice)tcpDevice).setServerPort(p);
         tcpSettingsViewModel.getPort().observe(this, portObserver);
 
+        upCommand = new MoveByCommand(1,0);
         findViewById(R.id.upButton).setOnClickListener(view -> {
-            if (currentCommunicationDevice != null) { currentCommunicationDevice.sendData("UP");}
+            if (currentCommunicationDevice != null)
+            {
+                currentCommunicationDevice.sendData(upCommand.getCommand());
+            }
         });
+        downCommand = new MoveByCommand(-1,0);
         findViewById(R.id.downButton).setOnClickListener(view -> {
-            if (currentCommunicationDevice != null) { currentCommunicationDevice.sendData("DOWN");}
+            if (currentCommunicationDevice != null)
+            {
+                currentCommunicationDevice.sendData(downCommand.getCommand());
+            }
         });
+        leftCommand = new MoveByCommand(0,1);
         findViewById(R.id.leftButton).setOnClickListener(view -> {
-            if (currentCommunicationDevice != null) { currentCommunicationDevice.sendData("LEFT");}
+            if (currentCommunicationDevice != null)
+            {
+                currentCommunicationDevice.sendData(leftCommand.getCommand());
+            }
         });
+        rightCommand = new MoveByCommand(0,-1);
         findViewById(R.id.rightButton).setOnClickListener(view -> {
-            if (currentCommunicationDevice != null) { currentCommunicationDevice.sendData("RIGHT");}
+            if (currentCommunicationDevice != null)
+            {
+                currentCommunicationDevice.sendData(rightCommand.getCommand());
+            }
         });
+        stopCommand = new MoveByCommand(0,0);
         findViewById(R.id.stopButton).setOnClickListener(view -> {
-            if (currentCommunicationDevice != null) { currentCommunicationDevice.sendData("STOP");}
+            if (currentCommunicationDevice != null)
+            {
+                currentCommunicationDevice.sendData(stopCommand.getCommand());
+            }
         });
 
         switchCommunication(uartSettingsFrag);
@@ -166,22 +201,90 @@ public class TestActivity extends AppCompatActivity {
         dataReceived.setText("");
     }
 
-    final TCPDevice.ClientCallback tcpCallBack = new TCPDevice.ClientCallback() {
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if(ev.getAction() == MotionEvent.ACTION_UP) {
+            final View view = getCurrentFocus();
+
+            if(view != null) {
+                final boolean consumed = super.dispatchTouchEvent(ev);
+
+                final View viewTmp = getCurrentFocus();
+                final View viewNew = viewTmp != null ? viewTmp : view;
+
+                if(viewNew.equals(view)) {
+                    final Rect rect = new Rect();
+                    final int[] coordinates = new int[2];
+
+                    view.getLocationOnScreen(coordinates);
+
+                    rect.set(coordinates[0], coordinates[1], coordinates[0] + view.getWidth(), coordinates[1] + view.getHeight());
+
+                    final int x = (int) ev.getX();
+                    final int y = (int) ev.getY();
+
+                    if(rect.contains(x, y)) {
+                        return consumed;
+                    }
+                }
+                else if(viewNew instanceof EditText) {
+                    return consumed;
+                }
+
+                final InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputMethodManager.hideSoftInputFromWindow(viewNew.getWindowToken(), 0);
+                viewNew.clearFocus();
+                return consumed;
+            }
+        }
+
+        return super.dispatchTouchEvent(ev);
+    }
+
+    final CommunicationDevice.ConnectionCallback connectionCallback = new CommunicationDevice.ConnectionCallback() {
         @Override
         public void onConnect() {
-            Log.d(TAG, "New TCP Connection");
-            tcpDevice.broadCastConnectionStatus(ConnectionStatus.connected);
+            Log.d(TAG, "New Connection");
+            currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.connected);
+            InputStream inputStream = currentCommunicationDevice.getDataStream();
+            Thread thread = new Thread(() -> {
+                while (inputStream != null) {
+                    try {
+                        receivedMessage = MessageOuterClass.Message.parseDelimitedFrom(inputStream);
+                        logProtoMessage(receivedMessage);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return;
+                    }
+                }
+            });
+            thread.start();
+        }
+
+        private void logProtoMessage(MessageOuterClass.Message msg)
+        {
+            if (msg != null && dataReceived != null)
+            {
+                appendTextAndScroll(dataReceived, "\n");
+                appendTextAndScroll(dataReceived, "Destination_id: " + msg.getDestinationId() + "\n");
+                appendTextAndScroll(dataReceived, "Source_id: " + msg.getSourceId() + "\n");
+                if (msg.hasRequest()) {appendTextAndScroll(dataReceived, "Request: " + msg.getRequest() + "\n");}
+                else if (msg.hasResponse()) {appendTextAndScroll(dataReceived, "Response: " + msg.getResponse() + "\n");}
+                appendTextAndScroll(dataReceived, "\n");
+            }
         }
 
         @Override
         public void onDisconnect() {
-            Log.d(TAG, "End of TCP Connection");
-            tcpDevice.broadCastConnectionStatus(ConnectionStatus.notConnected);
+            Log.d(TAG, "End of Connection");
+            currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.notConnected);
+            if (receivedMessage != null) {receivedMessage.toBuilder().clear();}
         }
 
         @Override
         public void onConnectError() {
-            tcpDevice.broadCastConnectionStatus(ConnectionStatus.notConnected);
+            currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.notConnected);
+            if (receivedMessage != null) {receivedMessage.toBuilder().clear();}
         }
     };
 
