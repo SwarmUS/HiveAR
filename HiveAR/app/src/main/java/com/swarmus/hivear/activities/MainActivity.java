@@ -31,6 +31,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
@@ -44,8 +45,8 @@ public class MainActivity extends AppCompatActivity {
     BottomNavigationView bottomNavigationView;
     NavHostFragment navHostFragment;
 
-    private SerialDevice serialDevice;
-    private TCPDevice tcpDevice;
+    private CommunicationDevice serialDevice;
+    private CommunicationDevice tcpDevice;
     private CommunicationDevice currentCommunicationDevice;
 
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -152,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
         setUpSerialCommunication();
 
         currentCommunicationDevice = serialDevice;
+        currentCommunicationDevice.setActive(true);
     }
 
     private void setUpTCPCommunication() {
@@ -159,22 +161,24 @@ public class MainActivity extends AppCompatActivity {
         tcpDevice.init(this, connectionCallback);
 
         TcpSettingsViewModel tcpSettingsViewModel = new ViewModelProvider(this).get(TcpSettingsViewModel.class);
-        final Observer<String> ipAddressObserver = s -> tcpDevice.setServerIP(s);
+        final Observer<String> ipAddressObserver = s -> ((TCPDevice)tcpDevice).setServerIP(s);
         tcpSettingsViewModel.getIpAddress().observe(this, ipAddressObserver);
 
-        final Observer<Integer> portObserver = p -> tcpDevice.setServerPort(p);
+        final Observer<Integer> portObserver = p -> ((TCPDevice)tcpDevice).setServerPort(p);
         tcpSettingsViewModel.getPort().observe(this, portObserver);
     }
 
     private void setUpSerialCommunication() {
         serialDevice = new SerialDevice();
-        serialDevice.init(this, connectionCallback);
 
         IntentFilter filter = new IntentFilter(SerialDevice.ACTION_SERIAL_DEVICE_CHANGED);
         registerReceiver(serialDeviceChangedReceiver, filter);
 
         SerialSettingsViewModel serialSettingsViewModel = new ViewModelProvider(this).get(SerialSettingsViewModel.class);
-        serialSettingsViewModel.getSelectedDevice().observe(this, deviceName -> serialDevice.setSelectedUsbDeviceName(deviceName));
+        serialSettingsViewModel.getSelectedDevice().observe(this, deviceName -> ((SerialDevice)serialDevice).setSelectedUsbDeviceName(deviceName));
+
+        // Must be after receiver
+        serialDevice.init(this, connectionCallback);
     }
 
     private final BroadcastReceiver serialDeviceChangedReceiver = new BroadcastReceiver() {
@@ -189,7 +193,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateSerialDevices(HashMap<String, String> deviceMap) {
         SerialSettingsViewModel serialSettingsViewModel = new ViewModelProvider(this).get(SerialSettingsViewModel.class);
-        serialSettingsViewModel.getDevices().setValue(deviceMap);
+        MutableLiveData<HashMap<String, String>> devices = serialSettingsViewModel.getDevices();
+        devices.setValue(deviceMap);
+        if (!devices.getValue().isEmpty()) {
+            serialSettingsViewModel.getSelectedDevice().setValue(devices.getValue().values().iterator().next());
+        }
     }
 
     private final BroadcastReceiver deviceConnectionStatusReceiver = new BroadcastReceiver() {

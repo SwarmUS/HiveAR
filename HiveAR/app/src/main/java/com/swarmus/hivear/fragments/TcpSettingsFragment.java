@@ -1,12 +1,12 @@
 package com.swarmus.hivear.fragments;
 
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.InputFilter;
-import android.view.KeyEvent;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -62,24 +62,32 @@ public class TcpSettingsFragment extends Fragment {
 
             ipInputEditText.setText(ip);
 
-            ipInputEditText.setFocusableInTouchMode(true);
-            ipInputEditText.setFocusable(true);
-            ipInputEditText.setOnFocusChangeListener((v, hasFocus) -> {
-                if (!hasFocus) {
+            ipInputEditText.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+                @Override
+                public void afterTextChanged(Editable editable) {
                     tcpSettingsViewModel.getIpAddress().setValue(Objects.requireNonNull(ipInputEditText.getText()).toString());
-                    ipInputEditText.clearFocus();
                 }
             });
         }
 
         TextInputEditText portInputEditText = view.findViewById(R.id.PortTextInputEditText);
         if (portInputEditText!=null){
-            portInputEditText.setFocusableInTouchMode(true);
-            portInputEditText.setFocusable(true);
-            portInputEditText.setOnFocusChangeListener((v, hasFocus) -> {
-                if (!hasFocus) {
+            portInputEditText.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+                @Override
+                public void afterTextChanged(Editable editable) {
                     tcpSettingsViewModel.getPort().setValue(Integer.valueOf(Objects.requireNonNull(portInputEditText.getText()).toString()));
-                    portInputEditText.clearFocus();
                 }
             });
             portInputEditText.setText(Integer.toString(port));
