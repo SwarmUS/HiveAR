@@ -8,7 +8,7 @@
             <LayoutPositions>
               <option name="myPositions">
                 <map>
-                  <entry key="ARViewFragment2">
+                  <entry key="ARViewFragment">
                     <value>
                       <LayoutPositions>
                         <option name="myPosition">
@@ -20,7 +20,7 @@
                       </LayoutPositions>
                     </value>
                   </entry>
-                  <entry key="connectionViewFragment2">
+                  <entry key="connectionViewFragment">
                     <value>
                       <LayoutPositions>
                         <option name="myPosition">
@@ -32,7 +32,7 @@
                       </LayoutPositions>
                     </value>
                   </entry>
-                  <entry key="robotDetailsViewFragment2">
+                  <entry key="robotDetailsViewFragment">
                     <value>
                       <LayoutPositions>
                         <option name="myPosition">
@@ -43,7 +43,7 @@
                         </option>
                         <option name="myPositions">
                           <map>
-                            <entry key="action_robotDetailsViewFragment2_to_swarmSummaryViewFragment2">
+                            <entry key="action_robotDetailsViewFragment_to_swarmSummaryViewFragment">
                               <value>
                                 <LayoutPositions />
                               </value>
@@ -53,7 +53,7 @@
                       </LayoutPositions>
                     </value>
                   </entry>
-                  <entry key="swarmSummaryViewFragment2">
+                  <entry key="swarmSummaryViewFragment">
                     <value>
                       <LayoutPositions>
                         <option name="myPosition">
@@ -64,7 +64,7 @@
                         </option>
                         <option name="myPositions">
                           <map>
-                            <entry key="action_swarmSummaryViewFragment2_to_robotDetailsViewFragment2">
+                            <entry key="action_swarmSummaryViewFragment_to_robotDetailsViewFragment">
                               <value>
                                 <LayoutPositions />
                               </value>

@@ -18,8 +18,15 @@ import com.swarmus.hivear.models.TcpSettingsViewModel;
 import java.util.Objects;
 
 public class TcpSettingsFragment extends Fragment {
+    private String ip;
+    private int port;
 
     private TcpSettingsViewModel tcpSettingsViewModel;
+
+    public TcpSettingsFragment(String ip, int port) {
+        this.ip = ip;
+        this.port = port;
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -53,15 +60,14 @@ public class TcpSettingsFragment extends Fragment {
             };
             ipInputEditText.setFilters(filters);
 
+            ipInputEditText.setText(ip);
+
             ipInputEditText.setFocusableInTouchMode(true);
             ipInputEditText.setFocusable(true);
-            ipInputEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-                @Override
-                public void onFocusChange(View v, boolean hasFocus) {
-                    if (!hasFocus) {
-                        tcpSettingsViewModel.getIpAddress().setValue(Objects.requireNonNull(ipInputEditText.getText()).toString());
-                        ipInputEditText.clearFocus();
-                    }
+            ipInputEditText.setOnFocusChangeListener((v, hasFocus) -> {
+                if (!hasFocus) {
+                    tcpSettingsViewModel.getIpAddress().setValue(Objects.requireNonNull(ipInputEditText.getText()).toString());
+                    ipInputEditText.clearFocus();
                 }
             });
         }
@@ -70,15 +76,13 @@ public class TcpSettingsFragment extends Fragment {
         if (portInputEditText!=null){
             portInputEditText.setFocusableInTouchMode(true);
             portInputEditText.setFocusable(true);
-            portInputEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-                @Override
-                public void onFocusChange(View v, boolean hasFocus) {
-                    if (!hasFocus) {
-                        tcpSettingsViewModel.getPort().setValue(Integer.valueOf(Objects.requireNonNull(portInputEditText.getText()).toString()));
-                        portInputEditText.clearFocus();
-                    }
+            portInputEditText.setOnFocusChangeListener((v, hasFocus) -> {
+                if (!hasFocus) {
+                    tcpSettingsViewModel.getPort().setValue(Integer.valueOf(Objects.requireNonNull(portInputEditText.getText()).toString()));
+                    portInputEditText.clearFocus();
                 }
             });
+            portInputEditText.setText(Integer.toString(port));
         }
 
         return view;
