@@ -87,7 +87,12 @@ public class TcpSettingsFragment extends Fragment {
 
                 @Override
                 public void afterTextChanged(Editable editable) {
-                    tcpSettingsViewModel.getPort().setValue(Integer.valueOf(Objects.requireNonNull(portInputEditText.getText()).toString()));
+                    String portInputValue = portInputEditText.getText().toString();
+                    tcpSettingsViewModel.getPort().setValue(
+                            portInputValue.isEmpty() ?
+                                    0 :
+                                    Integer.valueOf(portInputValue)
+                    );
                 }
             });
             portInputEditText.setText(Integer.toString(port));
