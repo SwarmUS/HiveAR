@@ -133,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
 
     public CommunicationDevice getCurrentCommunicationDevice() {return currentCommunicationDevice;}
 
-    public CommunicationDevice switchCurrentCommunicationDevice() {
+    public void switchCurrentCommunicationDevice() {
         currentCommunicationDevice.endConnection();
         currentCommunicationDevice.setActive(false);
         if (currentCommunicationDevice instanceof SerialDevice) {
@@ -142,7 +142,6 @@ public class MainActivity extends AppCompatActivity {
             currentCommunicationDevice = serialDevice;
         }
         currentCommunicationDevice.setActive(true);
-        return currentCommunicationDevice;
     }
 
     public void sendCommand(@NonNull GenericCommand command) {
@@ -408,7 +407,6 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Camera not available. Try restarting the app." + e, Toast.LENGTH_LONG)
                     .show();
             session = null;
-            return;
         }
     }
 
@@ -439,7 +437,6 @@ public class MainActivity extends AppCompatActivity {
         // ARCore requires camera permission to operate.
         if (!CameraPermissionHelper.hasCameraPermission(this)) {
             CameraPermissionHelper.requestCameraPermission(this);
-            return;
         }
     }
 
@@ -460,12 +457,7 @@ public class MainActivity extends AppCompatActivity {
         ArCoreApk.Availability availability = ArCoreApk.getInstance().checkAvailability(this);
         if (availability.isTransient()) {
             // Continue to query availability at 5Hz while compatibility is checked in the background.
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    maybeEnableAr();
-                }
-            }, 200);
+            new Handler().postDelayed(() -> maybeEnableAr(), 200);
         }
         if (availability.isSupported()) {
             // TODO show AR tab
