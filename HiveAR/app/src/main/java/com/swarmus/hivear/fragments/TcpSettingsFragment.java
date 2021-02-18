@@ -18,8 +18,8 @@ import com.swarmus.hivear.models.TcpSettingsViewModel;
 import java.util.Objects;
 
 public class TcpSettingsFragment extends Fragment {
-    private String ip;
-    private int port;
+    private final String ip;
+    private final int port;
 
     private TcpSettingsViewModel tcpSettingsViewModel;
 
@@ -91,7 +91,7 @@ public class TcpSettingsFragment extends Fragment {
                     tcpSettingsViewModel.getPort().setValue(
                             portInputValue.isEmpty() ?
                                     0 :
-                                    Integer.valueOf(portInputValue)
+                                    Integer.parseInt(portInputValue)
                     );
                 }
             });
