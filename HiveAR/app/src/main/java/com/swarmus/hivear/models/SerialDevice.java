@@ -299,22 +299,20 @@ public class SerialDevice extends CommunicationDevice {
 
     private void logConnectedDevices() {
         HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
-        device = deviceList.get(selectedDeviceName);
-        listenToSerial();
         Iterator<UsbDevice> deviceIterator = deviceList.values().iterator();
         String i = "";
         while(deviceIterator.hasNext()) {
-            device = deviceIterator.next();
-            if (!manager.hasPermission(device)) {
-                manager.requestPermission(device, permissionIntent);
+            UsbDevice iterDevice = deviceIterator.next();
+            if (!manager.hasPermission(iterDevice)) {
+                manager.requestPermission(iterDevice, permissionIntent);
             }
-            i += "\n" + "DeviceID: " + device.getDeviceId() + "\n"
-                    + "DeviceName: " + device.getDeviceName() + "\n"
-                    + "DeviceClass: " + device.getDeviceClass() + " - "
-                    + "DeviceSubClass: " + device.getDeviceSubclass() + "\n"
-                    + "VendorID: " + device.getVendorId() + "\n"
-                    + "ProductID: " + device.getProductId() + "\n"
-                    + "Protocol: " + device.getDeviceProtocol() + "\n";
+            i += "\n" + "DeviceID: " + iterDevice.getDeviceId() + "\n"
+                    + "DeviceName: " + iterDevice.getDeviceName() + "\n"
+                    + "DeviceClass: " + iterDevice.getDeviceClass() + " - "
+                    + "DeviceSubClass: " + iterDevice.getDeviceSubclass() + "\n"
+                    + "VendorID: " + iterDevice.getVendorId() + "\n"
+                    + "ProductID: " + iterDevice.getProductId() + "\n"
+                    + "Protocol: " + iterDevice.getDeviceProtocol() + "\n";
         }
         Log.d(DEVICE_INFO_LOG_TAG, i);
     }

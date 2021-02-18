@@ -29,6 +29,10 @@ public class UartSettingsFragment extends Fragment {
             ArrayAdapter<String> adapter =  new ArrayAdapter<>(requireActivity().getBaseContext(), android.R.layout.simple_spinner_dropdown_item, devices.keySet().toArray(new String[0]));
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             dropdown.setAdapter(adapter);
+            String selectedDevice = serialSettingsViewModel.getSelectedDevice().getValue();
+            if (selectedDevice != null) {
+                dropdown.setSelection(adapter.getPosition(selectedDevice));
+            }
         });
 
         dropdown.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {

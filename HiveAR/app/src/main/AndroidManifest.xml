@@ -14,10 +14,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HiveAR"
         tools:ignore="AllowBackup">
-        <activity
-            android:name=".activities.TestActivity"
-            android:label="@string/title_activity_test">
-        </activity>
 
         <activity
             android:name=".activities.MainActivity"
@@ -28,10 +24,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".activities.ARActivity"
-            android:parentActivityName=".activities.MainActivity"
-            android:theme="@style/Theme.HiveAR.NoActionBar" />
     </application>
 
 </manifest>

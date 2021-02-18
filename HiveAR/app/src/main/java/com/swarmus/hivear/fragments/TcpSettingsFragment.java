@@ -1,12 +1,12 @@
 package com.swarmus.hivear.fragments;
 
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.InputFilter;
-import android.view.KeyEvent;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -18,8 +18,15 @@ import com.swarmus.hivear.models.TcpSettingsViewModel;
 import java.util.Objects;
 
 public class TcpSettingsFragment extends Fragment {
+    private String ip;
+    private int port;
 
     private TcpSettingsViewModel tcpSettingsViewModel;
+
+    public TcpSettingsFragment(String ip, int port) {
+        this.ip = ip;
+        this.port = port;
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -53,32 +60,42 @@ public class TcpSettingsFragment extends Fragment {
             };
             ipInputEditText.setFilters(filters);
 
-            ipInputEditText.setFocusableInTouchMode(true);
-            ipInputEditText.setFocusable(true);
-            ipInputEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            ipInputEditText.setText(ip);
+
+            ipInputEditText.addTextChangedListener(new TextWatcher() {
                 @Override
-                public void onFocusChange(View v, boolean hasFocus) {
-                    if (!hasFocus) {
-                        tcpSettingsViewModel.getIpAddress().setValue(Objects.requireNonNull(ipInputEditText.getText()).toString());
-                        ipInputEditText.clearFocus();
-                    }
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+                @Override
+                public void afterTextChanged(Editable editable) {
+                    tcpSettingsViewModel.getIpAddress().setValue(Objects.requireNonNull(ipInputEditText.getText()).toString());
                 }
             });
         }
 
         TextInputEditText portInputEditText = view.findViewById(R.id.PortTextInputEditText);
         if (portInputEditText!=null){
-            portInputEditText.setFocusableInTouchMode(true);
-            portInputEditText.setFocusable(true);
-            portInputEditText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            portInputEditText.addTextChangedListener(new TextWatcher() {
                 @Override
-                public void onFocusChange(View v, boolean hasFocus) {
-                    if (!hasFocus) {
-                        tcpSettingsViewModel.getPort().setValue(Integer.valueOf(Objects.requireNonNull(portInputEditText.getText()).toString()));
-                        portInputEditText.clearFocus();
-                    }
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
+
+                @Override
+                public void afterTextChanged(Editable editable) {
+                    String portInputValue = portInputEditText.getText().toString();
+                    tcpSettingsViewModel.getPort().setValue(
+                            portInputValue.isEmpty() ?
+                                    0 :
+                                    Integer.valueOf(portInputValue)
+                    );
                 }
             });
+            portInputEditText.setText(Integer.toString(port));
         }
 
         return view;
