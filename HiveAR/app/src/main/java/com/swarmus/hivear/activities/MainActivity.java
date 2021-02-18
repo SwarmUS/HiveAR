@@ -29,7 +29,6 @@ import com.swarmus.hivear.utils.ProtoMsgStorer;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -55,8 +54,8 @@ public class MainActivity extends AppCompatActivity {
     private Queue<MessageOuterClass.Message> receivedMessages;
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private static final String DEFAULT_IP_ADDRESS = "0.0.0.0";
-    private static final int DEFAULT_PORT = 3000;
+    private static final String DEFAULT_IP_ADDRESS = "192.168.0.";
+    private static final int DEFAULT_PORT = 12345;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
