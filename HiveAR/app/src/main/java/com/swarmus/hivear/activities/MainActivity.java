@@ -6,13 +6,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.text.Layout;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.TextView;
 
 import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -20,17 +18,17 @@ import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.commands.GenericCommand;
 import com.swarmus.hivear.enums.ConnectionStatus;
-import com.swarmus.hivear.fragments.ConnectionViewFragment;
 import com.swarmus.hivear.models.CommunicationDevice;
+import com.swarmus.hivear.models.ProtoMsgViewModel;
 import com.swarmus.hivear.models.SerialDevice;
 import com.swarmus.hivear.models.SerialSettingsViewModel;
 import com.swarmus.hivear.models.TCPDevice;
 import com.swarmus.hivear.models.TcpSettingsViewModel;
+import com.swarmus.hivear.utils.ProtoMsgStorer;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
@@ -40,6 +38,8 @@ import androidx.navigation.ui.NavigationUI;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class MainActivity extends AppCompatActivity {
     BottomNavigationView bottomNavigationView;
@@ -49,9 +49,13 @@ public class MainActivity extends AppCompatActivity {
     private CommunicationDevice tcpDevice;
     private CommunicationDevice currentCommunicationDevice;
 
+    private static final String BROADCAST_PROTO_MSG_RECEIVED = "Proto Message Received";
+    private ProtoMsgStorer protoMsgStorer;
+    private Queue<MessageOuterClass.Message> receivedMessages;
+
     private static final String TAG = MainActivity.class.getSimpleName();
-    private static final String DEFAULT_IP_ADDRESS = "0.0.0.0";
-    private static final int DEFAULT_PORT = 3000;
+    private static final String DEFAULT_IP_ADDRESS = "192.168.0.";
+    private static final int DEFAULT_PORT = 12345;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -146,6 +150,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setUpCommmunication() {
+        receivedMessages = new LinkedList<MessageOuterClass.Message>();
+        protoMsgStorer = new ProtoMsgStorer(6);
+        ProtoMsgViewModel protoMsgViewModel = new ViewModelProvider(this).get(ProtoMsgViewModel.class);
+        protoMsgViewModel.getProtoMessages().observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(String s) {
+                Log.i(TAG, protoMsgViewModel.getProtoMessages().getValue());
+            }
+        });
+
+        IntentFilter filterProtoMsgReceived = new IntentFilter(BROADCAST_PROTO_MSG_RECEIVED);
+        registerReceiver(protoMsgReadReceiver, filterProtoMsgReceived);
+
         IntentFilter filterConnectionStatus = new IntentFilter(CommunicationDevice.CONNECTION_STATUS_RESULT);
         registerReceiver(deviceConnectionStatusReceiver, filterConnectionStatus);
 
@@ -217,11 +234,14 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "New Connection");
             currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.connected);
             InputStream inputStream = currentCommunicationDevice.getDataStream();
+            Intent msgReceivedIntent = new Intent();
+            msgReceivedIntent.setAction(BROADCAST_PROTO_MSG_RECEIVED);
             Thread thread = new Thread(() -> {
                 while (inputStream != null) {
                     try {
-                        MessageOuterClass.Message receivedMessage = MessageOuterClass.Message.parseDelimitedFrom(inputStream);
-                        logProtoMessage(receivedMessage);
+                        MessageOuterClass.Message msg = MessageOuterClass.Message.parseDelimitedFrom(inputStream);
+                        receivedMessages.add(msg);
+                        sendBroadcast(msgReceivedIntent);
                     } catch (IOException e) {
                         e.printStackTrace();
                         return;
@@ -229,27 +249,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             thread.start();
-        }
-
-        private void logProtoMessage(MessageOuterClass.Message msg)
-        {
-            Fragment currentFragment = navHostFragment.getChildFragmentManager().getFragments().get(0);
-            if (currentFragment instanceof ConnectionViewFragment && msg != null) {
-                TextView dataReceived = findViewById(R.id.dataReceived);
-                appendTextAndScroll(dataReceived, "\n");
-                appendTextAndScroll(dataReceived, "Destination_id: " + msg.getDestinationId() + "\n");
-                appendTextAndScroll(dataReceived, "Source_id: " + msg.getSourceId() + "\n");
-                if (msg.hasRequest()) {appendTextAndScroll(dataReceived, "Request: " + msg.getRequest() + "\n");}
-                else if (msg.hasResponse()) {appendTextAndScroll(dataReceived, "Response: " + msg.getResponse() + "\n");}
-                appendTextAndScroll(dataReceived, "\n");
-            }
-            else if (msg != null){
-                Log.d(TAG, "Proto Message:");
-                Log.d(TAG, "DestinationId: " + msg.getDestinationId());
-                Log.d(TAG, "SourceID: " + msg.getSourceId());
-                if (msg.hasRequest()) {Log.d(TAG, "Request: " + msg.getRequest());}
-                else {Log.d(TAG, "Response: " + msg.getResponse());}
-            }
         }
 
         @Override
@@ -264,17 +263,25 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private void appendTextAndScroll(TextView tv, String text)
-    {
-        if(tv != null){
-            tv.append(text);
-            final Layout layout = tv.getLayout();
-            if(layout != null){
-                int scrollDelta = layout.getLineBottom(tv.getLineCount() - 1)
-                        - tv.getScrollY() - tv.getHeight();
-                if(scrollDelta > 0)
-                    tv.scrollBy(0, scrollDelta);
+    private final BroadcastReceiver protoMsgReadReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (BROADCAST_PROTO_MSG_RECEIVED.equals(action)) {
+                MessageOuterClass.Message msg;
+                while ((msg = receivedMessages.poll()) != null) {
+                    storeProtoMessage(msg);
+                }
             }
+        }
+    };
+
+    private void storeProtoMessage(@NonNull MessageOuterClass.Message msg)
+    {
+        protoMsgStorer.addMsg(msg);
+        if (!protoMsgStorer.isEmpty()) {
+            ProtoMsgViewModel protoMsgViewModel = new ViewModelProvider(this).get(ProtoMsgViewModel.class);
+            protoMsgViewModel.getProtoMessages().setValue(protoMsgStorer.toString());
         }
     }
 }

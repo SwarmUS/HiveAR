@@ -1,6 +1,8 @@
 package com.swarmus.hivear.fragments;
 
 import android.os.Bundle;
+import android.text.Layout;
+import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,12 +14,15 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.activities.MainActivity;
 import com.swarmus.hivear.commands.MoveByCommand;
 import com.swarmus.hivear.models.CommunicationDevice;
+import com.swarmus.hivear.models.ProtoMsgViewModel;
 import com.swarmus.hivear.models.SerialDevice;
 import com.swarmus.hivear.models.TCPDevice;
 
@@ -35,6 +40,22 @@ public class ConnectionViewFragment extends Fragment {
         View view = inflater.inflate(R.layout.connection_view_fragment, container, false);
 
         fragmentManager = getChildFragmentManager();
+
+        TextView dataReceived = view.findViewById(R.id.dataReceived);
+        dataReceived.setMovementMethod(new ScrollingMovementMethod());
+        ProtoMsgViewModel protoMsgViewModel = new ViewModelProvider(requireActivity()).get(ProtoMsgViewModel.class);
+        dataReceived.setText(protoMsgViewModel.getProtoMessages().getValue());
+        protoMsgViewModel.getProtoMessages().observe(getViewLifecycleOwner(), s -> {
+            dataReceived.setText(protoMsgViewModel.getProtoMessages().getValue());
+            final Layout layout = dataReceived.getLayout();
+            if(layout != null){
+                int scrollDelta = layout.getLineBottom(dataReceived.getLineCount() - 1)
+                        - dataReceived.getScrollY() - dataReceived.getHeight();
+                if(scrollDelta > 0)
+                    dataReceived.scrollBy(0, scrollDelta);
+            }
+        });
+
 
         view.findViewById(R.id.connectButton).setOnClickListener(v -> {
             CommunicationDevice communicationDevice = ((MainActivity)getActivity()).getCurrentCommunicationDevice();
