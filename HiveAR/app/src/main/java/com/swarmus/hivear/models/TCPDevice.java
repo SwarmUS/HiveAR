@@ -125,6 +125,9 @@ public class TCPDevice extends CommunicationDevice {
     public void setServerIP(String ip) {this.serverIP=ip;}
     public void setServerPort(int port) {this.serverPort=port;}
 
+    public String getServerIP() {return serverIP;}
+    public int getServerPort() {return serverPort;}
+
     public OutputStream getSocketOutputStream()
     {
         if (socket != null && socket.isConnected())

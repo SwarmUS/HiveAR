@@ -19,10 +19,6 @@
         <!-- "AR Required" app, requires "Google Play Services for AR" (ARCore)
          to be installed, as the app does not include any non-AR features. -->
         <meta-data android:name="com.google.ar.core" android:value="required" />
-        <activity
-            android:name=".activities.TestActivity"
-            android:label="@string/title_activity_test">
-        </activity>
 
         <activity
             android:name=".activities.MainActivity"
@@ -33,10 +29,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".activities.ARActivity"
-            android:parentActivityName=".activities.MainActivity"
-            android:theme="@style/Theme.HiveAR.NoActionBar" />
     </application>
 
 </manifest>

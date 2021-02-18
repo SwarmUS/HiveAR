@@ -1,15 +1,14 @@
 <resources>
     <string name="app_name">HiveAR</string>
 
-    <string name="send_to_command_view">Send to Command View</string>
-    <string name="switch_to_ar_view_layout">Switch to AR view layout</string>
     <string name="connected_device">Connected Device: </string>
     <string name="incoming_data">Incoming Data:</string>
     <string name="ip_address">IP Address</string>
     <string name="port">Port</string>
-    <string name="title_activity_test">TestActivity</string>
     <string name="switchcommunicationtype">switchCommunicationType</string>
     <string name="disconnect">Disconnect</string>
     <string name="connect">Connect</string>
-    <string name="connectionstatus">connectionStatus</string>
+    <string name="connection">Connection</string>
+    <string name="ar">AR</string>
+    <string name="swarm_summary">Swarm Summary</string>
 </resources>
