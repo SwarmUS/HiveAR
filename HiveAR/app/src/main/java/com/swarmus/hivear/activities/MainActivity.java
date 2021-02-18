@@ -16,12 +16,12 @@ import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.R;
-import com.swarmus.hivear.adapters.ViewRobotListAdapter;
 import com.swarmus.hivear.commands.GenericCommand;
 import com.swarmus.hivear.enums.ConnectionStatus;
 import com.swarmus.hivear.models.CommunicationDevice;
 import com.swarmus.hivear.models.ProtoMsgViewModel;
 import com.swarmus.hivear.models.Robot;
+import com.swarmus.hivear.models.RobotListViewModel;
 import com.swarmus.hivear.models.SerialDevice;
 import com.swarmus.hivear.models.SerialSettingsViewModel;
 import com.swarmus.hivear.models.TCPDevice;
@@ -36,7 +36,6 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
-import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,9 +57,6 @@ public class MainActivity extends AppCompatActivity {
     private ProtoMsgStorer protoMsgStorer;
     private Queue<MessageOuterClass.Message> receivedMessages;
 
-    RecyclerView recyclerView;
-    List<Robot> robotList;
-
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final String DEFAULT_IP_ADDRESS = "192.168.0.";
     private static final int DEFAULT_PORT = 12345;
@@ -70,11 +66,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.app_layout);
 
-        recyclerView = findViewById(R.id.recyclerView);
-        updateRobots();
-
         setUpNavigation();
         setUpCommmunication();
+        updateRobots();
     }
 
     @Override
@@ -300,24 +294,13 @@ public class MainActivity extends AppCompatActivity {
     private void updateRobots()
     {
         // TODO Retrieve all robots in the swarm
-        initData();
-        setRecyclerView();
-    }
-
-    private void setRecyclerView() {
-        if (recyclerView != null)
-        {
-            ViewRobotListAdapter viewRobotListAdapter = new ViewRobotListAdapter(robotList);
-            recyclerView.setAdapter(viewRobotListAdapter);
-            recyclerView.setHasFixedSize(true);
-        }
-    }
-
-    private void initData() {
-        robotList = new ArrayList<>();
+        List<Robot> robotList = new ArrayList<>();
 
         robotList.add(new Robot("Robot1", 1));
         robotList.add(new Robot("Robot2", 2));
         robotList.add(new Robot("Robot3", 3));
+
+        RobotListViewModel robotListViewModel = new ViewModelProvider(this).get(RobotListViewModel.class);
+        robotListViewModel.getRobotList().setValue(robotList);
     }
 }

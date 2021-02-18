@@ -31,5 +31,16 @@
         <action
             android:id="@+id/action_robotDetailsViewFragment_to_swarmSummaryViewFragment"
             app:destination="@id/swarmSummaryViewFragment" />
+        <argument
+            android:name="robotname"
+            app:argType="string"
+            android:defaultValue="Robot" />
+        <argument
+            android:name="uid"
+            app:argType="integer"
+            android:defaultValue="0" />
+        <argument
+            android:name="robot_commands"
+            app:argType="string[]" />
     </fragment>
 </navigation>

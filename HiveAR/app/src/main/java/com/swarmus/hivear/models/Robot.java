@@ -9,14 +9,11 @@ public class Robot {
     private int uid;
     private List<String> commands;
 
-    private boolean expandable;
-
     public Robot(String name, int uid) {
         this.name = name;
         this.uid = uid;
-        this.expandable = false;
         // TODO remove after examples
-        commands = Arrays.asList("Command 1", "Command 2", "Command 3");
+        commands = Arrays.asList("moveBy");
     }
 
     @Override
@@ -41,14 +38,6 @@ public class Robot {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public boolean isExpandable() {
-        return expandable;
-    }
-
-    public void setExpandable(boolean expandable) {
-        this.expandable = expandable;
     }
 
     public List<String> getCommands() {
