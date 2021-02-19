@@ -9,14 +9,17 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.swarmus.hivear.R;
+import com.swarmus.hivear.adapters.RobotCommandsAdapter;
+
+import java.util.Arrays;
 
 public class RobotDetailsViewFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.robot_details_view_fragment, container, false);
-        return view;
+        return inflater.inflate(R.layout.robot_details_view_fragment, container, false);
     }
 
     @Override
@@ -31,8 +34,14 @@ public class RobotDetailsViewFragment extends Fragment {
             TextView robotUIDTV = view.findViewById(R.id.robot_uid);
             robotUIDTV.setText(Integer.toString(args.getUid()));
 
-            // TODO set recycler view from commands (command factory) from args.getRobotCommands()
+            RecyclerView recyclerView = view.findViewById(R.id.robotDetailsRecycler);
+            if (recyclerView != null)
+            {
+                // Maybe later on, replace List of String by list of Proto Requests for dynamic command UI inflation
+                RobotCommandsAdapter robotCommandsAdapter = new RobotCommandsAdapter(Arrays.asList(args.getRobotCommands()));
+                recyclerView.setAdapter(robotCommandsAdapter);
+                recyclerView.setHasFixedSize(true);
+            }
         }
-
     }
 }

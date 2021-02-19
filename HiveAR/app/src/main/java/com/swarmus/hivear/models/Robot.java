@@ -13,7 +13,7 @@ public class Robot {
         this.name = name;
         this.uid = uid;
         // TODO remove after examples
-        commands = Arrays.asList("moveBy");
+        commands = Arrays.asList("moveBy", "doABackFlip");
     }
 
     @Override

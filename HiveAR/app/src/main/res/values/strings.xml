@@ -18,4 +18,7 @@
     <string name="x_offset">X offset</string>
     <string name="offset">Offset</string>
     <string name="y_offset">Y offset</string>
+    <string name="command">Command</string>
+    <string name="command_argument">Command Argument</string>
+    <string name="commands">Commands:</string>
 </resources>

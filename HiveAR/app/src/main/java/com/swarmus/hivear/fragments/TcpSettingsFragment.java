@@ -74,6 +74,10 @@ public class TcpSettingsFragment extends Fragment {
                     tcpSettingsViewModel.getIpAddress().setValue(Objects.requireNonNull(ipInputEditText.getText()).toString());
                 }
             });
+
+            ipInputEditText.setOnFocusChangeListener((view1, b) -> {
+                if (b) {ipInputEditText.setSelection(ipInputEditText.getText().length());}
+            });
         }
 
         TextInputEditText portInputEditText = view.findViewById(R.id.PortTextInputEditText);
@@ -91,11 +95,15 @@ public class TcpSettingsFragment extends Fragment {
                     tcpSettingsViewModel.getPort().setValue(
                             portInputValue.isEmpty() ?
                                     0 :
-                                    Integer.valueOf(portInputValue)
+                                    Integer.parseInt(portInputValue)
                     );
                 }
             });
             portInputEditText.setText(Integer.toString(port));
+
+            portInputEditText.setOnFocusChangeListener((view1, b) -> {
+                if (b) {portInputEditText.setSelection(portInputEditText.getText().length());}
+            });
         }
 
         return view;
