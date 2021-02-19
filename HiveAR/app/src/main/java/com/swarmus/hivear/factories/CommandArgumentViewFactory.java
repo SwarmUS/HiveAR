@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.swarmus.hivear.FunctionCall;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.enums.CommandType;
 
@@ -21,6 +22,16 @@ public class CommandArgumentViewFactory {
                 return getMoveByArgumentViews(inflater);
             case doABackFlip:
                 return getDoABackFlipArgumentViews(inflater);
+        }
+        return null;
+    }
+
+    public static List<View> createCommandArgumentViews(LayoutInflater inflater, FunctionCall.FunctionCallRequest functionCallRequest) {
+
+        for (FunctionCall.FunctionArgument arg : functionCallRequest.getArgumentsList()) {
+            // Get argument name
+            //
+            // Get argument type
         }
         return null;
     }
