@@ -38,10 +38,9 @@ public class ViewRobotListAdapter extends RecyclerView.Adapter<ViewRobotListAdap
         holder.robotInfoLayout.setOnClickListener(view -> {
 
             SwarmSummaryViewFragmentDirections.ActionSwarmSummaryViewFragmentToRobotDetailsViewFragment action =
-                    SwarmSummaryViewFragmentDirections.actionSwarmSummaryViewFragmentToRobotDetailsViewFragment(
-                            robot.getCommands().toArray(new String[0])
-                    );
-            action.setRobotname(robot.getName());
+                    SwarmSummaryViewFragmentDirections.actionSwarmSummaryViewFragmentToRobotDetailsViewFragment();
+            String robotName = robot.getName();
+            action.setRobotname(robotName == null ? "" : robotName);
             action.setUid(robot.getUid());
 
             Navigation.findNavController(view).navigate(action);

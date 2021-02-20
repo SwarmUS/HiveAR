@@ -1,19 +1,24 @@
 package com.swarmus.hivear.models;
 
-import java.util.Arrays;
+import com.swarmus.hivear.MessageOuterClass;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class Robot {
 
     private String name;
     private int uid;
-    private List<String> commands;
+    private List<MessageOuterClass.Request> commands;
 
     public Robot(String name, int uid) {
+        this(name, uid, new ArrayList<>());
+    }
+
+    public Robot(String name, int uid, List<MessageOuterClass.Request> commands) {
         this.name = name;
         this.uid = uid;
-        // TODO remove after examples
-        commands = Arrays.asList("moveBy", "doABackFlip");
+        this.commands = commands;
     }
 
     @Override
@@ -40,11 +45,11 @@ public class Robot {
         this.name = name;
     }
 
-    public List<String> getCommands() {
+    public List<MessageOuterClass.Request> getCommands() {
         return commands;
     }
 
-    public void setCommands(List<String> commands) {
+    public void setCommands(List<MessageOuterClass.Request> commands) {
         this.commands = commands;
     }
 }

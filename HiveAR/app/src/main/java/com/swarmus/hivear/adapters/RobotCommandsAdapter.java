@@ -10,16 +10,17 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.swarmus.hivear.FunctionCall;
+import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.R;
-import com.swarmus.hivear.enums.CommandType;
 import com.swarmus.hivear.factories.CommandArgumentViewFactory;
 
 import java.util.List;
 
 public class RobotCommandsAdapter extends RecyclerView.Adapter<RobotCommandsAdapter.RobotCommandsVH> {
-    List<String> commands;
+    List<MessageOuterClass.Request> commands;
 
-    public RobotCommandsAdapter(List<String> commands) {
+    public RobotCommandsAdapter(List<MessageOuterClass.Request> commands) {
         this.commands = commands;
     }
 
@@ -33,15 +34,15 @@ public class RobotCommandsAdapter extends RecyclerView.Adapter<RobotCommandsAdap
     @Override
     public void onBindViewHolder(@NonNull RobotCommandsVH holder, int position) {
 
-        String command = commands.get(position);
-        holder.commandNameTV.setText(command);
+        FunctionCall.FunctionCallRequest function = commands.get(position).getUserCall().getFunctionCall();
+        holder.commandNameTV.setText(function.getFunctionName());
         holder.commandSendButton.setOnClickListener(view -> {
 
             // TODO sendData of proto msg constructed from args present in cardview.
 
         });
-        for (View argView : CommandArgumentViewFactory.createCommandArgumentViews(LayoutInflater.from(holder.itemView.getContext()),
-                CommandType.fromString(command))) {
+
+        for (View argView : CommandArgumentViewFactory.createCommandArgumentViews(holder.itemView, function)) {
             holder.commandArgumentList.addView(argView);
         }
     }
@@ -52,7 +53,7 @@ public class RobotCommandsAdapter extends RecyclerView.Adapter<RobotCommandsAdap
         else { return 0; }
     }
 
-    public class RobotCommandsVH extends RecyclerView.ViewHolder {
+    class RobotCommandsVH extends RecyclerView.ViewHolder {
         TextView commandNameTV;
         Button commandSendButton;
         LinearLayout commandArgumentList;

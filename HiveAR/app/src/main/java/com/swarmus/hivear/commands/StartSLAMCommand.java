@@ -4,33 +4,28 @@ import com.swarmus.hivear.FunctionCall;
 import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.UserCall;
 
-public class MoveByCommand extends GenericCommand{
+public class StartSLAMCommand extends GenericCommand{
 
-    private final static String MOVE_BY_FUNCTION_NAME ="moveBy";
-    float x,y;
+    private final static String START_SLAM_COMMAND ="startSLAM";
+    boolean activated;
 
-    public MoveByCommand() { this(0, 0);}
+    public StartSLAMCommand() { this(true);}
 
-    public MoveByCommand(float x, float y)
+    public StartSLAMCommand(boolean activate)
     {
-        this.x = x;
-        this.y = y;
+        this.activated = activate;
     }
 
     @Override
     public MessageOuterClass.Message getCommand() {
         if (message == null)
         {
-            FunctionCall.FunctionArgument argX = FunctionCall.FunctionArgument.newBuilder()
-                    .setFloatArg(x)
-                    .build();
-            FunctionCall.FunctionArgument argY = FunctionCall.FunctionArgument.newBuilder()
-                    .setFloatArg(y)
+            FunctionCall.FunctionArgument arg = FunctionCall.FunctionArgument.newBuilder()
+                    .setIntArg(activated ? 1 : 0)
                     .build();
             FunctionCall.FunctionCallRequest request = FunctionCall.FunctionCallRequest.newBuilder()
-                    .addArguments(argX)
-                    .addArguments(argY)
-                    .setFunctionName(MOVE_BY_FUNCTION_NAME)
+                    .addArguments(arg)
+                    .setFunctionName(START_SLAM_COMMAND)
                     .build();
             UserCall.UserCallTarget userCallDestination = UserCall.UserCallTarget.HOST;
             UserCall.UserCallTarget userCallSource = UserCall.UserCallTarget.HOST;

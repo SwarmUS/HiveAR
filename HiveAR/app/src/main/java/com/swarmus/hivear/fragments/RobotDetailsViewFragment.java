@@ -9,10 +9,13 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.adapters.RobotCommandsAdapter;
+import com.swarmus.hivear.models.Robot;
+import com.swarmus.hivear.models.RobotListViewModel;
 
 import java.util.Arrays;
 
@@ -38,9 +41,16 @@ public class RobotDetailsViewFragment extends Fragment {
             if (recyclerView != null)
             {
                 // Maybe later on, replace List of String by list of Proto Requests for dynamic command UI inflation
-                RobotCommandsAdapter robotCommandsAdapter = new RobotCommandsAdapter(Arrays.asList(args.getRobotCommands()));
-                recyclerView.setAdapter(robotCommandsAdapter);
-                recyclerView.setHasFixedSize(true);
+                RobotListViewModel robotListViewModel = new ViewModelProvider(requireActivity()).get(RobotListViewModel.class);
+                Robot robot = robotListViewModel.getRobotFromList(
+                        args.getRobotname(),
+                        args.getUid());
+                if (robot != null) {
+                    RobotCommandsAdapter robotCommandsAdapter =
+                            new RobotCommandsAdapter(robot.getCommands());
+                    recyclerView.setAdapter(robotCommandsAdapter);
+                    recyclerView.setHasFixedSize(true);
+                }
             }
         }
     }
