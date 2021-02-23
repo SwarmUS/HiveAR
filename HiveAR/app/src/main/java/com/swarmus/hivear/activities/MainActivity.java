@@ -17,9 +17,13 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.commands.GenericCommand;
+import com.swarmus.hivear.commands.MoveByCommand;
+import com.swarmus.hivear.commands.StartSLAMCommand;
 import com.swarmus.hivear.enums.ConnectionStatus;
 import com.swarmus.hivear.models.CommunicationDevice;
 import com.swarmus.hivear.models.ProtoMsgViewModel;
+import com.swarmus.hivear.models.Robot;
+import com.swarmus.hivear.models.RobotListViewModel;
 import com.swarmus.hivear.models.SerialDevice;
 import com.swarmus.hivear.models.SerialSettingsViewModel;
 import com.swarmus.hivear.models.TCPDevice;
@@ -37,8 +41,11 @@ import androidx.navigation.ui.NavigationUI;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 public class MainActivity extends AppCompatActivity {
@@ -64,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
 
         setUpNavigation();
         setUpCommmunication();
+        updateRobots();
     }
 
     @Override
@@ -283,5 +291,24 @@ public class MainActivity extends AppCompatActivity {
             ProtoMsgViewModel protoMsgViewModel = new ViewModelProvider(this).get(ProtoMsgViewModel.class);
             protoMsgViewModel.getProtoMessages().setValue(protoMsgStorer.toString());
         }
+    }
+
+    // TODO update when new details will be available
+    private void updateRobots()
+    {
+        // TODO Retrieve all robots in the swarm
+        List<Robot> robotList = new ArrayList<>();
+
+        GenericCommand c1 = new MoveByCommand();
+        GenericCommand c2 = new StartSLAMCommand();
+
+        robotList.add(new Robot("Robot1", 1,
+                Arrays.asList(c1.getCommand().getRequest())));
+        robotList.add(new Robot("Robot2", 2));
+        robotList.add(new Robot("Robot3", 3,
+                Arrays.asList(c1.getCommand().getRequest(), c2.getCommand().getRequest())));
+
+        RobotListViewModel robotListViewModel = new ViewModelProvider(this).get(RobotListViewModel.class);
+        robotListViewModel.getRobotList().setValue(robotList);
     }
 }

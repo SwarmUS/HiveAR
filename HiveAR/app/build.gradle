@@ -6,6 +6,8 @@ plugins {
     id "de.undercouch.download" version "4.1.1"
 }
 
+apply plugin: "androidx.navigation.safeargs"
+
 android {
     compileSdkVersion 30
     buildToolsVersion "30.0.3"
@@ -46,6 +48,8 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'com.github.felHR85:UsbSerial:6.1.0'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+    implementation 'androidx.recyclerview:recyclerview:1.1.0'
+    implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'com.google.protobuf:protobuf-javalite:3.14.0'
     implementation 'androidx.navigation:navigation-fragment:2.3.3'
     implementation 'androidx.navigation:navigation-ui:2.3.3'
