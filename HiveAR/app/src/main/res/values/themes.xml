@@ -20,8 +20,4 @@
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="Theme.HiveAR.AppBarOverlay" parent="ThemeOverlay.AppCompat.Light" />
-
-    <style name="Theme.HiveAR.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
-
 </resources>

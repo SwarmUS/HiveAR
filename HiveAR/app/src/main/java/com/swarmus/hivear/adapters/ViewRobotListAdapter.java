@@ -21,7 +21,7 @@ public class ViewRobotListAdapter extends RecyclerView.Adapter<ViewRobotListAdap
         this.robotList = robotList;
     }
 
-    List<Robot> robotList;
+    final List<Robot> robotList;
     @NonNull
     @Override
     public ViewRobotListVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -53,10 +53,10 @@ public class ViewRobotListAdapter extends RecyclerView.Adapter<ViewRobotListAdap
         else { return 0; }
     }
 
-    public class ViewRobotListVH extends RecyclerView.ViewHolder {
-        TextView robotNameTV;
-        TextView robotUIDTV;
-        RelativeLayout robotInfoLayout;
+    public static class ViewRobotListVH extends RecyclerView.ViewHolder {
+        final TextView robotNameTV;
+        final TextView robotUIDTV;
+        final RelativeLayout robotInfoLayout;
 
         public ViewRobotListVH(@NonNull View itemView) {
             super(itemView);

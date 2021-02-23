@@ -18,7 +18,7 @@ import com.swarmus.hivear.factories.CommandArgumentViewFactory;
 import java.util.List;
 
 public class RobotCommandsAdapter extends RecyclerView.Adapter<RobotCommandsAdapter.RobotCommandsVH> {
-    List<MessageOuterClass.Request> commands;
+    final List<MessageOuterClass.Request> commands;
 
     public RobotCommandsAdapter(List<MessageOuterClass.Request> commands) {
         this.commands = commands;
@@ -53,10 +53,10 @@ public class RobotCommandsAdapter extends RecyclerView.Adapter<RobotCommandsAdap
         else { return 0; }
     }
 
-    class RobotCommandsVH extends RecyclerView.ViewHolder {
-        TextView commandNameTV;
-        Button commandSendButton;
-        LinearLayout commandArgumentList;
+    static class RobotCommandsVH extends RecyclerView.ViewHolder {
+        final TextView commandNameTV;
+        final Button commandSendButton;
+        final LinearLayout commandArgumentList;
 
         public RobotCommandsVH(@NonNull View itemView) {
             super(itemView);

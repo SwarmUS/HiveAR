@@ -7,7 +7,7 @@ import com.swarmus.hivear.UserCall;
 public class StartSLAMCommand extends GenericCommand{
 
     private final static String START_SLAM_COMMAND ="startSLAM";
-    boolean activated;
+    final boolean activated;
 
     public StartSLAMCommand() { this(true);}
 
