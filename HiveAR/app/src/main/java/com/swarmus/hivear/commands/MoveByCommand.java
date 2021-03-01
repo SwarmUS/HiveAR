@@ -7,7 +7,8 @@ import com.swarmus.hivear.UserCall;
 public class MoveByCommand extends GenericCommand{
 
     private final static String MOVE_BY_FUNCTION_NAME ="moveBy";
-    float x,y;
+    final float x;
+    final float y;
 
     public MoveByCommand() { this(0, 0);}
 

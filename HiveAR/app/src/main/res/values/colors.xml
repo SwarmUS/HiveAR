@@ -2,12 +2,9 @@
 <resources>
     <color name="honeycomb_light">#F6E000</color>
     <color name="honeycomb">#F9C901</color>
-    <color name="honeycomb_dark">#985B10</color>
     <color name="brown_light">#896800</color>
     <color name="brown_dark">#6B4701</color>
     <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="wrong_entry">#FF0000</color>
     <color name="connection_pending">#0027FF</color>
     <color name="connection_established">#00FF0A</color>
     <color name="connection_none">#FF0000</color>

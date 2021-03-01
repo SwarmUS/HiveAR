@@ -17,8 +17,6 @@ import com.swarmus.hivear.adapters.RobotCommandsAdapter;
 import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.models.RobotListViewModel;
 
-import java.util.Arrays;
-
 public class RobotDetailsViewFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {

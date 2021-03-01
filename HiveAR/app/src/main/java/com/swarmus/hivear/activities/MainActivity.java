@@ -6,16 +6,28 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.swarmus.hivear.MessageOuterClass;
+import com.google.ar.core.ArCoreApk;
+import com.google.ar.core.Config;
+import com.google.ar.core.Session;
+import com.google.ar.core.exceptions.CameraNotAvailableException;
+import com.google.ar.core.exceptions.UnavailableApkTooOldException;
+import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
+import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
+import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
+import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
 import com.swarmus.hivear.R;
+import com.swarmus.hivear.MessageOuterClass;
+import com.swarmus.hivear.arcore.CameraPermissionHelper;
 import com.swarmus.hivear.commands.GenericCommand;
 import com.swarmus.hivear.commands.MoveByCommand;
 import com.swarmus.hivear.commands.StartSLAMCommand;
@@ -64,14 +76,143 @@ public class MainActivity extends AppCompatActivity {
     private static final String DEFAULT_IP_ADDRESS = "192.168.0.";
     private static final int DEFAULT_PORT = 12345;
 
+    private boolean userRequestedInstall = true;
+    private Session session;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.app_layout);
 
+        maybeEnableAr(); // Hide AR tab if not possible to do AR
         setUpNavigation();
         setUpCommmunication();
         updateRobots();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (session != null) {
+            // Explicitly close ARCore Session to release native resources.
+            // Review the API reference for important considerations before calling close() in apps with
+            // more complicated lifecycle requirements:
+            // https://developers.google.com/ar/reference/java/arcore/reference/com/google/ar/core/Session#close()
+            session.close();
+            session = null;
+        }
+
+        super.onDestroy();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (session == null) {
+            Exception exception = null;
+            String message = null;
+            try {
+                switch (ArCoreApk.getInstance().requestInstall(this, !userRequestedInstall)) {
+                    case INSTALL_REQUESTED:
+                        userRequestedInstall = false;
+                        return;
+                    case INSTALLED:
+                        break;
+                }
+
+                // ARCore requires camera permissions to operate. If we did not yet obtain runtime
+                // permission on Android M and above, now is a good time to ask the user for it.
+                if (!CameraPermissionHelper.hasCameraPermission(this)) {
+                    CameraPermissionHelper.requestCameraPermission(this);
+                    return;
+                }
+
+                // Create the session.
+                session = new Session(this);
+            } catch (UnavailableArcoreNotInstalledException
+                    | UnavailableUserDeclinedInstallationException e) {
+                message = "Please install ARCore";
+                exception = e;
+            } catch (UnavailableApkTooOldException e) {
+                message = "Please update ARCore";
+                exception = e;
+            } catch (UnavailableSdkTooOldException e) {
+                message = "Please update this app";
+                exception = e;
+            } catch (UnavailableDeviceNotCompatibleException e) {
+                message = "This device does not support AR";
+                exception = e;
+            } catch (Exception e) {
+                message = "Failed to create AR session";
+                exception = e;
+            }
+
+            if (message != null) {
+                Toast.makeText(this, message, Toast.LENGTH_LONG)
+                        .show();
+                Log.e("ARCore", "Exception creating session", exception);
+                return;
+            }
+        }
+
+        // Note that order matters - see the note in onPause(), the reverse applies here.
+        try {
+            configureSession();
+            // To record a live camera session for later playback, call
+            // `session.startRecording(recorderConfig)` at anytime. To playback a previously recorded AR
+            // session instead of using the live camera feed, call
+            // `session.setPlaybackDataset(playbackDatasetPath)` before calling `session.resume()`. To
+            // learn more about recording and playback, see:
+            // https://developers.google.com/ar/develop/java/recording-and-playback
+            session.resume();
+        } catch (CameraNotAvailableException e) {
+            Toast.makeText(this, "Camera not available. Try restarting the app." + e, Toast.LENGTH_LONG)
+                    .show();
+            session = null;
+        }
+    }
+
+    /** Configures the session with feature settings. */
+    private void configureSession() {
+        Config config = session.getConfig();
+        config.setLightEstimationMode(Config.LightEstimationMode.ENVIRONMENTAL_HDR);
+        if (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
+            config.setDepthMode(Config.DepthMode.AUTOMATIC);
+        } else {
+            config.setDepthMode(Config.DepthMode.DISABLED);
+        }
+        session.configure(config);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (session != null) {
+            session.pause();
+        }
+    }
+
+    @Override
+    protected void onPostResume() {
+        super.onPostResume();
+
+        // ARCore requires camera permission to operate.
+        if (!CameraPermissionHelper.hasCameraPermission(this)) {
+            CameraPermissionHelper.requestCameraPermission(this);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        if (!CameraPermissionHelper.hasCameraPermission(this)) {
+            Toast.makeText(this, "Camera permission is needed to run this application", Toast.LENGTH_LONG)
+                    .show();
+            if (!CameraPermissionHelper.shouldShowRequestPermissionRationale(this)) {
+                // Permission denied with checking "Do not ask again".
+                CameraPermissionHelper.launchPermissionSettings(this);
+            }
+            finish();
+        }
     }
 
     @Override
@@ -114,22 +255,17 @@ public class MainActivity extends AppCompatActivity {
         return super.dispatchTouchEvent(ev);
     }
 
-    public CommunicationDevice getCurrentCommunicationDevice() {return currentCommunicationDevice;}
-
-    public CommunicationDevice switchCurrentCommunicationDevice() {
-        currentCommunicationDevice.endConnection();
-        currentCommunicationDevice.setActive(false);
-        if (currentCommunicationDevice instanceof SerialDevice) {
-            currentCommunicationDevice = tcpDevice;
-        } else if (currentCommunicationDevice instanceof TCPDevice) {
-            currentCommunicationDevice = serialDevice;
+    private void maybeEnableAr() {
+        ArCoreApk.Availability availability = ArCoreApk.getInstance().checkAvailability(this);
+        if (availability.isTransient()) {
+            // Continue to query availability at 5Hz while compatibility is checked in the background.
+            new Handler().postDelayed(this::maybeEnableAr, 200);
         }
-        currentCommunicationDevice.setActive(true);
-        return currentCommunicationDevice;
-    }
-
-    public void sendCommand(@NonNull GenericCommand command) {
-        currentCommunicationDevice.sendData(command.getCommand());
+        if (!availability.isSupported()) {
+            bottomNavigationView = findViewById(R.id.bottom_nav_view);
+            // Show or not the AR view
+            bottomNavigationView.getMenu().removeItem(R.id.ARViewFragment);
+        }
     }
 
     private void setUpNavigation() {
@@ -158,15 +294,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setUpCommmunication() {
-        receivedMessages = new LinkedList<MessageOuterClass.Message>();
+        receivedMessages = new LinkedList<>();
         protoMsgStorer = new ProtoMsgStorer(6);
         ProtoMsgViewModel protoMsgViewModel = new ViewModelProvider(this).get(ProtoMsgViewModel.class);
-        protoMsgViewModel.getProtoMessages().observe(this, new Observer<String>() {
-            @Override
-            public void onChanged(String s) {
-                Log.i(TAG, protoMsgViewModel.getProtoMessages().getValue());
-            }
-        });
+        protoMsgViewModel.getProtoMessages().observe(this, s -> Log.i(TAG, protoMsgViewModel.getProtoMessages().getValue()));
 
         IntentFilter filterProtoMsgReceived = new IntentFilter(BROADCAST_PROTO_MSG_RECEIVED);
         registerReceiver(protoMsgReadReceiver, filterProtoMsgReceived);
@@ -310,5 +441,22 @@ public class MainActivity extends AppCompatActivity {
 
         RobotListViewModel robotListViewModel = new ViewModelProvider(this).get(RobotListViewModel.class);
         robotListViewModel.getRobotList().setValue(robotList);
+    }
+
+    public CommunicationDevice getCurrentCommunicationDevice() {return currentCommunicationDevice;}
+
+    public void switchCurrentCommunicationDevice() {
+        currentCommunicationDevice.endConnection();
+        currentCommunicationDevice.setActive(false);
+        if (currentCommunicationDevice instanceof SerialDevice) {
+            currentCommunicationDevice = tcpDevice;
+        } else if (currentCommunicationDevice instanceof TCPDevice) {
+            currentCommunicationDevice = serialDevice;
+        }
+        currentCommunicationDevice.setActive(true);
+    }
+
+    public void sendCommand(@NonNull GenericCommand command) {
+        currentCommunicationDevice.sendData(command.getCommand());
     }
 }

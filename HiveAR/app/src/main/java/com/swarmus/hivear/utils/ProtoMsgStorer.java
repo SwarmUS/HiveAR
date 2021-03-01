@@ -8,8 +8,8 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 public class ProtoMsgStorer {
-    private Queue<MessageOuterClass.Message> msgQueue;
-    int maxCapacity = 0;
+    private final Queue<MessageOuterClass.Message> msgQueue;
+    int maxCapacity;
 
     public ProtoMsgStorer(int size) {
         maxCapacity = size;

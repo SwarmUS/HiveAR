@@ -1,7 +1,6 @@
 package com.swarmus.hivear.factories;
 
 import android.text.InputType;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -20,7 +19,7 @@ public class CommandArgumentViewFactory {
 
         int i = 0;
         for (FunctionCall.FunctionArgument arg : functionCallRequest.getArgumentsList()) {
-            View argView = LayoutInflater.from(view.getContext()).inflate(R.layout.command_argument, null, false);
+            View argView = View.inflate(view.getContext(), R.layout.command_argument, null);
 
             // We should retrieve argument name in the future.
             TextView argName = argView.findViewById(R.id.command_argument_name);
