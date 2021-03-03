@@ -10,7 +10,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.swarmus.hivear.FunctionCall;
 import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.factories.CommandArgumentViewFactory;
@@ -34,7 +33,7 @@ public class RobotCommandsAdapter extends RecyclerView.Adapter<RobotCommandsAdap
     @Override
     public void onBindViewHolder(@NonNull RobotCommandsVH holder, int position) {
 
-        FunctionCall.FunctionCallRequest function = commands.get(position).getUserCall().getFunctionCall();
+        MessageOuterClass.FunctionCallRequest function = commands.get(position).getUserCall().getFunctionCall();
         holder.commandNameTV.setText(function.getFunctionName());
         holder.commandSendButton.setOnClickListener(view -> {
 
