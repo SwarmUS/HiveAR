@@ -1,8 +1,6 @@
 package com.swarmus.hivear.commands;
 
-import com.swarmus.hivear.FunctionCall;
 import com.swarmus.hivear.MessageOuterClass;
-import com.swarmus.hivear.UserCall;
 
 public class MoveByCommand extends GenericCommand{
 
@@ -22,20 +20,20 @@ public class MoveByCommand extends GenericCommand{
     public MessageOuterClass.Message getCommand() {
         if (message == null)
         {
-            FunctionCall.FunctionArgument argX = FunctionCall.FunctionArgument.newBuilder()
+            MessageOuterClass.FunctionArgument argX = MessageOuterClass.FunctionArgument.newBuilder()
                     .setFloatArg(x)
                     .build();
-            FunctionCall.FunctionArgument argY = FunctionCall.FunctionArgument.newBuilder()
+            MessageOuterClass.FunctionArgument argY = MessageOuterClass.FunctionArgument.newBuilder()
                     .setFloatArg(y)
                     .build();
-            FunctionCall.FunctionCallRequest request = FunctionCall.FunctionCallRequest.newBuilder()
+            MessageOuterClass.FunctionCallRequest request = MessageOuterClass.FunctionCallRequest.newBuilder()
                     .addArguments(argX)
                     .addArguments(argY)
                     .setFunctionName(MOVE_BY_FUNCTION_NAME)
                     .build();
-            UserCall.UserCallTarget userCallDestination = UserCall.UserCallTarget.HOST;
-            UserCall.UserCallTarget userCallSource = UserCall.UserCallTarget.HOST;
-            UserCall.UserCallRequest userCallRequest = UserCall.UserCallRequest.newBuilder()
+            MessageOuterClass.UserCallTarget userCallDestination = MessageOuterClass.UserCallTarget.HOST;
+            MessageOuterClass.UserCallTarget userCallSource = MessageOuterClass.UserCallTarget.HOST;
+            MessageOuterClass.UserCallRequest userCallRequest = MessageOuterClass.UserCallRequest.newBuilder()
                     .setDestination(userCallDestination)
                     .setSource(userCallSource)
                     .setFunctionCall(request)

@@ -5,7 +5,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.swarmus.hivear.FunctionCall;
+import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.R;
 
 import java.util.ArrayList;
@@ -14,11 +14,11 @@ import java.util.List;
 public class CommandArgumentViewFactory {
     private CommandArgumentViewFactory() {} // make Factory act as a static class
 
-    public static List<View> createCommandArgumentViews(View view, FunctionCall.FunctionCallRequest functionCallRequest) {
+    public static List<View> createCommandArgumentViews(View view, MessageOuterClass.FunctionCallRequest functionCallRequest) {
         List<View> argViews = new ArrayList<>();
 
         int i = 0;
-        for (FunctionCall.FunctionArgument arg : functionCallRequest.getArgumentsList()) {
+        for (MessageOuterClass.FunctionArgument arg : functionCallRequest.getArgumentsList()) {
             View argView = View.inflate(view.getContext(), R.layout.command_argument, null);
 
             // We should retrieve argument name in the future.

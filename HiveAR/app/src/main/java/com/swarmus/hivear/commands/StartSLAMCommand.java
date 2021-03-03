@@ -1,8 +1,6 @@
 package com.swarmus.hivear.commands;
 
-import com.swarmus.hivear.FunctionCall;
 import com.swarmus.hivear.MessageOuterClass;
-import com.swarmus.hivear.UserCall;
 
 public class StartSLAMCommand extends GenericCommand{
 
@@ -20,16 +18,16 @@ public class StartSLAMCommand extends GenericCommand{
     public MessageOuterClass.Message getCommand() {
         if (message == null)
         {
-            FunctionCall.FunctionArgument arg = FunctionCall.FunctionArgument.newBuilder()
+            MessageOuterClass.FunctionArgument arg = MessageOuterClass.FunctionArgument.newBuilder()
                     .setIntArg(activated ? 1 : 0)
                     .build();
-            FunctionCall.FunctionCallRequest request = FunctionCall.FunctionCallRequest.newBuilder()
+            MessageOuterClass.FunctionCallRequest request = MessageOuterClass.FunctionCallRequest.newBuilder()
                     .addArguments(arg)
                     .setFunctionName(START_SLAM_COMMAND)
                     .build();
-            UserCall.UserCallTarget userCallDestination = UserCall.UserCallTarget.HOST;
-            UserCall.UserCallTarget userCallSource = UserCall.UserCallTarget.HOST;
-            UserCall.UserCallRequest userCallRequest = UserCall.UserCallRequest.newBuilder()
+            MessageOuterClass.UserCallTarget userCallDestination = MessageOuterClass.UserCallTarget.HOST;
+            MessageOuterClass.UserCallTarget userCallSource = MessageOuterClass.UserCallTarget.HOST;
+            MessageOuterClass.UserCallRequest userCallRequest = MessageOuterClass.UserCallRequest.newBuilder()
                     .setDestination(userCallDestination)
                     .setSource(userCallSource)
                     .setFunctionCall(request)
