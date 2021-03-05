@@ -8,4 +8,5 @@
     <color name="connection_pending">#0027FF</color>
     <color name="connection_established">#00FF0A</color>
     <color name="connection_none">#FF0000</color>
+    <color name="ar_overlay_background">#BE535353</color>
 </resources>

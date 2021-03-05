@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -12,4 +12,35 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-</LinearLayout>
+    <LinearLayout xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:context=".fragments.CurrentArRobotFragment"
+        android:orientation="horizontal"
+        android:id="@+id/robot_ar_selected"
+        android:padding="10dp"
+        android:background="@drawable/round_corner_grey">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/robotname"
+            android:paddingStart="10dp"
+            android:textSize="20sp"
+            android:textAlignment="viewStart"
+            android:layout_weight="1"
+            android:id="@+id/robot_ar_selected_name"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/uid"
+            android:textAlignment="viewEnd"
+            android:textSize="20sp"
+            android:layout_weight="1"
+            android:id="@+id/robot_ar_selected_uid"/>
+
+    </LinearLayout>
+
+</FrameLayout>
