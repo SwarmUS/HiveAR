@@ -17,4 +17,5 @@
     <string name="command">Command</string>
     <string name="command_argument">Command Argument</string>
     <string name="commands">Commands:</string>
+    <string name="tags_db">tagsDB.imgdb</string>
 </resources>
