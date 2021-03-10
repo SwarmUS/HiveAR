@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.google.ar.core.AugmentedImage;
@@ -18,8 +19,13 @@ import com.google.ar.core.exceptions.UnavailableApkTooOldException;
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
+import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.FrameTime;
+import com.google.ar.sceneform.math.Quaternion;
+import com.google.ar.sceneform.math.Vector3;
+import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
+import com.google.ar.sceneform.ux.TransformableNode;
 import com.swarmus.hivear.R;
 
 import java.io.IOException;
@@ -29,8 +35,28 @@ import java.util.HashMap;
 
 public class ARViewFragment extends Fragment {
 
-    ArFragment arFragment;
-    HashMap<String, AugmentedImage.TrackingMethod> trackableInfos;
+    private ArFragment arFragment;
+    private HashMap<String, AugmentedImage.TrackingMethod> trackableInfos;
+    private ModelRenderable arrowRenderable;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        ModelRenderable.builder()
+                .setSource(getContext(), R.raw.arrow)
+                .build()
+                .thenAccept(renderable -> {
+                    arrowRenderable = renderable;
+                    arrowRenderable.setShadowCaster(false);
+                    arrowRenderable.setShadowReceiver(false);
+                })
+                .exceptionally(
+                        throwable -> {
+                            Log.e(ARViewFragment.class.getName(), "Unable to load Renderable.", throwable);
+                            return null;
+                        });
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -61,6 +87,7 @@ public class ARViewFragment extends Fragment {
                 config.setAugmentedImageDatabase(AugmentedImageDatabase.deserialize(session, inputStream));
                 config.setFocusMode(Config.FocusMode.AUTO);
                 config.setPlaneFindingMode(Config.PlaneFindingMode.HORIZONTAL);
+                config.setLightEstimationMode(Config.LightEstimationMode.DISABLED);
                 session.configure(config);
                 arFragment.getArSceneView().setupSession(session);
             } catch (IOException e) {
@@ -90,9 +117,26 @@ public class ARViewFragment extends Fragment {
                 String msg = augmentedImage.getName() + " : " +currentMethod.toString();
                 // Show to user if currently tracking
                 if (currentMethod.equals(AugmentedImage.TrackingMethod.FULL_TRACKING)) {
+                    if (augmentedImage.getIndex() == 0) // Instead, link with robot ID?
+                    {
+                        AnchorNode anchorNode = new AnchorNode(augmentedImage.createAnchor(augmentedImage.getCenterPose()));
+                        anchorNode.setParent(arFragment.getArSceneView().getScene());
+
+                        TransformableNode node = new TransformableNode(arFragment.getTransformationSystem());
+                        node.setRenderable(arrowRenderable);
+                        Quaternion arrowRot = Quaternion.axisAngle(new Vector3(1.0f, 0.0f, 0.0f), -90.0f).normalized(); // Align arrow to up vector
+                        node.setLocalRotation(arrowRot);
+                        node.setLocalPosition(new Vector3(0f, 0f, -augmentedImage.getExtentZ()/2));
+                        node.setParent(anchorNode);
+                        node.select();
+
+                        // Disable selected visualizer
+                        arFragment.getTransformationSystem().getSelectionVisualizer().removeSelectionVisual(node);
+                    }
+
                     Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
                 }
-                Log.e("ARCore", msg);
+                Log.i("ARCore", msg);
             }
         }
     }

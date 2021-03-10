@@ -60,6 +60,15 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 }
 
+apply plugin: 'com.google.ar.sceneform.plugin'
+
+sceneform.asset(
+        'sampledata/arrow.obj', // Source asset path
+        'default', // Material path
+        'sampledata/arrow.sfa', // sfa output path
+        'src/main/res/raw/arrow'  // sfb output pat
+)
+
 // Dependencies from https://nimblehq.co/public/downloads/android-bangkok-conference-2020-protobuf-android-nimble.pdf
 protobuf {
     protoc {
