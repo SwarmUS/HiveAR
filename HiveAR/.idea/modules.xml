@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/HiveAR.iml" filepath="$PROJECT_DIR$/.idea/HiveAR.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/HiveAR.HiveAR.iml" filepath="$PROJECT_DIR$/.idea/modules/HiveAR.HiveAR.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/HiveAR.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/HiveAR.app.iml" />
     </modules>
   </component>
