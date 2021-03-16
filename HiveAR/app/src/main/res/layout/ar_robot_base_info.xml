@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="10dp"
+    android:background="@drawable/round_corner_grey"
+    android:id="@+id/ar_view_layout">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/robotname"
+        android:paddingStart="10dp"
+        android:textSize="20sp"
+        android:textAlignment="viewStart"
+        android:layout_weight="1"
+        android:id="@+id/robot_ar_selected_name"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/uid"
+        android:textAlignment="viewEnd"
+        android:textSize="20sp"
+        android:layout_weight="1"
+        android:id="@+id/robot_ar_selected_uid"/>
+
+</LinearLayout>

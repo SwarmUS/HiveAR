@@ -27,6 +27,7 @@ import com.google.ar.sceneform.FrameTime;
 import com.google.ar.sceneform.math.Quaternion;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
+import com.google.ar.sceneform.rendering.ViewRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.TransformableNode;
 import com.swarmus.hivear.R;
@@ -37,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.function.Consumer;
 
 public class ARViewFragment extends Fragment {
 
@@ -157,5 +159,22 @@ public class ARViewFragment extends Fragment {
                 Log.i("ARCore", msg);
             }
         }
+    }
+
+    private ViewRenderable getRobotARInfoRenderable()
+    {
+        ViewRenderable.builder()
+                .setView(requireContext(), R.layout.ar_robot_base_info)
+                .build()
+                .thenAccept(viewRenderable -> {
+                    viewRenderable.setShadowCaster(false);
+                    viewRenderable.setShadowReceiver(false);
+                    viewRenderable.getView().findViewById(R.id.ar_view_layout).set
+                })
+                .exceptionally(
+                        throwable -> {
+                            Log.e(ARViewFragment.class.getName(), "Unable to load Renderable.", throwable);
+                            return null;
+                        });
     }
 }
