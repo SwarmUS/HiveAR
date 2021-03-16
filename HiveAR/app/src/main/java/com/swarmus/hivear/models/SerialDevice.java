@@ -98,18 +98,8 @@ public class SerialDevice extends CommunicationDevice {
 
     @Override
     public void sendData(byte[] data) {
-        // TODO: Check for length limit and cut message into different packets if bigger than max size
-        try {
-            ByteArrayOutputStream msg = encodeMessage(data);
-            byte[] msgBytes = msg.toByteArray();
-
-            if (serial != null)
-                serial.write(msgBytes);
-        }
-        catch (IOException e) {
-            Log.e(DEVICE_INFO_LOG_TAG, "Error converting message to byte array");
-            e.printStackTrace();
-        }
+        if (serial != null)
+            serial.write(data);
     }
 
     @Override
@@ -251,41 +241,8 @@ public class SerialDevice extends CommunicationDevice {
 
     final UsbSerialInterface.UsbReadCallback usbReadCallback = (data) -> {
         try {
-            rxByteStream.write(data);
-            // TODO: Timeout
-
-            // If header hasn't been analyzed and enough bytes have been received to do so
-            if (rxByteStream.size() >= FIXED_HEADER_SIZE && rxLength == 0) {
-                byte[] b = rxByteStream.toByteArray();
-                rxLength = bytesToInt16(Arrays.copyOfRange(b, 0, 2));
-                rxCrc = bytesToInt32(Arrays.copyOfRange(b, 2, 6));
-            }
-
-            // If we have received all bytes of a packet
-            if (rxLength > 0 && rxByteStream.size() >= (rxLength + FIXED_HEADER_SIZE)) {
-                byte[] b = rxByteStream.toByteArray();
-                byte[] packet = Arrays.copyOfRange(b, FIXED_HEADER_SIZE, FIXED_HEADER_SIZE+rxLength);
-
-                int calculatedCRC = bytesToInt32(CalculateCRC32(packet));
-
-                // TODO: Send Ack/Nack depending on CRC
-                if (calculatedCRC == rxCrc && pipedOutputStream != null) {
-                    Log.d(DEVICE_INFO_LOG_TAG, "CRC EQUAL");
-                    pipedOutputStream.write(packet);
-                } else {
-                    Log.d(DEVICE_INFO_LOG_TAG, "CRC NOT EQUAL");
-                    Log.d(DEVICE_INFO_LOG_TAG, "Received: " + packet.toString());
-                }
-
-                // Reset internal buffer and copy bytes that weren't part of the current packet into it
-                rxByteStream = new ByteArrayOutputStream();
-                rxByteStream.write(Arrays.copyOfRange(b, FIXED_HEADER_SIZE+rxLength, b.length));
-
-                rxLength = 0;
-                rxCrc = 0;
-            }
+            pipedOutputStream.write(data);
         } catch (IOException e) {
-            Log.e(DEVICE_INFO_LOG_TAG, "Error while receiving bytes from UART");
             e.printStackTrace();
         }
     };
