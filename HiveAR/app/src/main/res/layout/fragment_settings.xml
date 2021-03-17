@@ -3,22 +3,25 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     tools:context=".fragments.SettingsFragment"
     android:id="@+id/settings_view">
 
-    <TextView
+    <!--TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/scan_new_swarm_entity"
-        android:layout_gravity="bottom"/>
+        android:layout_gravity="bottom"/-->
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:src="@android:drawable/ic_menu_search"
+        android:src="@drawable/ic_qrcode"
         android:id="@+id/scan_qr_code"
+        app:fabCustomSize="64dp"
+        app:maxImageSize="32dp"
         android:contentDescription="@string/switch_to_scan_qr_code_page" />
 
 </FrameLayout>
