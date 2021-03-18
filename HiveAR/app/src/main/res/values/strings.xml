@@ -22,8 +22,13 @@
     <string name="switch_to_scan_qr_code_page">Switch to scan Qr code page</string>
     <string name="Settings">Settings</string>
     <string name="scan_qr_code">Scan QR Code</string>
-    <string name="add_to_ar_database">Add to AR Database</string>
+    <string name="add_to_ar_database">Add to Current AR Database</string>
     <string name="robot_name">Robot Name</string>
     <string name="robot_description">Robot description</string>
     <string name="ar_database_dir">arDatabase</string>
+    <string name="current_active_database">Current Active Database:</string>
+    <string name="ar_database_settings">Ar Database Settings</string>
+    <string name="add_new_folder">Add new folder</string>
+    <string name="select_folder">Select Folder</string>
+    <string name="string_select_folder">Select Folder</string>
 </resources>

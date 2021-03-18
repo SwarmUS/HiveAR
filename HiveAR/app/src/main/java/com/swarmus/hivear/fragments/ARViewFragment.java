@@ -1,6 +1,5 @@
 package com.swarmus.hivear.fragments;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -44,6 +43,7 @@ import com.swarmus.hivear.ar.CameraFacingNode;
 import com.swarmus.hivear.models.CurrentArRobotViewModel;
 import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.models.RobotListViewModel;
+import com.swarmus.hivear.models.SettingsViewModel;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -283,7 +283,8 @@ public class ARViewFragment extends Fragment {
     }
 
     private void setupArDatabase(AugmentedImageDatabase augmentedImageDatabase) {
-        File folder = requireContext().getDir(getString(R.string.ar_database_dir), Context.MODE_PRIVATE); //Creating an internal dir;
+        SettingsViewModel settingsViewModel = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
+        File folder = new File(settingsViewModel.getActiveDatabaseFolder().getValue());
         FilenameFilter filter = (f, name) -> name.endsWith(".jpg");
         String[] filesInFolder = folder.list(filter);
         for (String filename : filesInFolder) {

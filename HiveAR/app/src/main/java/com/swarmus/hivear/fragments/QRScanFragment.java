@@ -1,7 +1,6 @@
 package com.swarmus.hivear.fragments;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -20,6 +19,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.Detector;
@@ -30,6 +30,7 @@ import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.swarmus.hivear.R;
+import com.swarmus.hivear.models.SettingsViewModel;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -75,7 +76,10 @@ public class QRScanFragment extends Fragment {
                 int robotUID = qrJsonInfo.getInt(JSON_ROBOT_UID);
                 String fileTitle = robotName + "-" + robotUID;
                 // Add to data base instead of save to device
-                addQRToARDatabase(fileTitle, bitmap);
+                String wasAddedMsg = addQRToARDatabase(fileTitle, bitmap) ?
+                    "Saved to AR Database." : "Couldn't save to AR Database.";
+
+                Toast.makeText(requireContext(), wasAddedMsg, Toast.LENGTH_LONG).show();
 
             }catch (WriterException | JSONException e){
                 e.printStackTrace();
@@ -92,8 +96,13 @@ public class QRScanFragment extends Fragment {
                 robotJsonDescription.accumulate(JSON_ROBOT_DESCRIPTION, robotDescriptionET.getText());
                 Bitmap bitmap = textToImageEncode(robotJsonDescription.toString());
                 String fileTitle = robotNameET.getText() + "-" + robotUidET.getText();
-                MediaStore.Images.Media.insertImage(requireActivity().getContentResolver(), bitmap, fileTitle
-                        , null);
+                MediaStore.Images.Media.insertImage(requireActivity().getContentResolver(), bitmap,
+                        fileTitle, null);
+                // Also automatically save to database
+                String wasAddedMsg = addQRToARDatabase(fileTitle, bitmap) ?
+                        "Downloaded and saved to AR Database." : "Couldn't save to AR Database.";
+
+                Toast.makeText(requireContext(), wasAddedMsg, Toast.LENGTH_LONG).show();
 
             }catch (WriterException | JSONException e){
                 e.printStackTrace();
@@ -202,7 +211,8 @@ public class QRScanFragment extends Fragment {
 
     private boolean addQRToARDatabase(String fileName, Bitmap qrCode)
     {
-        File mydir = requireContext().getDir(getString(R.string.ar_database_dir), Context.MODE_PRIVATE); //Creating an internal dir;
+        SettingsViewModel settingsViewModel = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
+        File mydir = new File(settingsViewModel.getActiveDatabaseFolder().getValue());
         File file = new File(mydir, fileName + ".jpg");
         try {
             FileOutputStream fos = new FileOutputStream(file, false);
