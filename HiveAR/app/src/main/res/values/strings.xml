@@ -23,4 +23,6 @@
     <string name="Settings">Settings</string>
     <string name="scan_qr_code">Scan QR Code</string>
     <string name="add_to_ar_database">Add to AR Database</string>
+    <string name="robot_name">Robot Name</string>
+    <string name="robot_description">Robot description</string>
 </resources>

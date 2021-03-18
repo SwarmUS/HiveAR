@@ -8,12 +8,10 @@
     tools:context=".fragments.SettingsFragment"
     android:id="@+id/settings_view">
 
-    <!--TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/scan_new_swarm_entity"
-        android:layout_gravity="bottom"/-->
+    <!--In this fragment, show which database to load , plus create new one-->
+    <!--In this fragment, show option to show scan qr code in ar view-->
 
+    <!-- This button should be in ArView-->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

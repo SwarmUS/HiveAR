@@ -22,9 +22,10 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/camera"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="10dp"
         android:textSize="24sp"
-        android:id="@+id/scan_qr_code_text"/>
+        android:id="@+id/scan_qr_code_text"
+        android:textAlignment="center"/>
 
     <Button
         android:layout_width="wrap_content"
@@ -34,17 +35,48 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/scan_qr_code_text"
-        android:layout_marginTop="24dp"/>
+        android:layout_marginTop="10dp"/>
 
-    <EditText
-        android:id="@+id/input_text"
+    <LinearLayout
+        android:id="@+id/robot_input_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Enter text"
+        android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/add_qr_to_database"
-        android:layout_marginTop="10dp"/>
+        android:layout_marginTop="24dp">
+
+        <EditText
+            android:id="@+id/input_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="@string/robot_name"
+            android:imeOptions="actionNext"
+            android:singleLine="true"/>
+
+        <EditText
+            android:id="@+id/input_uid"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="@string/uid"
+            android:imeOptions="actionNext"
+            android:singleLine="true"/>
+    </LinearLayout>
+
+    <EditText
+        android:id="@+id/input_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/robot_description"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/robot_input_layout"
+        android:imeOptions="actionDone"
+        android:layout_marginTop="10dp"
+        android:singleLine="true"/>
 
     <Button
         android:id="@+id/download"
@@ -54,7 +86,8 @@
         android:text="Download"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/input_text" />
+        app:layout_constraintTop_toBottomOf="@id/input_description"
+        android:layout_marginTop="10dp" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

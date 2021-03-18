@@ -42,8 +42,8 @@ import com.swarmus.hivear.models.CurrentArRobotViewModel;
 import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.models.RobotListViewModel;
 
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.function.Consumer;
@@ -103,7 +103,7 @@ public class ARViewFragment extends Fragment {
                 }
             }
             try {
-                InputStream inputStream = requireContext().getAssets().open(getString(R.string.tags_db));
+                FileInputStream inputStream = requireContext().openFileInput(getString(R.string.tags_db));
                 Config config = new Config(session);
                 config.setUpdateMode(Config.UpdateMode.LATEST_CAMERA_IMAGE);
                 config.setAugmentedImageDatabase(AugmentedImageDatabase.deserialize(session, inputStream));
