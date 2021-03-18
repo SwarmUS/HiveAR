@@ -25,14 +25,6 @@ import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
-import com.google.ar.core.AugmentedImage;
-import com.google.ar.core.AugmentedImageDatabase;
-import com.google.ar.core.Config;
-import com.google.ar.core.Session;
-import com.google.ar.core.exceptions.UnavailableApkTooOldException;
-import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
-import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
-import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.WriterException;
@@ -42,21 +34,17 @@ import com.swarmus.hivear.R;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.FileInputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class QRScanFragment extends Fragment {
-    private SurfaceView surfaceView;
     private CameraSource cameraSource;
     private TextView textView;
-    private BarcodeDetector barcodeDetector;
     private Button addToDatabase;
-    private Button download;
-    Bitmap bitmap;
-    JSONObject qrJsonInfo;
+    private JSONObject qrJsonInfo;
+    private BarcodeDetector barcodeDetector;
 
-    private final static float QRCodeWorldWidth = 0.1f; // m
     private final static int QRCodeWidth = 500; // Pixels
     private final static String JSON_ROBOT_NAME = "name";
     private final static String JSON_ROBOT_UID = "uid";
@@ -73,7 +61,7 @@ public class QRScanFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_q_r_scan, container, false);
 
-        surfaceView = view.findViewById(R.id.camera);
+        SurfaceView surfaceView = view.findViewById(R.id.camera);
         textView = view.findViewById(R.id.scan_qr_code_text);
         EditText robotNameET = view.findViewById(R.id.input_name);
         EditText robotUidET = view.findViewById(R.id.input_uid);
@@ -82,7 +70,7 @@ public class QRScanFragment extends Fragment {
         addToDatabase.setVisibility(View.INVISIBLE);
         addToDatabase.setOnClickListener(v -> {
             try{
-                bitmap = textToImageEncode(qrJsonInfo.toString());
+                Bitmap bitmap = textToImageEncode(qrJsonInfo.toString());
                 String robotName = qrJsonInfo.getString(JSON_ROBOT_NAME);
                 int robotUID = qrJsonInfo.getInt(JSON_ROBOT_UID);
                 String fileTitle = robotName + "-" + robotUID;
@@ -95,14 +83,14 @@ public class QRScanFragment extends Fragment {
 
         });
 
-        download = view.findViewById(R.id.download);
+        Button download = view.findViewById(R.id.download);
         download.setOnClickListener(v -> {
             try{
                 JSONObject robotJsonDescription = new JSONObject();
                 robotJsonDescription.accumulate(JSON_ROBOT_NAME, robotNameET.getText());
                 robotJsonDescription.accumulate(JSON_ROBOT_UID, robotUidET.getText());
                 robotJsonDescription.accumulate(JSON_ROBOT_DESCRIPTION, robotDescriptionET.getText());
-                bitmap = textToImageEncode(robotJsonDescription.toString());
+                Bitmap bitmap = textToImageEncode(robotJsonDescription.toString());
                 String fileTitle = robotNameET.getText() + "-" + robotUidET.getText();
                 MediaStore.Images.Media.insertImage(requireActivity().getContentResolver(), bitmap, fileTitle
                         , null);
@@ -141,15 +129,13 @@ public class QRScanFragment extends Fragment {
 
             @Override
             public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
-
+                cameraSource.stop();
             }
         });
 
         barcodeDetector.setProcessor(new Detector.Processor<Barcode>() {
             @Override
-            public void release() {
-
-            }
+            public void release() {}
 
             @Override
             public void receiveDetections(Detector.Detections<Barcode> detections) {
@@ -163,15 +149,14 @@ public class QRScanFragment extends Fragment {
                         {
                             addToDatabase.post(() -> addToDatabase.setVisibility(View.VISIBLE));
                         }
-                        // Set filter for robot
-                        // Save to gallery / database
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 }
                 else {
                     try {
-                        textView.post(() -> textView.setText(getString(R.string.scan_qr_code)));
+                        String defaultText = getString(R.string.scan_qr_code);
+                        textView.post(() -> textView.setText(defaultText));
                         addToDatabase.post(() -> addToDatabase.setVisibility(View.INVISIBLE));
                     }
                     catch(IllegalStateException e) {
@@ -182,6 +167,12 @@ public class QRScanFragment extends Fragment {
         });
 
         return view;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        barcodeDetector.release();
     }
 
     private Bitmap textToImageEncode(String value) throws WriterException {
@@ -211,36 +202,15 @@ public class QRScanFragment extends Fragment {
 
     private boolean addQRToARDatabase(String fileName, Bitmap qrCode)
     {
+        File mydir = requireContext().getDir(getString(R.string.ar_database_dir), Context.MODE_PRIVATE); //Creating an internal dir;
+        File file = new File(mydir, fileName + ".jpg");
         try {
-            AugmentedImageDatabase augmentedImageDatabase;
-            Session arSession = new Session(requireContext());
-            Config config = new Config(arSession);
-            try (FileInputStream inputStream = requireContext().openFileInput(getString(R.string.tags_db))) {
-                augmentedImageDatabase = AugmentedImageDatabase.deserialize(arSession, inputStream);
-                config.setAugmentedImageDatabase(augmentedImageDatabase);
-                arSession.configure(config);
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-                augmentedImageDatabase = new AugmentedImageDatabase(arSession);
-            }
-            // Verify if not already added
-            // Not possible to see if in database right now
-            for(AugmentedImage ai : arSession.getAllTrackables(AugmentedImage.class)){
-                if (ai.getName().equals(fileName)) {
-                    Toast.makeText(requireContext(), "Already in database", Toast.LENGTH_LONG).show();
-                    return false;
-                }
-            }
-            augmentedImageDatabase.addImage(fileName, qrCode, QRCodeWorldWidth);
-
-            try (FileOutputStream fos = requireContext().openFileOutput(
-                    getString(R.string.tags_db), Context.MODE_PRIVATE)) {
-                augmentedImageDatabase.serialize(fos);
-                Toast.makeText(requireContext(), "Added to database", Toast.LENGTH_LONG).show();
-                return true;
-            }
-        } catch (IOException | UnavailableApkTooOldException | UnavailableDeviceNotCompatibleException | UnavailableArcoreNotInstalledException | UnavailableSdkTooOldException e) {
+            FileOutputStream fos = new FileOutputStream(file, false);
+            qrCode.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            fos.flush();
+            fos.close();
+            return true;
+        } catch (java.io.IOException e) {
             e.printStackTrace();
         }
         return false;

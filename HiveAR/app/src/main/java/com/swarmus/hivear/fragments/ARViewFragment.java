@@ -1,5 +1,8 @@
 package com.swarmus.hivear.fragments;
 
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -42,8 +45,11 @@ import com.swarmus.hivear.models.CurrentArRobotViewModel;
 import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.models.RobotListViewModel;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.function.Consumer;
@@ -56,6 +62,7 @@ public class ARViewFragment extends Fragment {
 
     private final static String ARROW_RENDERABLE_NAME = "Arrow Renderable";
     private final static String AR_ROBOT_NAME = "Robot Name";
+    private final static float QRCodeWidth = 0.1f; // m
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -102,22 +109,17 @@ public class ARViewFragment extends Fragment {
                     e.printStackTrace();
                 }
             }
-            try {
-                FileInputStream inputStream = requireContext().openFileInput(getString(R.string.tags_db));
-                Config config = new Config(session);
-                config.setUpdateMode(Config.UpdateMode.LATEST_CAMERA_IMAGE);
-                config.setAugmentedImageDatabase(AugmentedImageDatabase.deserialize(session, inputStream));
-                config.setFocusMode(Config.FocusMode.AUTO);
-                config.setPlaneFindingMode(Config.PlaneFindingMode.HORIZONTAL);
-                config.setLightEstimationMode(Config.LightEstimationMode.DISABLED);
-                session.configure(config);
-                arFragment.getArSceneView().setupSession(session);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> {
-                updateFrame(frameTime);
-            });
+            Config config = new Config(session);
+            config.setUpdateMode(Config.UpdateMode.LATEST_CAMERA_IMAGE);
+            AugmentedImageDatabase augmentedImageDatabase = new AugmentedImageDatabase(session);
+            setupArDatabase(augmentedImageDatabase);
+            config.setAugmentedImageDatabase(augmentedImageDatabase);
+            config.setFocusMode(Config.FocusMode.AUTO);
+            config.setPlaneFindingMode(Config.PlaneFindingMode.HORIZONTAL);
+            config.setLightEstimationMode(Config.LightEstimationMode.DISABLED);
+            session.configure(config);
+            arFragment.getArSceneView().setupSession(session);
+            arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> updateFrame(frameTime));
 
             // Override to show nothing instead of default grey circle underneath selected anchor node
             arFragment.getTransformationSystem().setSelectionVisualizer(new SelectionVisualizer() {
@@ -279,4 +281,22 @@ public class ARViewFragment extends Fragment {
                             return null;
                         });
     }
+
+    private void setupArDatabase(AugmentedImageDatabase augmentedImageDatabase) {
+        File folder = requireContext().getDir(getString(R.string.ar_database_dir), Context.MODE_PRIVATE); //Creating an internal dir;
+        FilenameFilter filter = (f, name) -> name.endsWith(".jpg");
+        String[] filesInFolder = folder.list(filter);
+        for (String filename : filesInFolder) {
+            Bitmap bitmap;
+            File f = new File(folder, filename);
+            try (InputStream inputStream = new FileInputStream(f)) {
+                bitmap = BitmapFactory.decodeStream(inputStream);
+                filename = filename.replace(".jpg", "");
+                augmentedImageDatabase.addImage(filename, bitmap, QRCodeWidth);
+            } catch (IOException e) {
+                Log.e(this.getClass().toString(), "I/O exception loading augmented image bitmap.", e);
+            }
+        }
+    }
+
 }

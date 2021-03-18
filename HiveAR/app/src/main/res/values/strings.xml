@@ -25,4 +25,5 @@
     <string name="add_to_ar_database">Add to AR Database</string>
     <string name="robot_name">Robot Name</string>
     <string name="robot_description">Robot description</string>
+    <string name="ar_database_dir">arDatabase</string>
 </resources>
