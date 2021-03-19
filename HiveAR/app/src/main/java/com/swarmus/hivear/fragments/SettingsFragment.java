@@ -10,6 +10,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -22,6 +23,7 @@ import com.swarmus.hivear.R;
 import com.swarmus.hivear.models.SettingsViewModel;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +47,7 @@ public class SettingsFragment extends Fragment {
 
         folderSelection = view.findViewById(R.id.folder_selection);
         updateAdapter();
+        updateDatabaseContent(view);
         folderSelection.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
@@ -53,6 +56,9 @@ public class SettingsFragment extends Fragment {
 
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+        settingsViewModel.getActiveDatabaseFolder().observe(getViewLifecycleOwner(), s -> {
+            updateDatabaseContent(view);
         });
 
         view.findViewById(R.id.add_folder).setOnClickListener(v -> {
@@ -135,5 +141,18 @@ public class SettingsFragment extends Fragment {
         int currentIndex = databaseFolders.indexOf(settingsViewModel.getActiveDatabaseFolder().getValue());
         folderSelection.setAdapter(foldersAdapter);
         if (currentIndex >= 0) { folderSelection.setSelection(currentIndex); }
+    }
+
+    private void updateDatabaseContent(View view) {
+        TextView databaseContent = view.findViewById(R.id.database_content);
+        File folder = new File(settingsViewModel.getActiveFolderAbsolutePath());
+        FilenameFilter filter = (f, name) -> name.endsWith(".jpg");
+        String[] filesInFolder = folder.list(filter);
+        String tvText = "";
+        for (String file : filesInFolder) {
+            tvText += file;
+            tvText += "\n";
+        }
+        databaseContent.setText(tvText);
     }
 }
