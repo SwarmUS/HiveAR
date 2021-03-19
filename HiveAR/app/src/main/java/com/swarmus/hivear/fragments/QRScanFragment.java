@@ -76,8 +76,10 @@ public class QRScanFragment extends Fragment {
                 int robotUID = qrJsonInfo.getInt(JSON_ROBOT_UID);
                 String fileTitle = robotName + "-" + robotUID;
                 // Add to data base instead of save to device
+                SettingsViewModel settingsViewModel = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
                 String wasAddedMsg = addQRToARDatabase(fileTitle, bitmap) ?
-                    "Saved to AR Database." : "Couldn't save to AR Database.";
+                    "Saved to " + settingsViewModel.getActiveDatabaseFolder().getValue() :
+                        "Couldn't save to AR Database.";
 
                 Toast.makeText(requireContext(), wasAddedMsg, Toast.LENGTH_LONG).show();
 
@@ -99,8 +101,10 @@ public class QRScanFragment extends Fragment {
                 MediaStore.Images.Media.insertImage(requireActivity().getContentResolver(), bitmap,
                         fileTitle, null);
                 // Also automatically save to database
+                SettingsViewModel settingsViewModel = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
                 String wasAddedMsg = addQRToARDatabase(fileTitle, bitmap) ?
-                        "Downloaded and saved to AR Database." : "Couldn't save to AR Database.";
+                        "Downloaded to storage and saved to " + settingsViewModel.getActiveDatabaseFolder().getValue() :
+                        "Couldn't save to AR Database.";
 
                 Toast.makeText(requireContext(), wasAddedMsg, Toast.LENGTH_LONG).show();
 
@@ -212,7 +216,7 @@ public class QRScanFragment extends Fragment {
     private boolean addQRToARDatabase(String fileName, Bitmap qrCode)
     {
         SettingsViewModel settingsViewModel = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
-        File mydir = new File(settingsViewModel.getActiveDatabaseFolder().getValue());
+        File mydir = new File(settingsViewModel.getActiveFolderAbsolutePath());
         File file = new File(mydir, fileName + ".jpg");
         try {
             FileOutputStream fos = new FileOutputStream(file, false);

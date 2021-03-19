@@ -14,12 +14,21 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.NavigationUI;
+
 import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
-import com.swarmus.hivear.R;
 import com.swarmus.hivear.MessageOuterClass;
+import com.swarmus.hivear.R;
 import com.swarmus.hivear.arcore.CameraPermissionHelper;
 import com.swarmus.hivear.commands.GenericCommand;
 import com.swarmus.hivear.commands.MoveByCommand;
@@ -31,18 +40,10 @@ import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.models.RobotListViewModel;
 import com.swarmus.hivear.models.SerialDevice;
 import com.swarmus.hivear.models.SerialSettingsViewModel;
+import com.swarmus.hivear.models.SettingsViewModel;
 import com.swarmus.hivear.models.TCPDevice;
 import com.swarmus.hivear.models.TcpSettingsViewModel;
 import com.swarmus.hivear.utils.ProtoMsgStorer;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.fragment.NavHostFragment;
-import androidx.navigation.ui.NavigationUI;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -77,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.app_layout);
 
+        setupSettings();
         maybeEnableAr(); // Hide AR tab if not possible to do AR
         setUpNavigation();
         setUpCommmunication();
@@ -185,6 +187,16 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.dispatchTouchEvent(ev);
+    }
+
+    private void setupSettings() {
+        SettingsViewModel settingsViewModel = new ViewModelProvider(this).get(SettingsViewModel.class);
+        settingsViewModel.updateDatabaseDirs(this);
+        List<String> allDatabases = settingsViewModel.getAllDatabases().getValue();
+        if (allDatabases != null && !allDatabases.isEmpty()) {
+            // Set first element as default folder
+            settingsViewModel.getActiveDatabaseFolder().setValue(allDatabases.get(0));
+        }
     }
 
     private void maybeEnableAr() {

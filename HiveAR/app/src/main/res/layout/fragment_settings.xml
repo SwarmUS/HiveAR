@@ -30,40 +30,42 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/ar_settings_title" />
 
-    <Button
+    <Spinner
         android:id="@+id/folder_selection"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="15dp"
+        android:background="@android:drawable/btn_dropdown"
+        android:backgroundTint="@color/honeycomb"
+        android:spinnerMode="dropdown"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
         android:layout_marginTop="15dp"
         android:text="@string/string_select_folder"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/add_folder"
         app:layout_constraintTop_toBottomOf="@id/textView" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/add_folder"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="5dp"
+        android:layout_marginEnd="10dp"
         android:contentDescription="@string/add_new_folder"
         android:src="@drawable/new_folder"
         app:layout_constraintBottom_toBottomOf="@+id/folder_selection"
         app:layout_constraintEnd_toStartOf="@id/delete_folder"
-        app:layout_constraintStart_toEndOf="@id/folder_selection"
         app:layout_constraintTop_toTopOf="@id/folder_selection" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/delete_folder"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/delete_folder"
-        android:layout_marginStart="5dp"
-        android:layout_marginEnd="5dp"
+        android:layout_marginEnd="10dp"
+        android:contentDescription="@string/add_new_folder"
         android:src="@drawable/delete"
         app:layout_constraintBottom_toBottomOf="@+id/folder_selection"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/add_folder"
-        app:layout_constraintTop_toTopOf="@id/folder_selection"
-        android:contentDescription="@string/add_new_folder" />
+        app:layout_constraintTop_toTopOf="@id/folder_selection" />
 
     <TextView
         android:layout_width="wrap_content"

@@ -284,7 +284,7 @@ public class ARViewFragment extends Fragment {
 
     private void setupArDatabase(AugmentedImageDatabase augmentedImageDatabase) {
         SettingsViewModel settingsViewModel = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
-        File folder = new File(settingsViewModel.getActiveDatabaseFolder().getValue());
+        File folder = new File(settingsViewModel.getActiveFolderAbsolutePath());
         FilenameFilter filter = (f, name) -> name.endsWith(".jpg");
         String[] filesInFolder = folder.list(filter);
         for (String filename : filesInFolder) {

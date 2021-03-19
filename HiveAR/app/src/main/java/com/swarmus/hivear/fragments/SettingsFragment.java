@@ -1,20 +1,18 @@
 package com.swarmus.hivear.fragments;
 
-import android.content.Context;
-import android.graphics.Color;
+import android.content.DialogInterface;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.ListView;
-import android.widget.PopupWindow;
-import android.widget.TextView;
+import android.widget.EditText;
+import android.widget.Spinner;
+import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavDirections;
@@ -24,20 +22,18 @@ import com.swarmus.hivear.R;
 import com.swarmus.hivear.models.SettingsViewModel;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class SettingsFragment extends Fragment {
 
-    private List<String> databaseFolders;
     private SettingsViewModel settingsViewModel;
-    private File root;
+    private Spinner folderSelection;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        updateDatabaseDirs();
-        // TODO SHOULD INIT AT ACTIVITY FOR AR
         settingsViewModel = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
     }
 
@@ -47,112 +43,38 @@ public class SettingsFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
 
-        Button folderSelection = view.findViewById(R.id.folder_selection);
-        folderSelection.setOnClickListener(v -> {
-            PopupWindow popupFolders = popupFolders();
-            if (popupFolders != null){ popupFolders.showAsDropDown(v, -5, 0); };
+        folderSelection = view.findViewById(R.id.folder_selection);
+        updateAdapter();
+        folderSelection.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                settingsViewModel.getActiveDatabaseFolder().setValue(adapterView.getItemAtPosition(i).toString());
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
         });
-        // TODO SET DEFAULT FOLDER
 
         view.findViewById(R.id.add_folder).setOnClickListener(v -> {
-            // TODO INPUT POPUP
-            File newFolder = new File(root, "test");
-            newFolder.mkdir();
-
-            settingsViewModel.getActiveDatabaseFolder().setValue(newFolder.getAbsolutePath());
-            folderSelection.setText(newFolder.getName());
-            updateDatabaseDirs();
+            addNewFolder();
         });
 
         view.findViewById(R.id.delete_folder).setOnClickListener(v -> {
-            File folderToDelete = new File(root, folderSelection.getText().toString());
-            deleteRecursive(folderToDelete);
-            folderSelection.setText(getString(R.string.select_folder));
-            settingsViewModel.getActiveDatabaseFolder().setValue(null);
+            String currentDatabase = folderSelection.getSelectedItem().toString();
+            if (currentDatabase != null && !currentDatabase.isEmpty()) {
+                File folderToDelete = new File(settingsViewModel.getRootFolder(), currentDatabase);
+                settingsViewModel.getActiveDatabaseFolder().setValue(null);
+                deleteRecursive(folderToDelete);
+                settingsViewModel.updateDatabaseDirs(requireContext()); // Update cache list of folders
+                updateAdapter(); // Update UI from new updated list
+            }
         });
 
         view.findViewById(R.id.scan_qr_code).setOnClickListener(v -> {
             NavDirections action = SettingsFragmentDirections.actionSettingsFragmentToQRScanFragment();
-
             Navigation.findNavController(view).navigate(action);
         });
         return view;
-    }
-
-    private void updateDatabaseDirs() {
-        databaseFolders = new ArrayList<>();
-        root = requireContext().getDir(getString(R.string.ar_database_dir), Context.MODE_PRIVATE);
-        File[] childFolders = root.listFiles();
-        for (File child : childFolders) {
-            if (child.isDirectory()) { databaseFolders.add(child.getName()); }
-        }
-    }
-
-    private PopupWindow popupFolders() {
-
-        updateDatabaseDirs();
-        if (databaseFolders.isEmpty()) { return null; }
-
-        // initialize a pop up window type
-        PopupWindow popupWindow = new PopupWindow(requireContext());
-
-        // the drop down list is a list view
-        ListView listView = new ListView(requireContext());
-
-        // set our adapter and pass our pop up window contents
-        listView.setAdapter(foldersAdapter(databaseFolders.toArray(new String[0])));
-
-        // set the item click listener
-        listView.setOnItemClickListener((adapterView, view, i, l) -> {
-
-            // add some animation when a list item was clicked
-            Animation fadeInAnimation = AnimationUtils.loadAnimation(view.getContext(), android.R.anim.fade_in);
-            fadeInAnimation.setDuration(10);
-            view.startAnimation(fadeInAnimation);
-
-            // dismiss the pop up
-            popupWindow.dismiss();
-
-            // get the text and set it as the button text
-            String selectedItemText = ((TextView) view).getText().toString();
-            settingsViewModel.getActiveDatabaseFolder().setValue(selectedItemText);
-
-        });
-
-        // some other visual settings
-        popupWindow.setFocusable(true);
-        popupWindow.setWidth(250);
-        popupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
-
-        // set the list view as pop up window content
-        popupWindow.setContentView(listView);
-
-        return popupWindow;
-    }
-
-    private ArrayAdapter<String> foldersAdapter(String folders[]) {
-
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(requireContext(), android.R.layout.simple_list_item_1, folders) {
-
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-
-                // setting the ID and text for every items in the list
-                String item = getItem(position);
-
-                // visual settings for the list item
-                TextView listItem = new TextView(requireContext());
-
-                listItem.setText(item);
-                listItem.setTextSize(22);
-                listItem.setPadding(10, 10, 10, 10);
-                listItem.setTextColor(Color.WHITE);
-
-                return listItem;
-            }
-        };
-
-        return adapter;
     }
 
     private void deleteRecursive(File fileOrDirectory) {
@@ -163,5 +85,55 @@ public class SettingsFragment extends Fragment {
             }
         }
         fileOrDirectory.delete();
+    }
+
+    private void addNewFolder() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Add new Database Folder");
+
+        // Set up the input
+        final EditText input = new EditText(requireContext());
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        builder.setView(input);
+
+        // Set up the buttons
+        builder.setPositiveButton("Add", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String foldername = input.getText().toString();
+                File newFolder = new File(settingsViewModel.getRootFolder(), foldername);
+                try {
+                    newFolder.getCanonicalPath();
+                    newFolder.mkdir();
+
+                    settingsViewModel.getActiveDatabaseFolder().setValue(newFolder.getName());
+                    settingsViewModel.updateDatabaseDirs(requireContext());
+                    updateAdapter();
+                }
+                catch (IOException e) {
+                    Toast.makeText(requireContext(), "Folder couldn't be created", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+    }
+
+    private void updateAdapter() {
+        List<String> databaseFolders = settingsViewModel.getAllDatabases().getValue();
+        if (databaseFolders == null || databaseFolders.isEmpty()) { databaseFolders = new ArrayList<>(); }
+        ArrayAdapter<String> foldersAdapter = new ArrayAdapter<>(requireContext(),
+                android.R.layout.simple_list_item_1,
+                databaseFolders.toArray(new String[0]));
+        int currentIndex = databaseFolders.indexOf(settingsViewModel.getActiveDatabaseFolder().getValue());
+        folderSelection.setAdapter(foldersAdapter);
+        if (currentIndex >= 0) { folderSelection.setSelection(currentIndex); }
     }
 }
