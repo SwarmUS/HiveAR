@@ -39,4 +39,22 @@
             app:argType="integer"
             android:defaultValue="0" />
     </fragment>
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.swarmus.hivear.fragments.SettingsFragment"
+        android:label="fragment_settings"
+        tools:layout="@layout/fragment_settings" >
+        <action
+            android:id="@+id/action_settingsFragment_to_QRScanFragment"
+            app:destination="@id/QRScanFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/QRScanFragment"
+        android:name="com.swarmus.hivear.fragments.QRScanFragment"
+        android:label="fragment_q_r_scan"
+        tools:layout="@layout/fragment_q_r_scan" >
+        <action
+            android:id="@+id/action_QRScanFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
+    </fragment>
 </navigation>

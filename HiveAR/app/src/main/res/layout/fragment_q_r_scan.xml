@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".fragments.QRScanFragment">
+
+    <SurfaceView
+        android:id="@+id/camera"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_marginTop="32dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/scan_qr_code"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/camera"
+        android:layout_marginTop="10dp"
+        android:textSize="24sp"
+        android:id="@+id/scan_qr_code_text"
+        android:textAlignment="center"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/add_qr_to_database"
+        android:text="@string/add_to_ar_database"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/scan_qr_code_text"
+        android:layout_marginTop="10dp"/>
+
+    <LinearLayout
+        android:id="@+id/robot_input_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/add_qr_to_database"
+        android:layout_marginTop="24dp">
+
+        <EditText
+            android:id="@+id/input_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="@string/robot_name"
+            android:imeOptions="actionNext"
+            android:singleLine="true"/>
+
+        <EditText
+            android:id="@+id/input_uid"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="@string/uid"
+            android:imeOptions="actionNext"
+            android:singleLine="true"/>
+    </LinearLayout>
+
+    <EditText
+        android:id="@+id/input_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/robot_description"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/robot_input_layout"
+        android:imeOptions="actionDone"
+        android:layout_marginTop="10dp"
+        android:singleLine="true"/>
+
+    <Button
+        android:id="@+id/download"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:text="Download"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/input_description"
+        android:layout_marginTop="10dp" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
