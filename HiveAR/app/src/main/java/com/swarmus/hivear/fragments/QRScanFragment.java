@@ -84,7 +84,7 @@ public class QRScanFragment extends Fragment {
                 Toast.makeText(requireContext(), wasAddedMsg, Toast.LENGTH_LONG).show();
 
             }catch (WriterException | JSONException e){
-                e.printStackTrace();
+                Toast.makeText(requireContext(), "Error while adding QR to database", Toast.LENGTH_LONG).show();
             }
 
         });
@@ -136,9 +136,7 @@ public class QRScanFragment extends Fragment {
             }
 
             @Override
-            public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int i, int i1, int i2) {
-
-            }
+            public void surfaceChanged(@NonNull SurfaceHolder surfaceHolder, int format, int width, int height) {}
 
             @Override
             public void surfaceDestroyed(@NonNull SurfaceHolder surfaceHolder) {
@@ -216,8 +214,8 @@ public class QRScanFragment extends Fragment {
     private boolean addQRToARDatabase(String fileName, Bitmap qrCode)
     {
         SettingsViewModel settingsViewModel = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
-        File mydir = new File(settingsViewModel.getActiveFolderAbsolutePath());
-        File file = new File(mydir, fileName + ".jpg");
+        File activeDatabase = new File(settingsViewModel.getActiveFolderAbsolutePath());
+        File file = new File(activeDatabase, fileName + getString(R.string.jpeg_extension));
         try {
             FileOutputStream fos = new FileOutputStream(file, false);
             qrCode.compress(Bitmap.CompressFormat.JPEG, 100, fos);

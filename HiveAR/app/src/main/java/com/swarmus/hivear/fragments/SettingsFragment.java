@@ -1,6 +1,5 @@
 package com.swarmus.hivear.fragments;
 
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.LayoutInflater;
@@ -95,7 +94,7 @@ public class SettingsFragment extends Fragment {
 
     private void addNewFolder() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Add new Database Folder");
+        builder.setTitle(getString(R.string.add_new_database_folder));
 
         // Set up the input
         final EditText input = new EditText(requireContext());
@@ -104,30 +103,22 @@ public class SettingsFragment extends Fragment {
         builder.setView(input);
 
         // Set up the buttons
-        builder.setPositiveButton("Add", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String foldername = input.getText().toString();
-                File newFolder = new File(settingsViewModel.getRootFolder(), foldername);
-                try {
-                    newFolder.getCanonicalPath();
-                    newFolder.mkdir();
+        builder.setPositiveButton(getString(R.string.add), (dialog, which) -> {
+            String foldername = input.getText().toString();
+            File newFolder = new File(settingsViewModel.getRootFolder(), foldername);
+            try {
+                newFolder.getCanonicalPath();
+                newFolder.mkdir();
 
-                    settingsViewModel.getActiveDatabaseFolder().setValue(newFolder.getName());
-                    settingsViewModel.updateDatabaseDirs(requireContext());
-                    updateAdapter();
-                }
-                catch (IOException e) {
-                    Toast.makeText(requireContext(), "Folder couldn't be created", Toast.LENGTH_LONG).show();
-                }
+                settingsViewModel.getActiveDatabaseFolder().setValue(newFolder.getName());
+                settingsViewModel.updateDatabaseDirs(requireContext());
+                updateAdapter();
+            }
+            catch (IOException e) {
+                Toast.makeText(requireContext(), "Folder couldn't be created", Toast.LENGTH_LONG).show();
             }
         });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
+        builder.setNegativeButton(getString(R.string.cancel), (dialog, which) -> dialog.cancel());
 
         builder.show();
     }
@@ -146,7 +137,7 @@ public class SettingsFragment extends Fragment {
     private void updateDatabaseContent(View view) {
         TextView databaseContent = view.findViewById(R.id.database_content);
         File folder = new File(settingsViewModel.getActiveFolderAbsolutePath());
-        FilenameFilter filter = (f, name) -> name.endsWith(".jpg");
+        FilenameFilter filter = (f, name) -> name.endsWith(getString(R.string.jpeg_extension));
         String[] filesInFolder = folder.list(filter);
         String tvText = "";
         for (String file : filesInFolder) {

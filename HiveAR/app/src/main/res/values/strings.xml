@@ -32,4 +32,8 @@
     <string name="select_folder">Select Folder</string>
     <string name="string_select_folder">Select Folder</string>
     <string name="database_content">Database Content:</string>
+    <string name="jpeg_extension">.jpg</string>
+    <string name="add_new_database_folder">Add new Database Folder</string>
+    <string name="add">Add</string>
+    <string name="cancel">Cancel</string>
 </resources>
