@@ -52,7 +52,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.function.Consumer;
 
 public class ARViewFragment extends Fragment {
 
@@ -284,20 +283,22 @@ public class ARViewFragment extends Fragment {
 
     private void setupArDatabase(AugmentedImageDatabase augmentedImageDatabase) {
         SettingsViewModel settingsViewModel = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
-        File folder = new File(settingsViewModel.getActiveFolderAbsolutePath());
-        FilenameFilter filter = (f, name) -> name.endsWith(".jpg");
-        String[] filesInFolder = folder.list(filter);
-        for (String filename : filesInFolder) {
-            Bitmap bitmap;
-            File f = new File(folder, filename);
-            try (InputStream inputStream = new FileInputStream(f)) {
-                bitmap = BitmapFactory.decodeStream(inputStream);
-                filename = filename.replace(".jpg", "");
-                augmentedImageDatabase.addImage(filename, bitmap, QRCodeWidth);
-            } catch (IOException e) {
-                Log.e(this.getClass().toString(), "I/O exception loading augmented image bitmap.", e);
+        String activeDatabasePath = settingsViewModel.getActiveFolderAbsolutePath();
+        if (activeDatabasePath != null && !activeDatabasePath.isEmpty()) {
+            File folder = new File(activeDatabasePath);
+            FilenameFilter filter = (f, name) -> name.endsWith(".jpg");
+            String[] filesInFolder = folder.list(filter);
+            for (String filename : filesInFolder) {
+                Bitmap bitmap;
+                File f = new File(folder, filename);
+                try (InputStream inputStream = new FileInputStream(f)) {
+                    bitmap = BitmapFactory.decodeStream(inputStream);
+                    filename = filename.replace(".jpg", "");
+                    augmentedImageDatabase.addImage(filename, bitmap, QRCodeWidth);
+                } catch (IOException e) {
+                    Log.e(this.getClass().toString(), "I/O exception loading augmented image bitmap.", e);
+                }
             }
         }
     }
-
 }
