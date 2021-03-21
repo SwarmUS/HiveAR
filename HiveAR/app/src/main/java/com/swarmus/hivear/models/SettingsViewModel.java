@@ -41,7 +41,7 @@ public class SettingsViewModel extends ViewModel {
     }
 
     public String getActiveFolderAbsolutePath() {
-        if (rootFolder == null) { return null; }
+        if (rootFolder == null || getActiveDatabaseFolder().getValue() == null) { return null; }
         File newFile = new File(rootFolder, getActiveDatabaseFolder().getValue());
         return newFile.getAbsolutePath();
     }

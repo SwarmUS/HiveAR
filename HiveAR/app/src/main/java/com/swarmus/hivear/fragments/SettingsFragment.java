@@ -136,14 +136,17 @@ public class SettingsFragment extends Fragment {
 
     private void updateDatabaseContent(View view) {
         TextView databaseContent = view.findViewById(R.id.database_content);
-        File folder = new File(settingsViewModel.getActiveFolderAbsolutePath());
-        FilenameFilter filter = (f, name) -> name.endsWith(getString(R.string.jpeg_extension));
-        String[] filesInFolder = folder.list(filter);
-        String tvText = "";
-        for (String file : filesInFolder) {
-            tvText += file;
-            tvText += "\n";
+        String activeDatabasePath = settingsViewModel.getActiveFolderAbsolutePath();
+        if (activeDatabasePath != null && !activeDatabasePath.isEmpty()) {
+            File folder = new File(activeDatabasePath);
+            FilenameFilter filter = (f, name) -> name.endsWith(getString(R.string.jpeg_extension));
+            String[] filesInFolder = folder.list(filter);
+            String tvText = "";
+            for (String file : filesInFolder) {
+                tvText += file;
+                tvText += "\n";
+            }
+            databaseContent.setText(tvText);
         }
-        databaseContent.setText(tvText);
     }
 }
