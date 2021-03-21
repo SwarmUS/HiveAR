@@ -92,6 +92,12 @@ public class QRScanFragment extends Fragment {
         Button download = view.findViewById(R.id.download);
         download.setOnClickListener(v -> {
             try{
+                String robotName = robotNameET.getText().toString();
+                String robotUid = robotUidET.getText().toString();
+                if ( robotName.isEmpty() || robotUid.isEmpty() ) {
+                    Toast.makeText(requireContext(), "Must have a name and a UID to download.", Toast.LENGTH_LONG).show();
+                    return;
+                }
                 JSONObject robotJsonDescription = new JSONObject();
                 robotJsonDescription.accumulate(JSON_ROBOT_NAME, robotNameET.getText());
                 robotJsonDescription.accumulate(JSON_ROBOT_UID, robotUidET.getText());
