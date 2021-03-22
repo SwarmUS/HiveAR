@@ -9,6 +9,8 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -46,6 +48,8 @@ public class SettingsFragment extends Fragment {
 
         folderSelection = view.findViewById(R.id.folder_selection);
         updateAdapter();
+        TableLayout tableLayout = view.findViewById(R.id.tableLayout);
+        tableLayout.setStretchAllColumns(true);
         updateDatabaseContent(view);
         folderSelection.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -135,18 +139,57 @@ public class SettingsFragment extends Fragment {
     }
 
     private void updateDatabaseContent(View view) {
-        TextView databaseContent = view.findViewById(R.id.database_content);
-        String activeDatabasePath = settingsViewModel.getActiveFolderAbsolutePath();
-        if (activeDatabasePath != null && !activeDatabasePath.isEmpty()) {
-            File folder = new File(activeDatabasePath);
-            FilenameFilter filter = (f, name) -> name.endsWith(getString(R.string.jpeg_extension));
-            String[] filesInFolder = folder.list(filter);
-            String tvText = "";
-            for (String file : filesInFolder) {
-                tvText += file;
-                tvText += "\n";
-            }
-            databaseContent.setText(tvText);
+        TableLayout tableLayout = view.findViewById(R.id.tableLayout);
+        tableLayout.removeAllViews();
+        TableRow headers = getTableHeaderRow();
+        tableLayout.addView(headers, new TableLayout.LayoutParams(
+                TableLayout.LayoutParams.WRAP_CONTENT, TableLayout.LayoutParams.WRAP_CONTENT));
+
+        File folder = new File(settingsViewModel.getActiveFolderAbsolutePath());
+        FilenameFilter filter = (f, name) -> name.endsWith(getString(R.string.jpeg_extension));
+        String[] filesInFolder = folder.list(filter);
+        for (String file : filesInFolder) {
+            file = file.replace(".jpg", "");
+            String robotName = file.split("-")[0];
+            int robotUid = Integer.valueOf(file.split("-")[1]);
+
+            TableRow row = getRobotInfoRow(robotName, robotUid);
+            tableLayout.addView(row, new TableLayout.LayoutParams(
+                    TableLayout.LayoutParams.WRAP_CONTENT, TableLayout.LayoutParams.WRAP_CONTENT));
         }
+    }
+
+    private TableRow getTableHeaderRow() {
+        TextView name = new TextView(requireContext());
+        name.setText(getString(R.string.robot_name));
+        name.setTextSize(16.0f);
+        name.setBackgroundColor(getResources().getColor(R.color.honeycomb));
+        name.setTextColor(getResources().getColor(R.color.design_default_color_on_secondary));
+        TextView uid = new TextView(requireContext());
+        uid.setText(getString(R.string.uid));
+        uid.setTextSize(16.0f);
+        uid.setBackgroundColor(getResources().getColor(R.color.honeycomb));
+        uid.setTextColor(getResources().getColor(R.color.design_default_color_on_secondary));
+
+        TableRow rowHeader = new TableRow(requireContext());
+        rowHeader.setPadding(0, 0, 0, 10);
+
+        rowHeader.addView(name);
+        rowHeader.addView(uid);
+        return rowHeader;
+    }
+
+    private TableRow getRobotInfoRow(String name, int uid) {
+        TextView nameTV = new TextView(requireContext());
+        nameTV.setText(name);
+        TextView uidTV = new TextView(requireContext());
+        uidTV.setText(Integer.toString(uid));
+
+        TableRow row = new TableRow(requireContext());
+        row.setPadding(0, 5, 0, 5);
+
+        row.addView(nameTV);
+        row.addView(uidTV);
+        return row;
     }
 }
