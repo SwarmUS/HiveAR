@@ -220,16 +220,19 @@ public class QRScanFragment extends Fragment {
     private boolean addQRToARDatabase(String fileName, Bitmap qrCode)
     {
         SettingsViewModel settingsViewModel = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
-        File activeDatabase = new File(settingsViewModel.getActiveFolderAbsolutePath());
-        File file = new File(activeDatabase, fileName + getString(R.string.jpeg_extension));
-        try {
-            FileOutputStream fos = new FileOutputStream(file, false);
-            qrCode.compress(Bitmap.CompressFormat.JPEG, 100, fos);
-            fos.flush();
-            fos.close();
-            return true;
-        } catch (java.io.IOException e) {
-            e.printStackTrace();
+        String activeDatabasePath = settingsViewModel.getActiveFolderAbsolutePath();
+        if (activeDatabasePath != null && !activeDatabasePath.isEmpty()) {
+            File activeDatabase = new File(activeDatabasePath);
+            File file = new File(activeDatabase, fileName + getString(R.string.jpeg_extension));
+            try {
+                FileOutputStream fos = new FileOutputStream(file, false);
+                qrCode.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+                fos.flush();
+                fos.close();
+                return true;
+            } catch (java.io.IOException e) {
+                e.printStackTrace();
+            }
         }
         return false;
     }
