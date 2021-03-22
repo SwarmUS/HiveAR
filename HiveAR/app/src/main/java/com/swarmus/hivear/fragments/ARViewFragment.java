@@ -58,6 +58,7 @@ public class ARViewFragment extends Fragment {
     private ArFragment arFragment;
     private HashMap<String, AugmentedImage.TrackingMethod> trackableInfos;
     private ModelRenderable arrowRenderable;
+    private RobotListViewModel robotListViewModel;
 
     private final static String ARROW_RENDERABLE_NAME = "Arrow Renderable";
     private final static String AR_ROBOT_NAME = "Robot Name";
@@ -66,6 +67,8 @@ public class ARViewFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+         robotListViewModel = new ViewModelProvider(requireActivity()).get(RobotListViewModel.class);
 
         ModelRenderable.builder()
                 .setSource(getContext(), R.raw.arrow)
@@ -161,6 +164,16 @@ public class ARViewFragment extends Fragment {
                 if (currentMethod.equals(AugmentedImage.TrackingMethod.FULL_TRACKING)) {
 
                     // Set anchor node
+                    String robotName = augmentedImage.getName().split("-")[0];
+                    int robotUid = Integer.parseInt(augmentedImage.getName().split("-")[1]);
+                    // Don't add AR stuff if robot not registered in swarm
+                    if (robotListViewModel.getRobotFromList(robotUid) == null) {
+                        Toast.makeText(requireContext(),
+                                "Robot " + robotName + "-" + robotUid + " not in current swarm",
+                                Toast.LENGTH_LONG).show();
+                        continue;
+                    }
+
                     NodeParent nodeParent = arFragment.getArSceneView().getScene().findInHierarchy(sceneNode -> sceneNode.getName().equals(augmentedImage.getName()));
 
                     AnchorNode anchorNode = nodeParent == null ? new AnchorNode() : (AnchorNode)nodeParent;
@@ -182,10 +195,10 @@ public class ARViewFragment extends Fragment {
                         node.setLocalRotation(arrowRot);
                         node.setLocalPosition(new Vector3(0f, 0f, -augmentedImage.getExtentZ()/2));
                         node.setParent(anchorNode);
-                        Robot selectedRobot = selectRobotFromAR(node, augmentedImage.getIndex());
+                        Robot selectedRobot = selectRobotFromAR(node, robotName, robotUid);
 
                         node.setOnTouchListener((hitTestResult, motionEvent) -> {
-                            selectRobotFromAR(node, augmentedImage.getIndex());
+                            selectRobotFromAR(node, robotName, robotUid);
                             return false;
                         });
 
@@ -206,9 +219,9 @@ public class ARViewFragment extends Fragment {
         }
     }
 
-    private Robot selectRobotFromAR(TransformableNode node, int uid) {
+    private Robot selectRobotFromAR(TransformableNode node, String robotName, int robotUid) {
         selectVisualNode(node);
-        return selectRobotFromUID(uid);
+        return selectRobotFromUID(robotUid);
     }
 
     private void selectVisualNode(TransformableNode node) {
@@ -231,9 +244,8 @@ public class ARViewFragment extends Fragment {
     }
 
     private Robot selectRobotFromUID(int uid) {
-        RobotListViewModel robotListViewModel = new ViewModelProvider(requireActivity()).get(RobotListViewModel.class);
         // For now, there are no link between uid and images
-        Robot robot = robotListViewModel.getRobotFromList(uid + 1); // For now, uid starts at 1
+        Robot robot = robotListViewModel.getRobotFromList(uid); // For now, uid starts at 1
 
         CurrentArRobotViewModel currentArRobotViewModel = new ViewModelProvider(requireActivity()).get(CurrentArRobotViewModel.class);
         currentArRobotViewModel.getSelectedRobot().setValue(robot);

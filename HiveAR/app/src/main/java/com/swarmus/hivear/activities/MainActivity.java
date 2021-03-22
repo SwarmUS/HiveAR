@@ -377,10 +377,10 @@ public class MainActivity extends AppCompatActivity {
         GenericCommand c1 = new MoveByCommand();
         GenericCommand c2 = new StartSLAMCommand();
 
-        robotList.add(new Robot("Robot1", 1,
+        robotList.add(new Robot("pioneer_0", 0,
                 Arrays.asList(c1.getCommand().getRequest())));
-        robotList.add(new Robot("Robot2", 2));
-        robotList.add(new Robot("Robot3", 3,
+        robotList.add(new Robot("Robot2", 1));
+        robotList.add(new Robot("Robot3", 2,
                 Arrays.asList(c1.getCommand().getRequest(), c2.getCommand().getRequest())));
 
         RobotListViewModel robotListViewModel = new ViewModelProvider(this).get(RobotListViewModel.class);
