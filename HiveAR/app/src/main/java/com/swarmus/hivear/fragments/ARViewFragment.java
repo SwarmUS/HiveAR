@@ -167,7 +167,7 @@ public class ARViewFragment extends Fragment {
                     String robotName = augmentedImage.getName().split("-")[0];
                     int robotUid = Integer.parseInt(augmentedImage.getName().split("-")[1]);
                     // Don't add AR stuff if robot not registered in swarm
-                    if (robotListViewModel.getRobotFromList(robotName, robotUid) == null) {
+                    if (robotListViewModel.getRobotFromList(robotUid) == null) {
                         Toast.makeText(requireContext(),
                                 "Robot " + robotName + "-" + robotUid + " not in current swarm",
                                 Toast.LENGTH_LONG).show();
@@ -221,7 +221,7 @@ public class ARViewFragment extends Fragment {
 
     private Robot selectRobotFromAR(TransformableNode node, String robotName, int robotUid) {
         selectVisualNode(node);
-        return selectRobotFromUID(robotName, robotUid);
+        return selectRobotFromUID(robotUid);
     }
 
     private void selectVisualNode(TransformableNode node) {
@@ -243,9 +243,9 @@ public class ARViewFragment extends Fragment {
         }
     }
 
-    private Robot selectRobotFromUID(String name, int uid) {
+    private Robot selectRobotFromUID(int uid) {
         // For now, there are no link between uid and images
-        Robot robot = robotListViewModel.getRobotFromList(name, uid); // For now, uid starts at 1
+        Robot robot = robotListViewModel.getRobotFromList(uid); // For now, uid starts at 1
 
         CurrentArRobotViewModel currentArRobotViewModel = new ViewModelProvider(requireActivity()).get(CurrentArRobotViewModel.class);
         currentArRobotViewModel.getSelectedRobot().setValue(robot);

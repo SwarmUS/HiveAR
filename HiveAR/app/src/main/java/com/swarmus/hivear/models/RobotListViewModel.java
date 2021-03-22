@@ -14,9 +14,9 @@ public class RobotListViewModel extends ViewModel {
         return robotList;
     }
 
-    public Robot getRobotFromList(@NonNull String name,@NonNull int uid) {
+    public Robot getRobotFromList(@NonNull int uid) {
         for (Robot robot : robotList.getValue()) {
-            if (name.equals(robot.getName()) && robot.getUid() == uid) { return robot; }
+            if (robot.getUid() == uid) { return robot; }
         }
         return null;
     }
