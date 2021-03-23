@@ -20,14 +20,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-
-import static com.swarmus.hivear.utils.CRC.CalculateCRC32;
-import static com.swarmus.hivear.utils.Serialization.bytesToInt16;
-import static com.swarmus.hivear.utils.Serialization.bytesToInt32;
-import static com.swarmus.hivear.utils.Serialization.int16ToBytes;
 
 
 public class SerialDevice extends CommunicationDevice {
@@ -37,11 +31,6 @@ public class SerialDevice extends CommunicationDevice {
     private UsbSerialDevice serial;
 
     private String selectedDeviceName;
-
-    private ByteArrayOutputStream rxByteStream;
-
-    private int rxLength = 0;
-    private int rxCrc = 0;
 
     private PipedInputStream pipedInputStream;
     private PipedOutputStream pipedOutputStream;
@@ -54,15 +43,12 @@ public class SerialDevice extends CommunicationDevice {
     public static final String ACTION_SERIAL_DEVICE_CHANGED = "com.swarmus.hivear.SERIAL_DEVICE_CHANGED";
     public static final String EXTRA_SERIAL_DEVICE_CHANGED = "deviceName";
 
-    private static final int FIXED_HEADER_SIZE = 6;
-
     @Override
     public void init(Context context, ConnectionCallback connectionCallback) {
         this.context = context;
         this.connectionCallback = connectionCallback;
         if (context != null)
         {
-            rxByteStream = new ByteArrayOutputStream();
             uartOutputStream = new ByteArrayOutputStream();
 
             UsbReceiver usbReceiver = new UsbReceiver();
@@ -271,18 +257,6 @@ public class SerialDevice extends CommunicationDevice {
                     + "Protocol: " + iterDevice.getDeviceProtocol() + "\n";
         }
         Log.d(DEVICE_INFO_LOG_TAG, i);
-    }
-
-    private static ByteArrayOutputStream encodeMessage(byte[] payload) throws IOException {
-        byte[] length = int16ToBytes((short) payload.length);
-        byte[] crc = CalculateCRC32(payload);
-
-        ByteArrayOutputStream msg = new ByteArrayOutputStream();
-        msg.write(length);
-        msg.write(crc);
-        msg.write(payload);
-
-        return msg;
     }
 
     private final BroadcastReceiver usbReceiverPermission = new BroadcastReceiver() {
