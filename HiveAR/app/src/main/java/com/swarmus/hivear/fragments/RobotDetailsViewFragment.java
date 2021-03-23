@@ -40,9 +40,7 @@ public class RobotDetailsViewFragment extends Fragment {
             {
                 // Maybe later on, replace List of String by list of Proto Requests for dynamic command UI inflation
                 RobotListViewModel robotListViewModel = new ViewModelProvider(requireActivity()).get(RobotListViewModel.class);
-                Robot robot = robotListViewModel.getRobotFromList(
-                        args.getRobotname(),
-                        args.getUid());
+                Robot robot = robotListViewModel.getRobotFromList(args.getUid());
                 if (robot != null) {
                     RobotCommandsAdapter robotCommandsAdapter =
                             new RobotCommandsAdapter(robot.getCommands());
