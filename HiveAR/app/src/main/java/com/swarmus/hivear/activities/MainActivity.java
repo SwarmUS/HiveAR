@@ -25,6 +25,7 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.swarmus.hivear.MessageOuterClass;
@@ -44,6 +45,7 @@ import com.swarmus.hivear.models.SettingsViewModel;
 import com.swarmus.hivear.models.TCPDevice;
 import com.swarmus.hivear.models.TcpSettingsViewModel;
 import com.swarmus.hivear.utils.ProtoMsgStorer;
+import com.unity3d.player.UnityPlayerActivity;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -77,6 +79,17 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.app_layout);
+
+        //////////////////////// TESTING
+        FloatingActionButton test_unity = findViewById(R.id.test_unity);
+        test_unity.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent unityIntent = new Intent(MainActivity.this, UnityPlayerActivity.class);
+                MainActivity.this.startActivity(unityIntent);
+            }
+        });
+        ///////////////////////
 
         setupSettings();
         maybeEnableAr(); // Hide AR tab if not possible to do AR

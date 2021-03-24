@@ -36,4 +36,6 @@
     <string name="add_new_database_folder">Add new Database Folder</string>
     <string name="add">Add</string>
     <string name="cancel">Cancel</string>
+    <string name="unity_testing">Unity Testing</string>
+    <string name="game_view_content_description">Game view</string> <!--Must keep this line to start unity activity-->
 </resources>

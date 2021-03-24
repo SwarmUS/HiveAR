@@ -3,8 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/HiveAR.iml" filepath="$PROJECT_DIR$/.idea/HiveAR.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/HiveAR.HiveAR.iml" filepath="$PROJECT_DIR$/.idea/modules/HiveAR.HiveAR.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/HiveAR.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/HiveAR.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/unityLibrary-release/HiveAR.unityLibrary-release.iml" filepath="$PROJECT_DIR$/.idea/modules/unityLibrary-release/HiveAR.unityLibrary-release.iml" />
     </modules>
   </component>
 </project>

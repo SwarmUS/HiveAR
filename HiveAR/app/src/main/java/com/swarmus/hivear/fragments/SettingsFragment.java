@@ -145,17 +145,20 @@ public class SettingsFragment extends Fragment {
         tableLayout.addView(headers, new TableLayout.LayoutParams(
                 TableLayout.LayoutParams.WRAP_CONTENT, TableLayout.LayoutParams.WRAP_CONTENT));
 
-        File folder = new File(settingsViewModel.getActiveFolderAbsolutePath());
-        FilenameFilter filter = (f, name) -> name.endsWith(getString(R.string.jpeg_extension));
-        String[] filesInFolder = folder.list(filter);
-        for (String file : filesInFolder) {
-            file = file.replace(".jpg", "");
-            String robotName = file.split("-")[0];
-            int robotUid = Integer.valueOf(file.split("-")[1]);
+        String activeDatabasePath = settingsViewModel.getActiveFolderAbsolutePath();
+        if (activeDatabasePath != null && !activeDatabasePath.isEmpty()) {
+            File folder = new File(activeDatabasePath);
+            FilenameFilter filter = (f, name) -> name.endsWith(getString(R.string.jpeg_extension));
+            String[] filesInFolder = folder.list(filter);
+            for (String file : filesInFolder) {
+                file = file.replace(".jpg", "");
+                String robotName = file.split("-")[0];
+                int robotUid = Integer.valueOf(file.split("-")[1]);
 
-            TableRow row = getRobotInfoRow(robotName, robotUid);
-            tableLayout.addView(row, new TableLayout.LayoutParams(
-                    TableLayout.LayoutParams.WRAP_CONTENT, TableLayout.LayoutParams.WRAP_CONTENT));
+                TableRow row = getRobotInfoRow(robotName, robotUid);
+                tableLayout.addView(row, new TableLayout.LayoutParams(
+                        TableLayout.LayoutParams.WRAP_CONTENT, TableLayout.LayoutParams.WRAP_CONTENT));
+            }
         }
     }
 
