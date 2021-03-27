@@ -353,7 +353,54 @@ public class MainActivity extends AppCompatActivity {
             if (BROADCAST_PROTO_MSG_RECEIVED.equals(action)) {
                 MessageOuterClass.Message msg;
                 while ((msg = receivedMessages.poll()) != null) {
+                    // For logging purposes
                     storeProtoMessage(msg);
+
+                    String msgProceeded = "Proto msg couldn't be used";
+
+                    // TODO execute action after reception of msg
+                    switch (msg.getMessageCase()) {
+                        case REQUEST:
+                            switch (msg.getRequest().getMessageCase()) {
+                                case USER_CALL:
+                                    switch (msg.getRequest().getUserCall().getRequestCase()) {
+                                        case FUNCTIONCALL:
+                                            switch(msg.getRequest().getUserCall().getFunctionCall().getFunctionName()) {
+                                                case "TODO":
+                                                    msgProceeded = "TODO msg proceeded.";
+                                                    break;
+                                            }
+                                            break;
+                                        case REQUEST_NOT_SET:
+                                            break;
+                                    }
+                                    break;
+                                case MESSAGE_NOT_SET:
+                                    break;
+                            }
+                            break;
+                        case RESPONSE:
+                            switch (msg.getResponse().getMessageCase()) {
+                                case USER_CALL:
+                                    switch (msg.getResponse().getUserCall().getResponseCase()) {
+                                        case FUNCTIONCALL:
+                                            break;
+                                        case GENERIC:
+                                            break;
+                                        case RESPONSE_NOT_SET:
+                                            break;
+                                    }
+                                    break;
+                                case GENERIC:
+                                    break;
+                                case MESSAGE_NOT_SET:
+                                    break;
+                            }
+                            break;
+                        case MESSAGE_NOT_SET:
+                            break;
+                    }
+                    Log.i(MainActivity.class.getName(), msgProceeded);
                 }
             }
         }

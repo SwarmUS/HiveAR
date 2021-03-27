@@ -36,4 +36,5 @@
     <string name="add_new_database_folder">Add new Database Folder</string>
     <string name="add">Add</string>
     <string name="cancel">Cancel</string>
+    <string name="update_commands">update commands</string>
 </resources>

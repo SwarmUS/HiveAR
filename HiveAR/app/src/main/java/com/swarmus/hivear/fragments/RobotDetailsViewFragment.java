@@ -12,12 +12,16 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.swarmus.hivear.R;
+import com.swarmus.hivear.activities.MainActivity;
 import com.swarmus.hivear.adapters.RobotCommandsAdapter;
+import com.swarmus.hivear.commands.FetchRobotCommands;
 import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.models.RobotListViewModel;
 
 public class RobotDetailsViewFragment extends Fragment {
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.robot_details_view_fragment, container, false);
@@ -30,10 +34,17 @@ public class RobotDetailsViewFragment extends Fragment {
         if (getArguments() != null) {
             RobotDetailsViewFragmentArgs args = RobotDetailsViewFragmentArgs.fromBundle(getArguments());
 
+            FetchRobotCommands fetchRobotCommands = new FetchRobotCommands(args.getUid());
+
             TextView robotNameTV = view.findViewById(R.id.robot_name);
             robotNameTV.setText(args.getRobotname());
             TextView robotUIDTV = view.findViewById(R.id.robot_uid);
             robotUIDTV.setText(Integer.toString(args.getUid()));
+
+            FloatingActionButton updateCommands = view.findViewById(R.id.updateCommands);
+            updateCommands.setOnClickListener(v -> {
+                ((MainActivity)requireActivity()).sendCommand(fetchRobotCommands);
+            });
 
             RecyclerView recyclerView = view.findViewById(R.id.robotDetailsRecycler);
             if (recyclerView != null)
