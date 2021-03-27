@@ -345,6 +345,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             thread.start();
+            // Send greet to get a swarm agent ID
+            sendGreet();
         }
 
         @Override

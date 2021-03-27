@@ -2,6 +2,7 @@ package com.swarmus.hivear.commands;
 
 import com.swarmus.hivear.MessageOuterClass;
 
+// TODO example, probably not done like that
 public class UpdateSwarmContentCommand extends GenericCommand{
     private static final String UPDATE_SWARM_CONTENT_NAME = "updateSwarmContent";
     @Override
