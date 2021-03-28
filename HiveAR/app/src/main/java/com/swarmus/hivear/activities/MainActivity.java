@@ -33,7 +33,8 @@ import com.swarmus.hivear.arcore.CameraPermissionHelper;
 import com.swarmus.hivear.commands.GenericCommand;
 import com.swarmus.hivear.enums.ConnectionStatus;
 import com.swarmus.hivear.models.CommunicationDevice;
-import com.swarmus.hivear.models.ProtoFunctionCallTemplate;
+import com.swarmus.hivear.models.FunctionTemplate;
+import com.swarmus.hivear.models.FunctionTemplateArgument;
 import com.swarmus.hivear.models.ProtoMsgViewModel;
 import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.models.RobotListViewModel;
@@ -394,10 +395,10 @@ public class MainActivity extends AppCompatActivity {
                                                 functionDescription.getArgumentsDescriptionList();
 
                                         String functionName = functionDescription.getFunctionName();
-                                        ProtoFunctionCallTemplate protoFunctionCallTemplate = new ProtoFunctionCallTemplate(functionName);
-                                        protoFunctionCallTemplate.setArguments(functionArguments);
+                                        FunctionTemplate functionTemplate = new FunctionTemplate(functionName);
+                                        functionTemplate.setArguments(functionArguments);
 
-                                        robot.addCommand(protoFunctionCallTemplate);
+                                        robot.addCommand(functionTemplate);
                                     }
                                     break;
                                 default:
@@ -426,7 +427,16 @@ public class MainActivity extends AppCompatActivity {
         // TODO Retrieve all robots in the swarm
         List<Robot> robotList = new ArrayList<>();
 
-        robotList.add(new Robot("pioneer_0", 0));
+        FunctionTemplate f1 = new FunctionTemplate("Test1");
+        f1.addArgument(new FunctionTemplateArgument("Arg int", String.valueOf(0), Integer.class));
+        FunctionTemplate f2 = new FunctionTemplate("Test2");
+        f2.addArgument(new FunctionTemplateArgument("Arg Float", String.valueOf(0.0f), Float.class));
+
+        Robot robot1 = new Robot("pioneer_0", 0);
+        robot1.addCommand(f1);
+        robot1.addCommand(f2);
+
+        robotList.add(robot1);
         robotList.add(new Robot("Robot2", 1));
         robotList.add(new Robot("Robot3", 2));
 
@@ -456,7 +466,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void sendCommand(@NonNull ProtoFunctionCallTemplate function, int swarmAgentDestination) {
+    public void sendCommand(@NonNull FunctionTemplate function, int swarmAgentDestination) {
         if (swarmAgentInfoViewModel.isAgentInitialized()) {
             currentCommunicationDevice.sendData(function.getProtoMsg(swarmAgentInfoViewModel.getSwarmAgentID().getValue(), swarmAgentDestination));
         }

@@ -5,25 +5,12 @@ import com.swarmus.hivear.MessageOuterClass;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProtoFunctionCallTemplate {
+public class FunctionTemplate {
 
-    public class Argument<T> {
-        private String name;
-        private T value;
-
-        public Argument(String name, T value) {
-            this.name = name;
-            this.value = value;
-        }
-
-        public T getValue() {return value;}
-        public String getName() {return name;}
-    }
-
-    private List<Argument> arguments;
+    private List<FunctionTemplateArgument> arguments;
     private String name;
 
-    public ProtoFunctionCallTemplate(String name) {
+    public FunctionTemplate(String name) {
         this.name = name;
         arguments = new ArrayList<>();
     }
@@ -36,21 +23,25 @@ public class ProtoFunctionCallTemplate {
         this.arguments = arguments;
     }
 
-    public List<Argument> getArguments() {
+    public List<FunctionTemplateArgument> getArguments() {
         return arguments;
     }
 
     public void addArgument(MessageOuterClass.FunctionDescriptionArgument arg) {
         switch (arg.getType()) {
             case INT:
-                arguments.add(new Argument(arg.getArgumentName(), new Integer(0)));
+                arguments.add(new FunctionTemplateArgument(arg.getArgumentName(), String.valueOf(0), Integer.class));
                 break;
             case FLOAT:
-                arguments.add(new Argument(arg.getArgumentName(), new Float(0)));
+                arguments.add(new FunctionTemplateArgument(arg.getArgumentName(), String.valueOf(0), Float.class));
                 break;
             default:
                 break;
         }
+    }
+
+    public void addArgument(FunctionTemplateArgument arg) {
+        arguments.add(arg);
     }
 
     public void setName(String name) {
@@ -65,11 +56,11 @@ public class ProtoFunctionCallTemplate {
         MessageOuterClass.FunctionCallRequest functionCallRequest;
         if (arguments.size() > 0) {
             List<MessageOuterClass.FunctionArgument> functionArguments = new ArrayList<>();
-            for (Argument argument : arguments) {
-                if (argument.getValue() instanceof Integer) {
-                    functionArguments.add(MessageOuterClass.FunctionArgument.newBuilder().setIntArg((int)argument.getValue()).build());
-                } else if (argument.getValue() instanceof Float) {
-                    functionArguments.add(MessageOuterClass.FunctionArgument.newBuilder().setFloatArg((float)argument.getValue()).build());
+            for (FunctionTemplateArgument argument : arguments) {
+                if (argument.getArgumentType().equals(Integer.class)) {
+                    functionArguments.add(MessageOuterClass.FunctionArgument.newBuilder().setIntArg((int)argument.getValueFromType()).build());
+                } else if (argument.getArgumentType().equals(Float.class)) {
+                    functionArguments.add(MessageOuterClass.FunctionArgument.newBuilder().setFloatArg((float)argument.getValueFromType()).build());
                 }
             }
             functionCallRequest = MessageOuterClass.FunctionCallRequest.newBuilder()

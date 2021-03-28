@@ -54,7 +54,7 @@ public class RobotDetailsViewFragment extends Fragment {
                 Robot robot = robotListViewModel.getRobotFromList(args.getUid());
                 if (robot != null) {
                     RobotCommandsAdapter robotCommandsAdapter =
-                            new RobotCommandsAdapter(robot.getUid(), robot.getCommands());
+                            new RobotCommandsAdapter(requireContext(), robot.getUid(), robot.getCommands());
                     recyclerView.setAdapter(robotCommandsAdapter);
                     recyclerView.setHasFixedSize(true);
                 }
