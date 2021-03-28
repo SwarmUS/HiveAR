@@ -10,16 +10,18 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.factories.CommandArgumentViewFactory;
+import com.swarmus.hivear.models.ProtoFunctionCallTemplate;
 
 import java.util.List;
 
 public class RobotCommandsAdapter extends RecyclerView.Adapter<RobotCommandsAdapter.RobotCommandsVH> {
-    final List<MessageOuterClass.Request> commands;
+    private final List<ProtoFunctionCallTemplate> commands;
+    private final int robotSwarmAgentID;
 
-    public RobotCommandsAdapter(List<MessageOuterClass.Request> commands) {
+    public RobotCommandsAdapter(int swarmAgentID, List<ProtoFunctionCallTemplate> commands) {
+        this.robotSwarmAgentID = swarmAgentID;
         this.commands = commands;
     }
 
@@ -33,15 +35,13 @@ public class RobotCommandsAdapter extends RecyclerView.Adapter<RobotCommandsAdap
     @Override
     public void onBindViewHolder(@NonNull RobotCommandsVH holder, int position) {
 
-        MessageOuterClass.FunctionCallRequest function = commands.get(position).getUserCall().getFunctionCall();
-        holder.commandNameTV.setText(function.getFunctionName());
+        ProtoFunctionCallTemplate function = commands.get(position);
+        holder.commandNameTV.setText(function.getName());
         holder.commandSendButton.setOnClickListener(view -> {
-
-            // TODO sendData of proto msg constructed from args present in cardview.
-
+            // TODO send
         });
 
-        for (View argView : CommandArgumentViewFactory.createCommandArgumentViews(holder.itemView, function)) {
+        for (View argView : CommandArgumentViewFactory.createCommandArgumentViews(holder.itemView, function.getArguments())) {
             holder.commandArgumentList.addView(argView);
         }
     }

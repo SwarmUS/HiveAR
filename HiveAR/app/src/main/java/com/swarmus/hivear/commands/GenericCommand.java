@@ -4,5 +4,5 @@ import com.swarmus.hivear.MessageOuterClass;
 
 public abstract class GenericCommand {
     protected MessageOuterClass.Message message;
-    abstract public MessageOuterClass.Message getCommand();
+    abstract public MessageOuterClass.Message getCommand(int swarmAgentID);
 }

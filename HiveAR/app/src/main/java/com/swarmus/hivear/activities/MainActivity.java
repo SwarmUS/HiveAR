@@ -31,10 +31,9 @@ import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.arcore.CameraPermissionHelper;
 import com.swarmus.hivear.commands.GenericCommand;
-import com.swarmus.hivear.commands.MoveByCommand;
-import com.swarmus.hivear.commands.StartSLAMCommand;
 import com.swarmus.hivear.enums.ConnectionStatus;
 import com.swarmus.hivear.models.CommunicationDevice;
+import com.swarmus.hivear.models.ProtoFunctionCallTemplate;
 import com.swarmus.hivear.models.ProtoMsgViewModel;
 import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.models.RobotListViewModel;
@@ -49,7 +48,6 @@ import com.swarmus.hivear.utils.ProtoMsgStorer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -68,6 +66,8 @@ public class MainActivity extends AppCompatActivity {
     private ProtoMsgStorer protoMsgStorer;
     private Queue<MessageOuterClass.Message> receivedMessages;
 
+    private RobotListViewModel robotListViewModel;
+
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final String DEFAULT_IP_ADDRESS = "192.168.0.";
     private static final int DEFAULT_PORT = 12345;
@@ -84,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
         maybeEnableAr(); // Hide AR tab if not possible to do AR
         setUpNavigation();
         setUpCommmunication();
+        robotListViewModel = new ViewModelProvider(this).get(RobotListViewModel.class);
         updateRobots();
     }
 
@@ -381,8 +382,23 @@ public class MainActivity extends AppCompatActivity {
                                     // Create calls to fetch all robot's function
                                     break;
                                 case FUNCTION_DESCRIPTION:
-                                    // TODO
-                                    // Save to robot it's function
+                                    // Fetch robot from swarmAgentID
+                                    Robot robot = robotListViewModel.getRobotFromList(msg.getSourceId());
+                                    if (robot != null) {
+                                        // Save to robot its function
+                                        MessageOuterClass.FunctionDescription functionDescription = msg.getResponse()
+                                                .getUserCall()
+                                                .getFunctionDescription()
+                                                .getFunctionDescription();
+                                        List<MessageOuterClass.FunctionDescriptionArgument> functionArguments =
+                                                functionDescription.getArgumentsDescriptionList();
+
+                                        String functionName = functionDescription.getFunctionName();
+                                        ProtoFunctionCallTemplate protoFunctionCallTemplate = new ProtoFunctionCallTemplate(functionName);
+                                        protoFunctionCallTemplate.setArguments(functionArguments);
+
+                                        robot.addCommand(protoFunctionCallTemplate);
+                                    }
                                     break;
                                 default:
                                     break;
@@ -410,14 +426,9 @@ public class MainActivity extends AppCompatActivity {
         // TODO Retrieve all robots in the swarm
         List<Robot> robotList = new ArrayList<>();
 
-        GenericCommand c1 = new MoveByCommand();
-        GenericCommand c2 = new StartSLAMCommand();
-
-        robotList.add(new Robot("pioneer_0", 0,
-                Arrays.asList(c1.getCommand().getRequest())));
+        robotList.add(new Robot("pioneer_0", 0));
         robotList.add(new Robot("Robot2", 1));
-        robotList.add(new Robot("Robot3", 2,
-                Arrays.asList(c1.getCommand().getRequest(), c2.getCommand().getRequest())));
+        robotList.add(new Robot("Robot3", 2));
 
         RobotListViewModel robotListViewModel = new ViewModelProvider(this).get(RobotListViewModel.class);
         robotListViewModel.getRobotList().setValue(robotList);
@@ -438,7 +449,16 @@ public class MainActivity extends AppCompatActivity {
 
     public void sendCommand(@NonNull GenericCommand command) {
         if (swarmAgentInfoViewModel.isAgentInitialized()) {
-            currentCommunicationDevice.sendData(command.getCommand());
+            currentCommunicationDevice.sendData(command.getCommand(swarmAgentInfoViewModel.getSwarmAgentID().getValue()));
+        }
+        else {
+            Toast.makeText(this, "Swarm Agent not initialized, can't send command.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public void sendCommand(@NonNull ProtoFunctionCallTemplate function, int swarmAgentDestination) {
+        if (swarmAgentInfoViewModel.isAgentInitialized()) {
+            currentCommunicationDevice.sendData(function.getProtoMsg(swarmAgentInfoViewModel.getSwarmAgentID().getValue(), swarmAgentDestination));
         }
         else {
             Toast.makeText(this, "Swarm Agent not initialized, can't send command.", Toast.LENGTH_LONG).show();
