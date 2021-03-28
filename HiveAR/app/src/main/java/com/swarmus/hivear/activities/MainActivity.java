@@ -41,6 +41,7 @@ import com.swarmus.hivear.models.RobotListViewModel;
 import com.swarmus.hivear.models.SerialDevice;
 import com.swarmus.hivear.models.SerialSettingsViewModel;
 import com.swarmus.hivear.models.SettingsViewModel;
+import com.swarmus.hivear.models.SwarmAgentInfoViewModel;
 import com.swarmus.hivear.models.TCPDevice;
 import com.swarmus.hivear.models.TcpSettingsViewModel;
 import com.swarmus.hivear.utils.ProtoMsgStorer;
@@ -62,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
     private CommunicationDevice tcpDevice;
     private CommunicationDevice currentCommunicationDevice;
 
+    private SwarmAgentInfoViewModel swarmAgentInfoViewModel;
     private static final String BROADCAST_PROTO_MSG_RECEIVED = "Proto Message Received";
     private ProtoMsgStorer protoMsgStorer;
     private Queue<MessageOuterClass.Message> receivedMessages;
@@ -238,6 +240,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setUpCommmunication() {
+        swarmAgentInfoViewModel = new ViewModelProvider(this).get(SwarmAgentInfoViewModel.class);
+
         receivedMessages = new LinkedList<>();
         protoMsgStorer = new ProtoMsgStorer(6);
         ProtoMsgViewModel protoMsgViewModel = new ViewModelProvider(this).get(ProtoMsgViewModel.class);
@@ -316,6 +320,10 @@ public class MainActivity extends AppCompatActivity {
         public void onConnect() {
             Log.d(TAG, "New Connection");
             currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.connected);
+
+            // Send greet to get a swarm agent ID
+            sendGreet();
+
             InputStream inputStream = currentCommunicationDevice.getDataStream();
             Intent msgReceivedIntent = new Intent();
             msgReceivedIntent.setAction(BROADCAST_PROTO_MSG_RECEIVED);
@@ -323,8 +331,13 @@ public class MainActivity extends AppCompatActivity {
                 while (inputStream != null) {
                     try {
                         MessageOuterClass.Message msg = MessageOuterClass.Message.parseDelimitedFrom(inputStream);
-                        receivedMessages.add(msg);
-                        sendBroadcast(msgReceivedIntent);
+                        if (swarmAgentInfoViewModel.isAgentInitialized()) {
+                            receivedMessages.add(msg);
+                            sendBroadcast(msgReceivedIntent);
+                        } else if (msg.hasGreeting()){
+                            int agentID = msg.getGreeting().getId();
+                            swarmAgentInfoViewModel.getSwarmAgentID().setValue(agentID);
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                         return;
@@ -338,6 +351,7 @@ public class MainActivity extends AppCompatActivity {
         public void onDisconnect() {
             Log.d(TAG, "End of Connection");
             currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.notConnected);
+            swarmAgentInfoViewModel.getSwarmAgentID().setValue(SwarmAgentInfoViewModel.DEFAULT_SWARM_AGENT_ID);
         }
 
         @Override
@@ -353,7 +367,29 @@ public class MainActivity extends AppCompatActivity {
             if (BROADCAST_PROTO_MSG_RECEIVED.equals(action)) {
                 MessageOuterClass.Message msg;
                 while ((msg = receivedMessages.poll()) != null) {
+                    // For logging purposes
                     storeProtoMessage(msg);
+
+                    String msgProcessed = "Proto msg couldn't be used";
+
+                    // TODO execute action after reception of msg
+                    if (msg.hasResponse()) {
+                        if (msg.getResponse().hasUserCall()) {
+                            switch (msg.getResponse().getUserCall().getResponseCase()) {
+                                case FUNCTION_LIST_LENGTH:
+                                    // TODO
+                                    // Create calls to fetch all robot's function
+                                    break;
+                                case FUNCTION_DESCRIPTION:
+                                    // TODO
+                                    // Save to robot it's function
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+                    Log.i(MainActivity.class.getName(), msgProcessed);
                 }
             }
         }
@@ -401,6 +437,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void sendCommand(@NonNull GenericCommand command) {
-        currentCommunicationDevice.sendData(command.getCommand());
+        if (swarmAgentInfoViewModel.isAgentInitialized()) {
+            currentCommunicationDevice.sendData(command.getCommand());
+        }
+        else {
+            Toast.makeText(this, "Swarm Agent not initialized, can't send command.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void sendGreet() {
+        MessageOuterClass.Greeting greeting = MessageOuterClass.Greeting.newBuilder()
+                .setId(0) // TEMP
+                .build();
+
+        MessageOuterClass.Message msg = MessageOuterClass.Message.newBuilder()
+                .setGreeting(greeting)
+                .build();
+        currentCommunicationDevice.sendData(msg);
     }
 }
