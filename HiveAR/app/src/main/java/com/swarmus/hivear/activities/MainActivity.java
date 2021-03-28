@@ -320,6 +320,10 @@ public class MainActivity extends AppCompatActivity {
         public void onConnect() {
             Log.d(TAG, "New Connection");
             currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.connected);
+
+            // Send greet to get a swarm agent ID
+            sendGreet();
+
             InputStream inputStream = currentCommunicationDevice.getDataStream();
             Intent msgReceivedIntent = new Intent();
             msgReceivedIntent.setAction(BROADCAST_PROTO_MSG_RECEIVED);
@@ -327,8 +331,13 @@ public class MainActivity extends AppCompatActivity {
                 while (inputStream != null) {
                     try {
                         MessageOuterClass.Message msg = MessageOuterClass.Message.parseDelimitedFrom(inputStream);
-                        receivedMessages.add(msg);
-                        sendBroadcast(msgReceivedIntent);
+                        if (swarmAgentInfoViewModel.isAgentInitialized()) {
+                            receivedMessages.add(msg);
+                            sendBroadcast(msgReceivedIntent);
+                        } else if (msg.hasGreeting()){
+                            int agentID = msg.getGreeting().getId();
+                            swarmAgentInfoViewModel.getSwarmAgentID().setValue(agentID);
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                         return;
@@ -336,8 +345,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             thread.start();
-            // Send greet to get a swarm agent ID
-            sendGreet();
         }
 
         @Override
@@ -376,16 +383,6 @@ public class MainActivity extends AppCompatActivity {
                                 case FUNCTION_DESCRIPTION:
                                     // TODO
                                     // Save to robot it's function
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
-                        else if (msg.getResponse().hasHiveApi()) {
-                            switch (msg.getResponse().getHiveApi().getResponseCase()) {
-                                case ID:
-                                    int agentID = msg.getResponse().getHiveApi().getId().getId();
-                                    swarmAgentInfoViewModel.getSwarmAgentID().setValue(agentID);
                                     break;
                                 default:
                                     break;
