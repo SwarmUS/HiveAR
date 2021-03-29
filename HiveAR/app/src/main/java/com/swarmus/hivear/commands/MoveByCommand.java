@@ -44,7 +44,7 @@ public class MoveByCommand extends GenericCommand{
             message = MessageOuterClass.Message.newBuilder()
                     .setRequest(moveByRequest)
                     .setDestinationId(1) // TODO temp for now
-                    .setSourceId(swarmAgentID)
+                    .setSourceId(42)
                     .build();
         }
         return message;
