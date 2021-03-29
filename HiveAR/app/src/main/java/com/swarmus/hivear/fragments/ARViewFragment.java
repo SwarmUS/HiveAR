@@ -77,6 +77,7 @@ public class ARViewFragment extends Fragment {
     private final static String ARROW_RENDERABLE_NAME = "Arrow Renderable";
     private final static String AR_ROBOT_NAME = "Robot Name";
     private final static float QRCodeWidth = 0.1f; // m
+    private final Object frameImageInUseLock = new Object();
 
     private Handler timerHandler;
     private HashMap<Robot,TextView> timerTextViews = new HashMap();
@@ -86,7 +87,6 @@ public class ARViewFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         robotListViewModel = new ViewModelProvider(requireActivity()).get(RobotListViewModel.class);
-
 
         timerHandler = new Handler();
         Runnable timerRunnable =  new Runnable() {
@@ -161,7 +161,8 @@ public class ARViewFragment extends Fragment {
             config.setLightEstimationMode(Config.LightEstimationMode.DISABLED);
             session.configure(config);
             arFragment.getArSceneView().setupSession(session);
-            arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> updateFrame(frameTime));
+            //arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> updateFrame(frameTime));
+            arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> getAprilTags(frameTime));
 
             // Override to show nothing instead of default grey circle underneath selected anchor node
             arFragment.getTransformationSystem().setSelectionVisualizer(new SelectionVisualizer() {
@@ -189,23 +190,6 @@ public class ARViewFragment extends Fragment {
     // More details here: https://medium.com/free-code-camp/how-to-build-an-augmented-images-application-with-arcore-93e417b8579d
     private void updateFrame(FrameTime frameTime) {
         Frame frame = arFragment.getArSceneView().getArFrame();
-
-        try {
-            Image frameImage = frame.acquireCameraImage();
-            byte[] img = toJpegImage(frameImage);
-            int imgWidth = frameImage.getWidth();
-            int imageHeight = frameImage.getHeight();
-            frameImage.close();
-
-            // To april tag recognition here
-            ProcessingThread thread = new ProcessingThread();
-            thread.bytes = img;
-            thread.width = imgWidth;
-            thread.height = imageHeight;
-            thread.run();
-        } catch (NotYetAvailableException e) {
-            e.printStackTrace();
-        }
 
         // Set trackable
         Collection<AugmentedImage> augmentedImages = frame.getUpdatedTrackables(AugmentedImage.class);
@@ -272,6 +256,27 @@ public class ARViewFragment extends Fragment {
                     if (nodeParent != null) { arFragment.getArSceneView().getScene().removeChild((Node)nodeParent); }
                 }
                 Log.i("ARCore", msg);
+            }
+        }
+    }
+
+    private void getAprilTags(FrameTime frameTime) {
+        synchronized (frameImageInUseLock) {
+            try {
+                Image frameImage = arFragment.getArSceneView().getArFrame().acquireCameraImage();
+                byte[] img = toJpegImage(frameImage);
+                int imgWidth = frameImage.getWidth();
+                int imageHeight = frameImage.getHeight();
+                frameImage.close();
+
+                // To april tag recognition here
+                ProcessingThread thread = new ProcessingThread();
+                thread.bytes = img;
+                thread.width = imgWidth;
+                thread.height = imageHeight;
+                thread.run();
+            } catch (NotYetAvailableException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -382,7 +387,10 @@ public class ARViewFragment extends Fragment {
 
         public void run() {
             ArrayList<ApriltagDetection> apriltagDetections = ApriltagNative.apriltag_detect_yuv(bytes, width, height);
-            Log.i("APRILTAG", "Detections: " + String.valueOf(apriltagDetections.size()));
+            if (apriltagDetections.size() > 0) {
+                Log.i("APRILTAG", "Detections: " + String.valueOf(apriltagDetections.size()));
+            }
+            apriltagDetections = null;
         }
     }
 
