@@ -9,7 +9,7 @@ plugins {
 apply plugin: "androidx.navigation.safeargs"
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 28
     dataBinding{
         enabled=true;
     }
@@ -18,7 +18,7 @@ android {
     defaultConfig {
         applicationId "com.swarmus.hivear"
         minSdkVersion 28
-        targetSdkVersion 30
+        targetSdkVersion 28
         versionCode 1
         versionName "1.0"
 

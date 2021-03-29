@@ -31,10 +31,7 @@ public class ProtoMsgStorer {
         String messagesString = "";
         for (MessageOuterClass.Message msg : msgQueue) {
             messagesString += "\nProto Message:\n";
-            messagesString += "DestinationId: " + msg.getDestinationId() + "\n";
-            messagesString += "SourceId: " + msg.getSourceId() + "\n";
-            if (msg.hasRequest()) { messagesString += "Request: " + msg.getRequest() + "\n";}
-            else { messagesString += "Response: " + msg.getResponse() + "\n";}
+            messagesString += msg + "\n";
         }
         return messagesString;
     }

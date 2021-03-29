@@ -323,9 +323,6 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "New Connection");
             currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.connected);
 
-            // Send greet to get a swarm agent ID
-            sendGreet();
-
             InputStream inputStream = currentCommunicationDevice.getDataStream();
             Intent msgReceivedIntent = new Intent();
             msgReceivedIntent.setAction(BROADCAST_PROTO_MSG_RECEIVED);
@@ -333,13 +330,8 @@ public class MainActivity extends AppCompatActivity {
                 while (inputStream != null) {
                     try {
                         MessageOuterClass.Message msg = MessageOuterClass.Message.parseDelimitedFrom(inputStream);
-                        if (swarmAgentInfoViewModel.isAgentInitialized()) {
-                            receivedMessages.add(msg);
-                            sendBroadcast(msgReceivedIntent);
-                        } else if (msg.hasGreeting()){
-                            int agentID = msg.getGreeting().getId();
-                            swarmAgentInfoViewModel.getSwarmAgentID().setValue(agentID);
-                        }
+                        receivedMessages.add(msg);
+                        sendBroadcast(msgReceivedIntent);
                     } catch (IOException e) {
                         e.printStackTrace();
                         return;
@@ -347,6 +339,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             thread.start();
+
+            // Send greet to get a swarm agent ID
+            sendGreet();
         }
 
         @Override
@@ -374,8 +369,7 @@ public class MainActivity extends AppCompatActivity {
 
                     String msgProcessed = "Proto msg couldn't be used";
 
-                    // TODO execute action after reception of msg
-                    if (msg.hasResponse()) {
+                    if (msg.hasResponse() && swarmAgentInfoViewModel.isAgentInitialized()) {
                         if (msg.getResponse().hasUserCall()) {
                             switch (msg.getResponse().getUserCall().getResponseCase()) {
                                 case FUNCTION_LIST_LENGTH:
@@ -405,6 +399,11 @@ public class MainActivity extends AppCompatActivity {
                                     break;
                             }
                         }
+                    } else if(msg.hasGreeting()) {
+                        int agentID = msg.getGreeting().getId();
+                        swarmAgentInfoViewModel.getSwarmAgentID().setValue(agentID);
+                    } else if (!swarmAgentInfoViewModel.isAgentInitialized()){ // If receiving data without initialized, send greet again
+                        sendGreet();
                     }
                     Log.i(MainActivity.class.getName(), msgProcessed);
                 }

@@ -4,7 +4,7 @@ import com.swarmus.hivear.MessageOuterClass;
 
 public class MoveByCommand extends GenericCommand{
 
-    private final static String MOVE_BY_FUNCTION_NAME ="moveBy";
+    private final static String MOVE_BY_FUNCTION_NAME ="moveByBuzz";
     final float x;
     final float y;
 
@@ -31,7 +31,7 @@ public class MoveByCommand extends GenericCommand{
                     .addArguments(argY)
                     .setFunctionName(MOVE_BY_FUNCTION_NAME)
                     .build();
-            MessageOuterClass.UserCallTarget userCallDestination = MessageOuterClass.UserCallTarget.HOST;
+            MessageOuterClass.UserCallTarget userCallDestination = MessageOuterClass.UserCallTarget.BUZZ;
             MessageOuterClass.UserCallTarget userCallSource = MessageOuterClass.UserCallTarget.HOST;
             MessageOuterClass.UserCallRequest userCallRequest = MessageOuterClass.UserCallRequest.newBuilder()
                     .setDestination(userCallDestination)
@@ -44,7 +44,7 @@ public class MoveByCommand extends GenericCommand{
             message = MessageOuterClass.Message.newBuilder()
                     .setRequest(moveByRequest)
                     .setDestinationId(1) // TODO temp for now
-                    .setSourceId(swarmAgentID)
+                    .setSourceId(42) // TODO temp for now
                     .build();
         }
         return message;
