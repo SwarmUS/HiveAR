@@ -2,6 +2,9 @@ package com.swarmus.hivear.fragments;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
+import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -21,7 +24,9 @@ import com.google.ar.core.AugmentedImage;
 import com.google.ar.core.AugmentedImageDatabase;
 import com.google.ar.core.Config;
 import com.google.ar.core.Frame;
+import com.google.ar.core.ImageFormat;
 import com.google.ar.core.Session;
+import com.google.ar.core.exceptions.NotYetAvailableException;
 import com.google.ar.core.exceptions.UnavailableApkTooOldException;
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
@@ -40,20 +45,27 @@ import com.google.ar.sceneform.ux.BaseTransformableNode;
 import com.google.ar.sceneform.ux.SelectionVisualizer;
 import com.google.ar.sceneform.ux.TransformableNode;
 import com.swarmus.hivear.R;
+import com.swarmus.hivear.apriltag.ApriltagDetection;
+import com.swarmus.hivear.apriltag.ApriltagNative;
 import com.swarmus.hivear.ar.CameraFacingNode;
 import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.viewmodels.CurrentArRobotViewModel;
 import com.swarmus.hivear.viewmodels.RobotListViewModel;
 import com.swarmus.hivear.viewmodels.SettingsViewModel;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+
+import static android.graphics.ImageFormat.NV21;
 
 public class ARViewFragment extends Fragment {
 
@@ -75,6 +87,7 @@ public class ARViewFragment extends Fragment {
 
         robotListViewModel = new ViewModelProvider(requireActivity()).get(RobotListViewModel.class);
 
+
         timerHandler = new Handler();
         Runnable timerRunnable =  new Runnable() {
             @Override
@@ -94,6 +107,8 @@ public class ARViewFragment extends Fragment {
             }
         };
         timerHandler.postDelayed(timerRunnable, 1000); // pick every second by evaluating at each 0.5s
+
+        ApriltagNative.apriltag_init("tag36h11", 2, 4, 0, 16);
 
         ModelRenderable.builder()
                 .setSource(getContext(), R.raw.arrow)
@@ -174,6 +189,23 @@ public class ARViewFragment extends Fragment {
     // More details here: https://medium.com/free-code-camp/how-to-build-an-augmented-images-application-with-arcore-93e417b8579d
     private void updateFrame(FrameTime frameTime) {
         Frame frame = arFragment.getArSceneView().getArFrame();
+
+        try {
+            Image frameImage = frame.acquireCameraImage();
+            byte[] img = toJpegImage(frameImage);
+            int imgWidth = frameImage.getWidth();
+            int imageHeight = frameImage.getHeight();
+            frameImage.close();
+
+            // To april tag recognition here
+            ProcessingThread thread = new ProcessingThread();
+            thread.bytes = img;
+            thread.width = imgWidth;
+            thread.height = imageHeight;
+            thread.run();
+        } catch (NotYetAvailableException e) {
+            e.printStackTrace();
+        }
 
         // Set trackable
         Collection<AugmentedImage> augmentedImages = frame.getUpdatedTrackables(AugmentedImage.class);
@@ -341,5 +373,62 @@ public class ARViewFragment extends Fragment {
                 }
             }
         }
+    }
+
+    static class ProcessingThread extends Thread {
+        byte[] bytes;
+        int width;
+        int height;
+
+        public void run() {
+            ArrayList<ApriltagDetection> apriltagDetections = ApriltagNative.apriltag_detect_yuv(bytes, width, height);
+            Log.i("APRILTAG", "Detections: " + String.valueOf(apriltagDetections.size()));
+        }
+    }
+
+    YuvImage toYuvImage(Image image) {
+        if (image.getFormat() != ImageFormat.YUV_420_888) {
+            throw new IllegalArgumentException("Invalid image format");
+        }
+
+        ByteBuffer yBuffer = image.getPlanes()[0].getBuffer();
+        ByteBuffer uBuffer = image.getPlanes()[1].getBuffer();
+        ByteBuffer vBuffer = image.getPlanes()[2].getBuffer();
+
+        int ySize = yBuffer.remaining();
+        int uSize = uBuffer.remaining();
+        int vSize = vBuffer.remaining();
+
+        byte[] nv21 = new byte[ySize + uSize + vSize];
+
+        // U and V are swapped
+        yBuffer.get(nv21, 0, ySize);
+        vBuffer.get(nv21, ySize, vSize);
+        uBuffer.get(nv21, ySize + vSize, uSize);
+
+        int width = image.getWidth();
+        int height = image.getHeight();
+        return new YuvImage(nv21, NV21, width, height, /* strides= */ null);
+    }
+
+    byte[] toJpegImage(Image image) {
+        if (image.getFormat() != ImageFormat.YUV_420_888) {
+            throw new IllegalArgumentException("Invalid image format");
+        }
+
+        YuvImage yuvImage = toYuvImage(image);
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        // Convert to jpeg
+        byte[] jpegImage = null;
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            yuvImage.compressToJpeg(new Rect(0, 0, width, height), 100, out);
+            jpegImage = out.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return jpegImage;
     }
 }
