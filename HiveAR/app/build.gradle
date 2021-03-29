@@ -10,6 +10,9 @@ apply plugin: "androidx.navigation.safeargs"
 
 android {
     compileSdkVersion 30
+    dataBinding{
+        enabled=true;
+    }
     buildToolsVersion "30.0.3"
 
     defaultConfig {

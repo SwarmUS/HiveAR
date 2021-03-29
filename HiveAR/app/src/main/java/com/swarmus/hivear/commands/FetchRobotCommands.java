@@ -10,7 +10,7 @@ public class FetchRobotCommands extends GenericCommand{
     }
 
     @Override
-    public MessageOuterClass.Message getCommand() {
+    public MessageOuterClass.Message getCommand(int swarmAgentID) {
         if (message == null){
             MessageOuterClass.FunctionListLengthRequest functionListLengthRequest =
                     MessageOuterClass.FunctionListLengthRequest.newBuilder().build();
@@ -27,7 +27,7 @@ public class FetchRobotCommands extends GenericCommand{
             message = MessageOuterClass.Message.newBuilder()
                     .setRequest(request)
                     .setDestinationId(uid)
-                    .setSourceId(42) // TODO temp for now
+                    .setSourceId(swarmAgentID)
                     .build();
         }
         return message;

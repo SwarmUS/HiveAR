@@ -1,7 +1,5 @@
 package com.swarmus.hivear.models;
 
-import com.swarmus.hivear.MessageOuterClass;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,13 +7,13 @@ public class Robot {
 
     private String name;
     private int uid;
-    private List<MessageOuterClass.Request> commands;
+    private List<FunctionTemplate> commands;
 
     public Robot(String name, int uid) {
         this(name, uid, new ArrayList<>());
     }
 
-    public Robot(String name, int uid, List<MessageOuterClass.Request> commands) {
+    public Robot(String name, int uid, List<FunctionTemplate> commands) {
         this.name = name;
         this.uid = uid;
         this.commands = commands;
@@ -45,11 +43,15 @@ public class Robot {
         this.name = name;
     }
 
-    public List<MessageOuterClass.Request> getCommands() {
+    public List<FunctionTemplate> getCommands() {
         return commands;
     }
 
-    public void setCommands(List<MessageOuterClass.Request> commands) {
+    public void setCommands(List<FunctionTemplate> commands) {
         this.commands = commands;
     }
+
+    public void addCommand(FunctionTemplate command) {this.commands.add(command);}
+
+    public void clearCommands() {this.commands.clear();}
 }
