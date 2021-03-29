@@ -369,7 +369,6 @@ public class MainActivity extends AppCompatActivity {
 
                     String msgProcessed = "Proto msg couldn't be used";
 
-                    // TODO execute action after reception of msg
                     if (msg.hasResponse() && swarmAgentInfoViewModel.isAgentInitialized()) {
                         if (msg.getResponse().hasUserCall()) {
                             switch (msg.getResponse().getUserCall().getResponseCase()) {
