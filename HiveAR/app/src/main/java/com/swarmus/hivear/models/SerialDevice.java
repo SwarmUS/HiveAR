@@ -79,7 +79,9 @@ public class SerialDevice extends CommunicationDevice {
     public void endConnection() {
         stopListenToSerial();
         setStreamsActive(false);
-        connectionCallback.onDisconnect();
+        if (connectionCallback != null) {
+            connectionCallback.onDisconnect();
+        }
     }
 
     @Override
