@@ -227,6 +227,9 @@ public class SerialDevice extends CommunicationDevice {
 
     final UsbSerialInterface.UsbReadCallback usbReadCallback = (data) -> {
         try {
+            if (pipedOutputStream == null) {
+                endConnection();
+            }
             pipedOutputStream.write(data);
         } catch (IOException e) {
             e.printStackTrace();
