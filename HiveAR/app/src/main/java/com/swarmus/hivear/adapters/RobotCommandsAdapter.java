@@ -5,10 +5,7 @@ import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.databinding.DataBindingUtil;
@@ -22,7 +19,7 @@ import com.swarmus.hivear.models.FunctionTemplateArgument;
 
 import java.util.List;
 
-public class RobotCommandsAdapter extends RecyclerView.Adapter<RobotCommandsAdapter.RobotCommandsVH> {
+public class RobotCommandsAdapter extends RecyclerView.Adapter<CommandsVH> {
     private final List<FunctionTemplate> commands;
     private Context context;
     private int swarmAgentDestinationID;
@@ -36,14 +33,14 @@ public class RobotCommandsAdapter extends RecyclerView.Adapter<RobotCommandsAdap
 
     @NonNull
     @Override
-    public RobotCommandsVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public CommandsVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.command_card, parent, false);
         parentGroup = (ViewGroup)view;
-        return new RobotCommandsVH(view);
+        return new CommandsVH(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RobotCommandsVH holder, int position) {
+    public void onBindViewHolder(@NonNull CommandsVH holder, int position) {
 
         FunctionTemplate function = commands.get(position);
         holder.commandNameTV.setText(function.getName());
@@ -75,19 +72,5 @@ public class RobotCommandsAdapter extends RecyclerView.Adapter<RobotCommandsAdap
     public int getItemCount() {
         if (commands != null) { return commands.size(); }
         else { return 0; }
-    }
-
-    static class RobotCommandsVH extends RecyclerView.ViewHolder {
-        final TextView commandNameTV;
-        final Button commandSendButton;
-        final LinearLayout commandArgumentList;
-
-        public RobotCommandsVH(@NonNull View itemView) {
-            super(itemView);
-
-            commandNameTV = itemView.findViewById(R.id.command_name);
-            commandSendButton = itemView.findViewById(R.id.command_send_button);
-            commandArgumentList = itemView.findViewById(R.id.command_argument_list);
-        }
     }
 }
