@@ -12,7 +12,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.swarmus.hivear.R;
-import com.swarmus.hivear.models.SerialSettingsViewModel;
+import com.swarmus.hivear.viewmodels.SerialSettingsViewModel;
 
 public class UartSettingsFragment extends Fragment {
 

@@ -30,7 +30,7 @@ import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.swarmus.hivear.R;
-import com.swarmus.hivear.models.SettingsViewModel;
+import com.swarmus.hivear.viewmodels.SettingsViewModel;
 
 import org.json.JSONException;
 import org.json.JSONObject;

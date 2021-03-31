@@ -18,7 +18,7 @@ import com.swarmus.hivear.activities.MainActivity;
 import com.swarmus.hivear.adapters.RobotCommandsAdapter;
 import com.swarmus.hivear.commands.FetchRobotCommands;
 import com.swarmus.hivear.models.Robot;
-import com.swarmus.hivear.models.RobotListViewModel;
+import com.swarmus.hivear.viewmodels.RobotListViewModel;
 
 public class RobotDetailsViewFragment extends Fragment {
 

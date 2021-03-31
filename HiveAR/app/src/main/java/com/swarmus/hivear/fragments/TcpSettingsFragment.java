@@ -13,7 +13,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.swarmus.hivear.R;
-import com.swarmus.hivear.models.TcpSettingsViewModel;
+import com.swarmus.hivear.viewmodels.TcpSettingsViewModel;
 
 import java.util.Objects;
 
