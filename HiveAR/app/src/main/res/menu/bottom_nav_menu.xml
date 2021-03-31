@@ -3,8 +3,8 @@
     <item android:id="@+id/connectionViewFragment"
         android:title="@string/connection"
         android:icon="@drawable/ic_action_name"/>
-    <item android:id="@+id/swarmSummaryViewFragment"
-        android:title="@string/swarm_summary"
+    <item android:id="@+id/commandTabs"
+        android:title="@string/commands_menu"
         android:icon="@android:drawable/ic_menu_info_details" />
     <item android:id="@+id/ARViewFragment"
         android:title="@string/ar"

@@ -90,4 +90,9 @@ public class FunctionTemplate {
                 .build();
         return message;
     }
+
+    public MessageOuterClass.Message getBuzzProtoMsg(int swarmAgentID) {
+        // TODO
+        return null;
+    }
 }

@@ -11,22 +11,24 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.swarmus.hivear.R;
-import com.swarmus.hivear.fragments.SwarmSummaryViewFragmentDirections;
+import com.swarmus.hivear.fragments.CommandTabsDirections;
 import com.swarmus.hivear.models.Robot;
 
 import java.util.List;
 
 public class ViewRobotListAdapter extends RecyclerView.Adapter<ViewRobotListAdapter.ViewRobotListVH> {
-    public ViewRobotListAdapter(List<Robot> robotList) {
-        this.robotList = robotList;
-    }
 
-    final List<Robot> robotList;
+    private final List<Robot> robotList;
+
     @NonNull
     @Override
     public ViewRobotListVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.robot_list_row, parent, false);
         return new ViewRobotListVH(view);
+    }
+
+    public ViewRobotListAdapter(List<Robot> robotList) {
+        this.robotList = robotList;
     }
 
     @Override
@@ -37,8 +39,8 @@ public class ViewRobotListAdapter extends RecyclerView.Adapter<ViewRobotListAdap
         holder.robotUIDTV.setText(Integer.toString(robot.getUid()));
         holder.robotInfoLayout.setOnClickListener(view -> {
 
-            SwarmSummaryViewFragmentDirections.ActionSwarmSummaryViewFragmentToRobotDetailsViewFragment action =
-                    SwarmSummaryViewFragmentDirections.actionSwarmSummaryViewFragmentToRobotDetailsViewFragment();
+            CommandTabsDirections.ActionCommandTabsToRobotDetailsViewFragment action =
+                    CommandTabsDirections.actionCommandTabsToRobotDetailsViewFragment();
             String robotName = robot.getName();
             action.setRobotname(robotName == null ? "" : robotName);
             action.setUid(robot.getUid());

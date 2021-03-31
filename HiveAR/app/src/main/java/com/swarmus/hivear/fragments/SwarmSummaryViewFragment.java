@@ -15,6 +15,8 @@ import com.swarmus.hivear.viewmodels.RobotListViewModel;
 
 public class SwarmSummaryViewFragment extends Fragment {
 
+    public static final String TAB_TITLE = "Robots";
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.swarm_summary_view_fragment, container, false);

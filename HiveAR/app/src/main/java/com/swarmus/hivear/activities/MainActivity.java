@@ -44,11 +44,13 @@ import com.swarmus.hivear.viewmodels.RobotListViewModel;
 import com.swarmus.hivear.viewmodels.SerialSettingsViewModel;
 import com.swarmus.hivear.viewmodels.SettingsViewModel;
 import com.swarmus.hivear.viewmodels.SwarmAgentInfoViewModel;
+import com.swarmus.hivear.viewmodels.SwarmInfoViewModel;
 import com.swarmus.hivear.viewmodels.TcpSettingsViewModel;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -441,6 +443,15 @@ public class MainActivity extends AppCompatActivity {
 
         RobotListViewModel robotListViewModel = new ViewModelProvider(this).get(RobotListViewModel.class);
         robotListViewModel.getRobotList().setValue(robotList);
+
+        // TODO retrieve swarm functions
+        FunctionTemplate assemble = new FunctionTemplate("Assemble");
+        assemble.addArgument(new FunctionTemplateArgument("Count", String.valueOf(4), Integer.class));
+        FunctionTemplate hide = new FunctionTemplate("Hide");
+        hide.addArgument(new FunctionTemplateArgument("Time", String.valueOf(10), Integer.class));
+        hide.addArgument(new FunctionTemplateArgument("Speed", String.valueOf(1000.0), Float.class));
+        SwarmInfoViewModel swarmInfoViewModel = new ViewModelProvider(this).get(SwarmInfoViewModel.class);
+        swarmInfoViewModel.getSwarmCommandList().setValue(Arrays.asList(assemble, hide));
     }
 
     public CommunicationDevice getCurrentCommunicationDevice() {return currentCommunicationDevice;}
@@ -458,7 +469,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void sendCommand(@NonNull GenericCommand command) {
         if (swarmAgentInfoViewModel.isAgentInitialized()) {
-            currentCommunicationDevice.sendData(command.getCommand(swarmAgentInfoViewModel.getSwarmAgentID().getValue()));
+            sendProtoMsg(command.getCommand(swarmAgentInfoViewModel.getSwarmAgentID().getValue()));
         }
         else {
             Toast.makeText(this, "Swarm Agent not initialized, can't send command.", Toast.LENGTH_LONG).show();
@@ -467,10 +478,27 @@ public class MainActivity extends AppCompatActivity {
 
     public void sendCommand(@NonNull FunctionTemplate function, int swarmAgentDestination) {
         if (swarmAgentInfoViewModel.isAgentInitialized()) {
-            currentCommunicationDevice.sendData(function.getProtoMsg(swarmAgentInfoViewModel.getSwarmAgentID().getValue(), swarmAgentDestination));
+            sendProtoMsg(function.getProtoMsg(swarmAgentInfoViewModel.getSwarmAgentID().getValue(), swarmAgentDestination));
         }
         else {
             Toast.makeText(this, "Swarm Agent not initialized, can't send command.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public void sendBuzzCommand(@NonNull FunctionTemplate function) {
+        if (swarmAgentInfoViewModel.isAgentInitialized()) {
+            sendProtoMsg(function.getBuzzProtoMsg(swarmAgentInfoViewModel.getSwarmAgentID().getValue()));
+        }
+        else {
+            Toast.makeText(this, "Swarm Agent not initialized, can't send command.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void sendProtoMsg(MessageOuterClass.Message msg) {
+        if (msg != null) {
+            currentCommunicationDevice.sendData(msg);
+        } else {
+            Toast.makeText(this, "Incorrect Command to send.", Toast.LENGTH_LONG).show();
         }
     }
 
