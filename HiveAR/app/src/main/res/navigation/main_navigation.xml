@@ -13,15 +13,10 @@
             app:destination="@id/robotDetailsViewFragment" />
     </fragment>
     <fragment
-        android:id="@+id/swarmSummaryViewFragment"
-        android:name="com.swarmus.hivear.fragments.SwarmSummaryViewFragment"
-        android:label="swarm_summary_view_fragment"
-        tools:layout="@layout/swarm_summary_view_fragment" />
-    <fragment
         android:id="@+id/ARViewFragment"
         android:name="com.swarmus.hivear.fragments.ARViewFragment"
         android:label="ar_view_fragment"
-        tools:layout="@layout/ar_view_fragment" />
+        tools:layout="@layout/fragment_ar_view" />
     <fragment
         android:id="@+id/connectionViewFragment"
         android:name="com.swarmus.hivear.fragments.ConnectionViewFragment"

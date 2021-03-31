@@ -2,8 +2,6 @@ package com.swarmus.hivear.fragments;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
 import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
@@ -15,6 +13,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
@@ -22,10 +21,12 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.google.ar.core.AugmentedImage;
 import com.google.ar.core.AugmentedImageDatabase;
+import com.google.ar.core.CameraIntrinsics;
 import com.google.ar.core.Config;
 import com.google.ar.core.Frame;
-import com.google.ar.core.ImageFormat;
+import com.google.ar.core.Pose;
 import com.google.ar.core.Session;
+import com.google.ar.core.TrackingState;
 import com.google.ar.core.exceptions.NotYetAvailableException;
 import com.google.ar.core.exceptions.UnavailableApkTooOldException;
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
@@ -35,6 +36,7 @@ import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.FrameTime;
 import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.NodeParent;
+import com.google.ar.sceneform.math.Matrix;
 import com.google.ar.sceneform.math.Quaternion;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.Color;
@@ -52,8 +54,9 @@ import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.viewmodels.CurrentArRobotViewModel;
 import com.swarmus.hivear.viewmodels.RobotListViewModel;
 import com.swarmus.hivear.viewmodels.SettingsViewModel;
+import com.swarmus.hivear.utils.ConvertUtil;
+import com.swarmus.hivear.utils.MathUtil;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
@@ -61,17 +64,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
-import static android.graphics.ImageFormat.NV21;
-
 public class ARViewFragment extends Fragment {
+
+    private static final String TAG = ARViewFragment.class.getName();
+    private static final double APRIL_TAG_SCALE_M = 0.2;
 
     private ArFragment arFragment;
     private HashMap<String, AugmentedImage.TrackingMethod> trackableInfos;
     private ModelRenderable arrowRenderable;
+    private ModelRenderable xyzRenderable;
     private RobotListViewModel robotListViewModel;
 
     private final static String ARROW_RENDERABLE_NAME = "Arrow Renderable";
@@ -81,6 +87,8 @@ public class ARViewFragment extends Fragment {
 
     private Handler timerHandler;
     private HashMap<Robot,TextView> timerTextViews = new HashMap();
+    private ProcessingThread aprilTagProcessingThread;
+    private AnchorNode worldNode;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -117,6 +125,20 @@ public class ARViewFragment extends Fragment {
                     arrowRenderable = renderable;
                     arrowRenderable.setShadowCaster(false);
                     arrowRenderable.setShadowReceiver(false);
+                })
+                .exceptionally(
+                        throwable -> {
+                            Log.e(ARViewFragment.class.getName(), "Unable to load Renderable.", throwable);
+                            return null;
+                        });
+
+        ModelRenderable.builder()
+                .setSource(getContext(), R.raw.xyz_arrow)
+                .build()
+                .thenAccept(renderable -> {
+                    xyzRenderable = renderable;
+                    xyzRenderable.setShadowCaster(false);
+                    xyzRenderable.setShadowReceiver(false);
                 })
                 .exceptionally(
                         throwable -> {
@@ -223,10 +245,6 @@ public class ARViewFragment extends Fragment {
                     anchorNode.setParent(arFragment.getArSceneView().getScene());
 
                     if (anchorNode.getChildren().size() == 0) {
-                        // Clean previous renderables before adding new ones
-                        for (Node child : anchorNode.getChildren()) {
-                            if (child instanceof TransformableNode) { anchorNode.removeChild(child); }
-                        }
 
                         // Set renderables
                         TransformableNode node = new TransformableNode(arFragment.getTransformationSystem());
@@ -263,21 +281,58 @@ public class ARViewFragment extends Fragment {
     private void getAprilTags(FrameTime frameTime) {
         synchronized (frameImageInUseLock) {
             try {
-                Image frameImage = arFragment.getArSceneView().getArFrame().acquireCameraImage();
-                byte[] img = toJpegImage(frameImage);
-                int imgWidth = frameImage.getWidth();
-                int imageHeight = frameImage.getHeight();
-                frameImage.close();
+                Frame frame = arFragment.getArSceneView().getArFrame();
+                if (frame != null) {
 
-                // To april tag recognition here
-                ProcessingThread thread = new ProcessingThread();
-                thread.bytes = img;
-                thread.width = imgWidth;
-                thread.height = imageHeight;
-                thread.run();
+                    if (worldNode == null && frame.getCamera().getTrackingState() == TrackingState.TRACKING) {
+                        worldNode = new AnchorNode();
+                        worldNode.setAnchor(arFragment.getArSceneView().getSession().createAnchor(Pose.IDENTITY));
+                        worldNode.setName("World");
+                        worldNode.setRenderable(xyzRenderable);
+                        worldNode.setParent(arFragment.getArSceneView().getScene());
+                        Log.i("ARScene", "World anchor added.");
+                    }
+
+                    addOrUpdateNode(frame.getCamera().getTrackingState(), arFragment.getArSceneView().getScene().getCamera(), "Test", new Vector3(1.0f, 0.0f, 0.0f), new Vector3(0, 0, -1));
+
+                    Image frameImage = frame.acquireCameraImage();
+                    byte[] img = YUV_420_888_to_nv1(frameImage);
+                    int imgWidth = frameImage.getWidth();
+                    int imageHeight = frameImage.getHeight();
+
+                    frameImage.close();
+                    CameraIntrinsics intrinsics = frame.getCamera().getImageIntrinsics();
+
+                    // To april tag recognition here
+                    if (aprilTagProcessingThread == null || !aprilTagProcessingThread.isRunning) {
+                        aprilTagProcessingThread = new ProcessingThread(
+                                img,
+                                imgWidth,
+                                imageHeight,
+                                ConvertUtil.convertToDoubleArray(intrinsics.getPrincipalPoint()),
+                                ConvertUtil.convertToDoubleArray(intrinsics.getFocalLength()),
+                                frame.getCamera().getPose(),
+                                this);
+                        aprilTagProcessingThread.run();
+
+                    }
+                }
             } catch (NotYetAvailableException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private void addOrUpdateNode(TrackingState state, @NonNull Node parent, String nodeName, Vector3 localRotation, Vector3 localTranslation) {
+        if (state == TrackingState.TRACKING && parent.findByName(nodeName) == null) {
+            TransformableNode node = new TransformableNode(arFragment.getTransformationSystem());
+            node.setRenderable(xyzRenderable);
+            node.setName(nodeName);
+            Quaternion rot = Quaternion.axisAngle(localRotation, 0.0f).normalized(); // Align arrow to up vector
+            node.setLocalRotation(rot);
+            node.setLocalPosition(localTranslation);
+            node.setParent(parent);
+            Log.i("ARScene", "Anchor added: " + nodeName);
         }
     }
 
@@ -384,21 +439,69 @@ public class ARViewFragment extends Fragment {
         byte[] bytes;
         int width;
         int height;
+        double[] centralPoint;
+        double[] focalLength;
+        Pose cameraDisplayOrientedPose;
+        boolean isRunning;
+        ARViewFragment parent;
+
+        ProcessingThread(byte[] bytes, int width, int height, double[] focalLength, double[] centralPoint, Pose cameraPose, ARViewFragment parent) {
+            this.bytes = bytes;
+            this.width = width;
+            this.height = height;
+            this.centralPoint = centralPoint;
+            this.focalLength = focalLength;
+            this.cameraDisplayOrientedPose = cameraPose;
+            this.parent = parent;
+            isRunning = false;
+        }
 
         public void run() {
-            ArrayList<ApriltagDetection> apriltagDetections = ApriltagNative.apriltag_detect_yuv(bytes, width, height);
-            if (apriltagDetections.size() > 0) {
-                Log.i("APRILTAG", "Detections: " + String.valueOf(apriltagDetections.size()));
+            isRunning = true;
+            ArrayList<ApriltagDetection> detections = ApriltagNative.apriltag_detect_yuv(bytes, width, height, APRIL_TAG_SCALE_M, centralPoint, focalLength);
+            Frame frame = parent.arFragment.getArSceneView().getArFrame();
+            if (detections.size() > 0) {
+                Log.i(TAG, "Detections: " + detections.size());
+                for (ApriltagDetection detection : detections) {
+                    Log.i(TAG, "Distance" + MathUtil.getNorm(detection.pose_t));
+                    Log.i(TAG, "Pose" + Arrays.toString(detection.pose_r) + "  " + Arrays.toString(detection.pose_t));
+                    Matrix mat = new Matrix(MathUtil.getHomogeneous(ConvertUtil.convertToFloatArray(detection.pose_r), ConvertUtil.convertToFloatArray(detection.pose_t)));
+                    Quaternion q = Quaternion.identity();
+                    mat.extractQuaternion(q);
+                    q.setIdentity();
+                    float[] quat = {q.x, q.y, q.z, q.w};
+                    Pose dPose = new Pose(ConvertUtil.convertToFloatArray(detection.pose_t), quat);
+                    final Pose CAMERA_POSE_FIX =
+                            Pose.makeRotation(0, 0, (float)Math.sqrt(0.5f), (float)Math.sqrt(0.5f)); // ±90° rotation about Z
+                    dPose = dPose.compose(CAMERA_POSE_FIX);
+                    Log.i(TAG, "test Pose" + dPose.inverse().toString());
+
+                    if (frame != null && frame.getCamera().getTrackingState() == TrackingState.TRACKING) {
+                        NodeParent nodeParent = parent.arFragment.getArSceneView().getScene().findInHierarchy(sceneNode -> sceneNode.getName().equals("test"));
+
+                        AnchorNode anchorNode = nodeParent == null ? new AnchorNode() : (AnchorNode)nodeParent;
+                        Session session = parent.arFragment.getArSceneView().getSession();
+
+                        // 90 degrees around z axis
+                        anchorNode.setAnchor(session.createAnchor(dPose));
+                        anchorNode.setName("test");
+                        anchorNode.setParent(parent.arFragment.getArSceneView().getScene());
+                        anchorNode.setRenderable(parent.xyzRenderable);
+
+                    }
+
+                }
             }
-            apriltagDetections = null;
+            isRunning = false;
         }
     }
 
-    YuvImage toYuvImage(Image image) {
-        if (image.getFormat() != ImageFormat.YUV_420_888) {
+    byte[] YUV_420_888_to_nv1(Image image) {
+        if (image.getFormat() != com.google.ar.core.ImageFormat.YUV_420_888) {
             throw new IllegalArgumentException("Invalid image format");
         }
 
+        byte[] nv21;
         ByteBuffer yBuffer = image.getPlanes()[0].getBuffer();
         ByteBuffer uBuffer = image.getPlanes()[1].getBuffer();
         ByteBuffer vBuffer = image.getPlanes()[2].getBuffer();
@@ -407,36 +510,13 @@ public class ARViewFragment extends Fragment {
         int uSize = uBuffer.remaining();
         int vSize = vBuffer.remaining();
 
-        byte[] nv21 = new byte[ySize + uSize + vSize];
+        nv21 = new byte[ySize + uSize + vSize];
 
-        // U and V are swapped
+        //U and V are swapped
         yBuffer.get(nv21, 0, ySize);
         vBuffer.get(nv21, ySize, vSize);
         uBuffer.get(nv21, ySize + vSize, uSize);
 
-        int width = image.getWidth();
-        int height = image.getHeight();
-        return new YuvImage(nv21, NV21, width, height, /* strides= */ null);
-    }
-
-    byte[] toJpegImage(Image image) {
-        if (image.getFormat() != ImageFormat.YUV_420_888) {
-            throw new IllegalArgumentException("Invalid image format");
-        }
-
-        YuvImage yuvImage = toYuvImage(image);
-        int width = image.getWidth();
-        int height = image.getHeight();
-
-        // Convert to jpeg
-        byte[] jpegImage = null;
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            yuvImage.compressToJpeg(new Rect(0, 0, width, height), 100, out);
-            jpegImage = out.toByteArray();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return jpegImage;
+        return nv21;
     }
 }

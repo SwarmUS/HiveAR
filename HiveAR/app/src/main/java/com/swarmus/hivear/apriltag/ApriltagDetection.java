@@ -17,4 +17,9 @@ public class ApriltagDetection {
     // wrap counter-clock wise around the tag.
     // Flattened to [x0 y0 x1 y1 ...] for JNI convenience
     public double[] p = new double[8];
+
+    // Flattened to [x1, x2, x3, y1, y2, y3, z1, z2, z3]
+    public double[] pose_r = new double[9];
+
+    public double[] pose_t = new double[3];
 }

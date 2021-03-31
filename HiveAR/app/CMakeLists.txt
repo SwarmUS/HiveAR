@@ -19,6 +19,7 @@ add_library(# Specifies the name of the library.
             # Provides a relative path to your source file(s).
             src/main/apriltag/apriltag.c
             src/main/apriltag/apriltag_quad_thresh.c
+            src/main/apriltag/apriltag_pose.c
             src/main/apriltag/apriltag_jni.c
             src/main/apriltag/common/g2d.c
             src/main/apriltag/common/getopt.c

@@ -21,5 +21,5 @@ public class ApriltagNative {
     public static native void apriltag_init(String tagFamily, int errorBits, double decimateFactor,
                                             double blurSigma, int nthreads);
 
-    public static native ArrayList<ApriltagDetection> apriltag_detect_yuv(byte[] src, int width, int height);
+    public static native ArrayList<ApriltagDetection> apriltag_detect_yuv(byte[] src, int width, int height, double tagWidth, double[] principalPoint, double[] focalLength);
 }

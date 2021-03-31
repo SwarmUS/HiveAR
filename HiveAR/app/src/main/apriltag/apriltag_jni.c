@@ -4,6 +4,7 @@
 #include <android/log.h>
 
 #include "apriltag.h"
+#include "apriltag_pose.h"
 #include "tag36h11.h"
 #include "tag36h10.h"
 #include "tag36artoolkit.h"
@@ -20,7 +21,7 @@ static struct {
     jmethodID al_constructor, al_add;
     jclass ad_cls;
     jmethodID ad_constructor;
-    jfieldID ad_id_field, ad_hamming_field, ad_c_field, ad_p_field;
+    jfieldID ad_id_field, ad_hamming_field, ad_c_field, ad_p_field, ad_pose_r_field, ad_pose_t_field;
 } state;
 
 JNIEXPORT void JNICALL Java_com_swarmus_hivear_apriltag_ApriltagNative_native_1init
@@ -65,10 +66,14 @@ JNIEXPORT void JNICALL Java_com_swarmus_hivear_apriltag_ApriltagNative_native_1i
     state.ad_hamming_field = (*env)->GetFieldID(env, ad_cls, "hamming", "I");
     state.ad_c_field = (*env)->GetFieldID(env, ad_cls, "c", "[D");
     state.ad_p_field = (*env)->GetFieldID(env, ad_cls, "p", "[D");
+    state.ad_pose_r_field = (*env)->GetFieldID(env, ad_cls, "pose_r", "[D");
+    state.ad_pose_t_field = (*env)->GetFieldID(env, ad_cls, "pose_t", "[D");
     if (!state.ad_id_field ||
             !state.ad_hamming_field ||
             !state.ad_c_field ||
-            !state.ad_p_field) {
+            !state.ad_p_field ||
+            !state.ad_pose_r_field ||
+            !state.ad_pose_t_field) {
         __android_log_write(ANDROID_LOG_ERROR, "apriltag_jni",
                             "couldn't find ApriltagDetection fields");
         return;
@@ -89,7 +94,7 @@ JNIEXPORT void JNICALL Java_com_swarmus_hivear_apriltag_ApriltagNative_yuv_1to_1
 
     jbyte *src = (*env)->GetByteArrayElements(env, _src, NULL);
     jint *dst = NULL;
-    AndroidBitmap_lockPixels(env, _dst, &dst);
+    AndroidBitmap_lockPixels(env, _dst, (void **) &dst);
 
     if (!dst) {
         __android_log_write(ANDROID_LOG_ERROR, "apriltag_jni",
@@ -200,7 +205,7 @@ JNIEXPORT void JNICALL Java_com_swarmus_hivear_apriltag_ApriltagNative_apriltag_
  * Signature: ([BII)Ljava/util/ArrayList;
  */
 JNIEXPORT jobject JNICALL Java_com_swarmus_hivear_apriltag_ApriltagNative_apriltag_1detect_1yuv
-        (JNIEnv *env, jclass cls, jbyteArray _buf, jint width, jint height) {
+        (JNIEnv *env, jclass cls, jbyteArray _buf, jint width, jint height, jdouble tagWidth, jdoubleArray principalPoint, jdoubleArray focalLength) {
     // If not initialized, init with default settings
     if (!state.td) {
         state.tf = tag36h11_create();
@@ -216,6 +221,9 @@ JNIEXPORT jobject JNICALL Java_com_swarmus_hivear_apriltag_ApriltagNative_aprilt
     // Use the luma channel (the first width*height elements)
     // as grayscale input image
     jbyte *buf = (*env)->GetByteArrayElements(env, _buf, NULL);
+
+    double *cPoint = (*env)->GetDoubleArrayElements(env, principalPoint ,NULL);
+    double *fLength = (*env)->GetDoubleArrayElements(env, focalLength ,NULL);
     image_u8_t im = {
             .buf = (uint8_t*)buf,
             .height = height,
@@ -231,6 +239,22 @@ JNIEXPORT jobject JNICALL Java_com_swarmus_hivear_apriltag_ApriltagNative_aprilt
         apriltag_detection_t *det;
         zarray_get(detections, i, &det);
 
+        apriltag_detection_info_t detectionInfo = {
+                .det = det,
+                .tagsize = tagWidth,
+                .fx = ((double*)fLength)[0],
+                .fy = ((double*)fLength)[1],
+                .cx = ((double*)cPoint)[0],
+                .cy = ((double*)cPoint)[1]
+        };
+
+        apriltag_pose_t pose = {
+                .R = matd_identity(3),
+                .t = matd_create(3, 1)
+        };
+
+        estimate_pose_for_tag_homography(&detectionInfo, &pose);
+
         // ad = new ApriltagDetection();
         jobject ad = (*env)->NewObject(env, state.ad_cls, state.ad_constructor);
         (*env)->SetIntField(env, ad, state.ad_id_field, det->id);
@@ -239,6 +263,10 @@ JNIEXPORT jobject JNICALL Java_com_swarmus_hivear_apriltag_ApriltagNative_aprilt
         (*env)->SetDoubleArrayRegion(env, ad_c, 0, 2, det->c);
         jdoubleArray ad_p = (*env)->GetObjectField(env, ad, state.ad_p_field);
         (*env)->SetDoubleArrayRegion(env, ad_p, 0, 8, (double*)det->p);
+        jdoubleArray ad_pose_r = (*env)->GetObjectField(env, ad, state.ad_pose_r_field);
+        (*env)->SetDoubleArrayRegion(env, ad_pose_r, 0, 9, pose.R->data);
+        jdoubleArray ad_pose_t = (*env)->GetObjectField(env, ad, state.ad_pose_t_field);
+        (*env)->SetDoubleArrayRegion(env, ad_pose_t, 0, 3, pose.t->data);
 
         // al.add(ad);
         (*env)->CallBooleanMethod(env, al, state.al_add, ad);
@@ -247,9 +275,13 @@ JNIEXPORT jobject JNICALL Java_com_swarmus_hivear_apriltag_ApriltagNative_aprilt
         (*env)->DeleteLocalRef(env, ad);
         (*env)->DeleteLocalRef(env, ad_c);
         (*env)->DeleteLocalRef(env, ad_p);
+        (*env)->DeleteLocalRef(env, ad_pose_r);
+        (*env)->DeleteLocalRef(env, ad_pose_t);
     }
 
     // Cleanup
+    (*env)->ReleaseDoubleArrayElements(env,principalPoint,cPoint,0);
+    (*env)->ReleaseDoubleArrayElements(env,focalLength,fLength,0);
     apriltag_detections_destroy(detections);
 
     return al;

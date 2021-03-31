@@ -6,7 +6,7 @@
     <item android:id="@+id/commandTabs"
         android:title="@string/commands_menu"
         android:icon="@android:drawable/ic_menu_info_details" />
-    <item android:id="@+id/ARViewFragment"
+    <item android:id="@+id/ArRendererFragment"
         android:title="@string/ar"
         android:icon="@android:drawable/ic_menu_camera"/>
     <item

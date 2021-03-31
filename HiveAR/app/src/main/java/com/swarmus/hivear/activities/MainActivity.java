@@ -30,7 +30,7 @@ import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.R;
-import com.swarmus.hivear.arcore.CameraPermissionHelper;
+import com.swarmus.hivear.arcore.helpers.CameraPermissionHelper;
 import com.swarmus.hivear.commands.FetchRobotCommands;
 import com.swarmus.hivear.commands.GenericCommand;
 import com.swarmus.hivear.enums.ConnectionStatus;
@@ -234,7 +234,7 @@ public class MainActivity extends AppCompatActivity {
         if (!availability.isSupported()) {
             bottomNavigationView = findViewById(R.id.bottom_nav_view);
             // Show or not the AR view
-            bottomNavigationView.getMenu().removeItem(R.id.ARViewFragment);
+            bottomNavigationView.getMenu().removeItem(R.id.ArRendererFragment);
         }
     }
 
