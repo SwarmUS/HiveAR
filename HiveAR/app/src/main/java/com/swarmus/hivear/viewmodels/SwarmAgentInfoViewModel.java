@@ -1,4 +1,4 @@
-package com.swarmus.hivear.models;
+package com.swarmus.hivear.viewmodels;
 
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;

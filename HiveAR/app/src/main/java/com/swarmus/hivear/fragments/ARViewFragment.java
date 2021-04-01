@@ -40,10 +40,10 @@ import com.google.ar.sceneform.ux.SelectionVisualizer;
 import com.google.ar.sceneform.ux.TransformableNode;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.ar.CameraFacingNode;
-import com.swarmus.hivear.models.CurrentArRobotViewModel;
 import com.swarmus.hivear.models.Robot;
-import com.swarmus.hivear.models.RobotListViewModel;
-import com.swarmus.hivear.models.SettingsViewModel;
+import com.swarmus.hivear.viewmodels.CurrentArRobotViewModel;
+import com.swarmus.hivear.viewmodels.RobotListViewModel;
+import com.swarmus.hivear.viewmodels.SettingsViewModel;
 
 import java.io.File;
 import java.io.FileInputStream;

@@ -21,9 +21,9 @@ import com.swarmus.hivear.R;
 import com.swarmus.hivear.activities.MainActivity;
 import com.swarmus.hivear.commands.MoveByCommand;
 import com.swarmus.hivear.models.CommunicationDevice;
-import com.swarmus.hivear.models.ProtoMsgViewModel;
 import com.swarmus.hivear.models.SerialDevice;
 import com.swarmus.hivear.models.TCPDevice;
+import com.swarmus.hivear.viewmodels.ProtoMsgViewModel;
 
 public class ConnectionViewFragment extends Fragment {
     private MoveByCommand upCommand;

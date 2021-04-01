@@ -1,7 +1,9 @@
-package com.swarmus.hivear.models;
+package com.swarmus.hivear.viewmodels;
 
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+
+import com.swarmus.hivear.models.Robot;
 
 public class CurrentArRobotViewModel extends ViewModel {
     MutableLiveData<Robot> selectedRobot;

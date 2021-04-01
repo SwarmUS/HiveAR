@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.adapters.ViewRobotListAdapter;
-import com.swarmus.hivear.models.RobotListViewModel;
+import com.swarmus.hivear.viewmodels.RobotListViewModel;
 
 public class SwarmSummaryViewFragment extends Fragment {
 

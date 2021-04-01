@@ -1,4 +1,4 @@
-package com.swarmus.hivear.models;
+package com.swarmus.hivear.viewmodels;
 
 import android.content.Context;
 

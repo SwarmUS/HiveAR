@@ -21,7 +21,7 @@ import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
 
 import com.swarmus.hivear.R;
-import com.swarmus.hivear.models.SettingsViewModel;
+import com.swarmus.hivear.viewmodels.SettingsViewModel;
 
 import java.io.File;
 import java.io.FilenameFilter;
