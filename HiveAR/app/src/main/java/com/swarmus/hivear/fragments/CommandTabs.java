@@ -33,7 +33,8 @@ public class CommandTabs extends Fragment {
 
         CommandViewPagerAdapter commandViewPagerAdapter = new CommandViewPagerAdapter(getChildFragmentManager());
         commandViewPagerAdapter.addFragment(new SwarmSummaryViewFragment(), SwarmSummaryViewFragment.TAB_TITLE);
-        commandViewPagerAdapter.addFragment(new SwarmCommands(), SwarmCommands.TAB_TITLE);
+        commandViewPagerAdapter.addFragment(new BroadcastCommands(), BroadcastCommands.TAB_TITLE);
+        commandViewPagerAdapter.addFragment(new LocalBuzzCommands(), LocalBuzzCommands.TAB_TITLE);
 
         viewPager.setAdapter(commandViewPagerAdapter);
         tabLayout.setupWithViewPager(viewPager);

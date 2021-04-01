@@ -7,7 +7,7 @@ import com.swarmus.hivear.models.FunctionTemplate;
 
 import java.util.List;
 
-public class SwarmInfoViewModel extends ViewModel {
+public class BroadcastInfoViewModel extends ViewModel {
     private MutableLiveData<List<FunctionTemplate>> swarmCommandList;
 
     public MutableLiveData<List<FunctionTemplate>> getSwarmCommandList() {

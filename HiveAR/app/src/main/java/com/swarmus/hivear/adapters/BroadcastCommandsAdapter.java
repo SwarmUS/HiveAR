@@ -19,12 +19,12 @@ import com.swarmus.hivear.models.FunctionTemplateArgument;
 
 import java.util.List;
 
-public class SwarmCommandsAdapter extends RecyclerView.Adapter<CommandsVH>{
+public class BroadcastCommandsAdapter extends RecyclerView.Adapter<CommandsVH>{
     private final List<FunctionTemplate> commands;
-    private Context context;
+    private final Context context;
     private ViewGroup parentGroup;
 
-    public SwarmCommandsAdapter(@NonNull Context context, List<FunctionTemplate> commands) {
+    public BroadcastCommandsAdapter(@NonNull Context context, List<FunctionTemplate> commands) {
         this.context = context;
         this.commands = commands;
     }

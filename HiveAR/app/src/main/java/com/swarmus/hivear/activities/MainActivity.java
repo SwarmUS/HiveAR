@@ -44,7 +44,6 @@ import com.swarmus.hivear.viewmodels.RobotListViewModel;
 import com.swarmus.hivear.viewmodels.SerialSettingsViewModel;
 import com.swarmus.hivear.viewmodels.SettingsViewModel;
 import com.swarmus.hivear.viewmodels.SwarmAgentInfoViewModel;
-import com.swarmus.hivear.viewmodels.SwarmInfoViewModel;
 import com.swarmus.hivear.viewmodels.TcpSettingsViewModel;
 
 import java.io.IOException;
@@ -389,9 +388,11 @@ public class MainActivity extends AppCompatActivity {
                                                 .getFunctionDescription();
                                         List<MessageOuterClass.FunctionDescriptionArgument> functionArguments =
                                                 functionDescription.getArgumentsDescriptionList();
+                                        boolean isBuzz =
+                                                msg.getResponse().getUserCall().getDestinationValue() == MessageOuterClass.UserCallTarget.BUZZ_VALUE;
 
                                         String functionName = functionDescription.getFunctionName();
-                                        FunctionTemplate functionTemplate = new FunctionTemplate(functionName);
+                                        FunctionTemplate functionTemplate = new FunctionTemplate(functionName, isBuzz);
                                         functionTemplate.setArguments(functionArguments);
 
                                         robot.addCommand(functionTemplate);
@@ -428,9 +429,9 @@ public class MainActivity extends AppCompatActivity {
         // TODO Retrieve all robots in the swarm
         List<Robot> robotList = new ArrayList<>();
 
-        FunctionTemplate f1 = new FunctionTemplate("Test1");
+        FunctionTemplate f1 = new FunctionTemplate("Test1", false);
         f1.addArgument(new FunctionTemplateArgument("Arg int", String.valueOf(0), Integer.class));
-        FunctionTemplate f2 = new FunctionTemplate("Test2");
+        FunctionTemplate f2 = new FunctionTemplate("Test2", true);
         f2.addArgument(new FunctionTemplateArgument("Arg Float", String.valueOf(0.0f), Float.class));
 
         Robot robot1 = new Robot("pioneer_0", 0);
@@ -445,13 +446,13 @@ public class MainActivity extends AppCompatActivity {
         robotListViewModel.getRobotList().setValue(robotList);
 
         // TODO retrieve swarm functions
-        FunctionTemplate assemble = new FunctionTemplate("Assemble");
+        FunctionTemplate assemble = new FunctionTemplate("Assemble", true);
         assemble.addArgument(new FunctionTemplateArgument("Count", String.valueOf(4), Integer.class));
-        FunctionTemplate hide = new FunctionTemplate("Hide");
+        FunctionTemplate hide = new FunctionTemplate("Hide", true);
         hide.addArgument(new FunctionTemplateArgument("Time", String.valueOf(10), Integer.class));
         hide.addArgument(new FunctionTemplateArgument("Speed", String.valueOf(1000.0), Float.class));
-        SwarmInfoViewModel swarmInfoViewModel = new ViewModelProvider(this).get(SwarmInfoViewModel.class);
-        swarmInfoViewModel.getSwarmCommandList().setValue(Arrays.asList(assemble, hide));
+        SwarmAgentInfoViewModel swarmAgentInfoViewModel = new ViewModelProvider(this).get(SwarmAgentInfoViewModel.class);
+        swarmAgentInfoViewModel.getCommands().setValue(Arrays.asList(assemble, hide));
     }
 
     public CommunicationDevice getCurrentCommunicationDevice() {return currentCommunicationDevice;}
