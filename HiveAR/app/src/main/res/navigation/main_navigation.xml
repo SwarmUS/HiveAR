@@ -2,16 +2,21 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    app:startDestination="@id/swarmSummaryViewFragment">
+    app:startDestination="@id/commandTabs">
+    <fragment
+        android:id="@+id/commandTabs"
+        android:name="com.swarmus.hivear.fragments.CommandTabs"
+        android:label="fragment_command_tabs"
+        tools:layout="@layout/fragment_command_tabs">
+        <action
+            android:id="@+id/action_commandTabs_to_robotDetailsViewFragment"
+            app:destination="@id/robotDetailsViewFragment" />
+    </fragment>
     <fragment
         android:id="@+id/swarmSummaryViewFragment"
         android:name="com.swarmus.hivear.fragments.SwarmSummaryViewFragment"
         android:label="swarm_summary_view_fragment"
-        tools:layout="@layout/swarm_summary_view_fragment" >
-        <action
-            android:id="@+id/action_swarmSummaryViewFragment_to_robotDetailsViewFragment"
-            app:destination="@id/robotDetailsViewFragment" />
-    </fragment>
+        tools:layout="@layout/swarm_summary_view_fragment" />
     <fragment
         android:id="@+id/ARViewFragment"
         android:name="com.swarmus.hivear.fragments.ARViewFragment"
@@ -27,9 +32,6 @@
         android:name="com.swarmus.hivear.fragments.RobotDetailsViewFragment"
         android:label="robot_details_view_fragment"
         tools:layout="@layout/robot_details_view_fragment" >
-        <action
-            android:id="@+id/action_robotDetailsViewFragment_to_swarmSummaryViewFragment"
-            app:destination="@id/swarmSummaryViewFragment" />
         <argument
             android:name="robotname"
             app:argType="string"
@@ -38,6 +40,9 @@
             android:name="uid"
             app:argType="integer"
             android:defaultValue="0" />
+        <action
+            android:id="@+id/action_robotDetailsViewFragment_to_commandTabs"
+            app:destination="@id/commandTabs" />
     </fragment>
     <fragment
         android:id="@+id/settingsFragment"

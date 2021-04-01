@@ -37,4 +37,5 @@
     <string name="add">Add</string>
     <string name="cancel">Cancel</string>
     <string name="update_commands">update commands</string>
+    <string name="commands_menu">Commands</string>
 </resources>

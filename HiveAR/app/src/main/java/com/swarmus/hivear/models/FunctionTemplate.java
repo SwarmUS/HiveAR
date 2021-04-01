@@ -9,10 +9,12 @@ public class FunctionTemplate {
 
     private List<FunctionTemplateArgument> arguments;
     private String name;
+    private boolean isBuzzFunction;
 
-    public FunctionTemplate(String name) {
+    public FunctionTemplate(String name, boolean isBuzz) {
         this.name = name;
         arguments = new ArrayList<>();
+        this.isBuzzFunction = isBuzz;
     }
 
     public void setArguments(List<MessageOuterClass.FunctionDescriptionArgument> protoArgs) {
@@ -20,7 +22,6 @@ public class FunctionTemplate {
         for (MessageOuterClass.FunctionDescriptionArgument arg : protoArgs) {
             addArgument(arg);
         }
-        this.arguments = arguments;
     }
 
     public List<FunctionTemplateArgument> getArguments() {
@@ -73,7 +74,8 @@ public class FunctionTemplate {
                 .build();
         }
 
-        MessageOuterClass.UserCallTarget userCallDestination = MessageOuterClass.UserCallTarget.HOST;
+        MessageOuterClass.UserCallTarget userCallDestination = isBuzzFunction ?
+                MessageOuterClass.UserCallTarget.BUZZ : MessageOuterClass.UserCallTarget.HOST;
         MessageOuterClass.UserCallTarget userCallSource = MessageOuterClass.UserCallTarget.HOST;
         MessageOuterClass.UserCallRequest userCallRequest = MessageOuterClass.UserCallRequest.newBuilder()
                 .setDestination(userCallDestination)
@@ -89,5 +91,9 @@ public class FunctionTemplate {
                 .setSourceId(swarmAgentID)
                 .build();
         return message;
+    }
+
+    public boolean isBuzzFunction() {
+        return isBuzzFunction;
     }
 }
