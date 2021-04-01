@@ -8,7 +8,7 @@ public class SwarmAgentInfoViewModel extends CommandListVM {
     public static final int DEFAULT_SWARM_AGENT_ID = -1;
     public static final int BROADCAST_AGENT_ID = 0;
 
-    public SwarmAgentInfoViewModel(){this.listTitle = "Host";}
+    public SwarmAgentInfoViewModel(){this.listTitle = "Local Buzz";}
 
     public MutableLiveData<Integer> getSwarmAgentID() {
         if (swarmAgentID == null) {swarmAgentID = new MutableLiveData<>(DEFAULT_SWARM_AGENT_ID);}
