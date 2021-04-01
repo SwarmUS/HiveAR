@@ -4,10 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".fragments.BroadcastCommands">
+    tools:context=".fragments.CommandList">
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/swarmCommandsContainer"
+        android:id="@+id/commandsContainer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
@@ -16,16 +16,5 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-
-    <!--com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/refreshCommands"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="10dp"
-        android:layout_marginBottom="10dp"
-        android:src="@android:drawable/stat_notify_sync"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" /-->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -395,7 +395,7 @@ public class MainActivity extends AppCompatActivity {
                                     Robot robot = robotListViewModel.getRobotFromList(msg.getSourceId());
 
                                     if (msg.getSourceId() == swarmAgentInfoViewModel.getSwarmAgentID().getValue()) {
-                                        swarmAgentInfoViewModel.getCommands().getValue().add(functionTemplate);
+                                        swarmAgentInfoViewModel.getCommandList().getValue().add(functionTemplate);
                                     } else if (robot != null) {
                                         robot.addCommand(functionTemplate);
                                     }
@@ -434,17 +434,26 @@ public class MainActivity extends AppCompatActivity {
         // TODO Retrieve all robots in the swarm
         List<Robot> robotList = new ArrayList<>();
 
-        FunctionTemplate f1 = new FunctionTemplate("Test1", false);
-        f1.addArgument(new FunctionTemplateArgument("Arg int", String.valueOf(0), Integer.class));
-        FunctionTemplate f2 = new FunctionTemplate("Test2", true);
-        f2.addArgument(new FunctionTemplateArgument("Arg Float", String.valueOf(0.0f), Float.class));
+        FunctionTemplate f11 = new FunctionTemplate("Test1", false);
+        f11.addArgument(new FunctionTemplateArgument("Arg int", String.valueOf(0), Integer.class));
+        FunctionTemplate f12 = new FunctionTemplate("Test2", true);
+        f12.addArgument(new FunctionTemplateArgument("Arg Float", String.valueOf(0.0f), Float.class));
 
         Robot robot1 = new Robot("pioneer_0", 0);
-        robot1.addCommand(f1);
-        robot1.addCommand(f2);
-
+        robot1.addCommand(f11);
+        robot1.addCommand(f12);
+        robot1.addCommand(new FunctionTemplate("Test3", false));
         robotList.add(robot1);
-        robotList.add(new Robot("Robot2", 1));
+
+        FunctionTemplate f21 = new FunctionTemplate("Test1", false);
+        f21.addArgument(new FunctionTemplateArgument("Arg int", String.valueOf(0), Integer.class));
+        FunctionTemplate f22 = new FunctionTemplate("Test2", true);
+        f22.addArgument(new FunctionTemplateArgument("Arg Float", String.valueOf(0.0f), Float.class));
+        Robot robot2 = new Robot("Robot2", 1);
+        robot2.addCommand(f21);
+        robot2.addCommand(f22);
+        robotList.add(robot2);
+
         robotList.add(new Robot("Robot3", 2));
 
         RobotListViewModel robotListViewModel = new ViewModelProvider(this).get(RobotListViewModel.class);
@@ -457,7 +466,7 @@ public class MainActivity extends AppCompatActivity {
         hide.addArgument(new FunctionTemplateArgument("Time", String.valueOf(10), Integer.class));
         hide.addArgument(new FunctionTemplateArgument("Speed", String.valueOf(1000.0), Float.class));
         SwarmAgentInfoViewModel swarmAgentInfoViewModel = new ViewModelProvider(this).get(SwarmAgentInfoViewModel.class);
-        swarmAgentInfoViewModel.getCommands().setValue(Arrays.asList(assemble, hide));
+        swarmAgentInfoViewModel.getCommandList().setValue(Arrays.asList(assemble, hide));
     }
 
     public CommunicationDevice getCurrentCommunicationDevice() {return currentCommunicationDevice;}

@@ -14,43 +14,47 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.adapters.CommandsAdapter;
 import com.swarmus.hivear.models.FunctionTemplate;
-import com.swarmus.hivear.viewmodels.SwarmAgentInfoViewModel;
+import com.swarmus.hivear.viewmodels.CommandListVM;
 
 import java.util.List;
 
-public class LocalBuzzCommands extends Fragment {
-    public static final String TAB_TITLE = "Host buzz";
+public class CommandList extends Fragment {
 
-    SwarmAgentInfoViewModel swarmAgentInfoViewModel;
+    CommandListVM commandListVM;
+    int destinationID;
+
+    public CommandList(CommandListVM commandListVM, int destinationID) {
+        this.commandListVM = commandListVM;
+        this.destinationID = destinationID;
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        swarmAgentInfoViewModel = new ViewModelProvider(requireActivity()).get(SwarmAgentInfoViewModel.class);
+        commandListVM = new ViewModelProvider(requireActivity()).get(commandListVM.getClass());
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_local_buzz_commands, container, false);
+        return inflater.inflate(R.layout.fragment_command_list, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        swarmAgentInfoViewModel.getCommands().observe(getViewLifecycleOwner(), this::udpateCommands);
-        udpateCommands(swarmAgentInfoViewModel.getCommands().getValue());
+        commandListVM.getCommandList().observe(getViewLifecycleOwner(), this::updateCommands);
+        updateCommands(commandListVM.getCommandList().getValue());
     }
 
-    private void udpateCommands(List<FunctionTemplate> commandList) {
+    private void updateCommands(List<FunctionTemplate> commandList) {
         View view = getView();
         RecyclerView recyclerView = view.findViewById(R.id.commandsContainer);
         if (recyclerView != null)
         {
             if (commandList != null) {
                 CommandsAdapter commandsAdapter =
-                        new CommandsAdapter(requireContext(), swarmAgentInfoViewModel.getSwarmAgentID().getValue(), commandList);
+                        new CommandsAdapter(requireContext(), destinationID, commandList);
                 recyclerView.setAdapter(commandsAdapter);
                 recyclerView.setHasFixedSize(true);
             }
