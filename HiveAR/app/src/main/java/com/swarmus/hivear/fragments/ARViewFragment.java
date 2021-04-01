@@ -3,6 +3,7 @@ package com.swarmus.hivear.fragments;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.Image;
+import android.opengl.Matrix;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -36,7 +37,6 @@ import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.FrameTime;
 import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.NodeParent;
-import com.google.ar.sceneform.math.Matrix;
 import com.google.ar.sceneform.math.Quaternion;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.Color;
@@ -89,6 +89,12 @@ public class ARViewFragment extends Fragment {
     private HashMap<Robot,TextView> timerTextViews = new HashMap();
     private ProcessingThread aprilTagProcessingThread;
     private AnchorNode worldNode;
+    static Pose defPose = Pose.makeRotation(0.7071068f, 0, 0, 0.7071068f).compose(Pose.makeRotation(0,1,0,0));
+    float vValue = 0f;
+    static final float sqrtHalf = (float) Math.sqrt(0.5f);
+    final static Pose xRot = Pose.makeRotation(sqrtHalf, 0, 0, sqrtHalf);
+    final static Pose yRot = Pose.makeRotation(0, sqrtHalf, 0, sqrtHalf);
+    final static Pose zRot = Pose.makeRotation(0, 0, sqrtHalf, sqrtHalf);
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -286,6 +292,7 @@ public class ARViewFragment extends Fragment {
 
                     if (worldNode == null && frame.getCamera().getTrackingState() == TrackingState.TRACKING) {
                         worldNode = new AnchorNode();
+                        /*worldNode.setAnchor(arFragment.getArSceneView().getSession().createAnchor(defPose));*/
                         worldNode.setAnchor(arFragment.getArSceneView().getSession().createAnchor(Pose.IDENTITY));
                         worldNode.setName("World");
                         worldNode.setRenderable(xyzRenderable);
@@ -293,7 +300,7 @@ public class ARViewFragment extends Fragment {
                         Log.i("ARScene", "World anchor added.");
                     }
 
-                    addOrUpdateNode(frame.getCamera().getTrackingState(), arFragment.getArSceneView().getScene().getCamera(), "Test", new Vector3(1.0f, 0.0f, 0.0f), new Vector3(0, 0, -1));
+                    //addOrUpdateNode(frame.getCamera().getTrackingState(), arFragment.getArSceneView().getScene().getCamera(), "Test", new Vector3(1.0f, 0.0f, 0.0f), new Vector3(0, 0, -1));
 
                     Image frameImage = frame.acquireCameraImage();
                     byte[] img = YUV_420_888_to_nv1(frameImage);
@@ -323,14 +330,30 @@ public class ARViewFragment extends Fragment {
         }
     }
 
-    private void addOrUpdateNode(TrackingState state, @NonNull Node parent, String nodeName, Vector3 localRotation, Vector3 localTranslation) {
-        if (state == TrackingState.TRACKING && parent.findByName(nodeName) == null) {
-            TransformableNode node = new TransformableNode(arFragment.getTransformationSystem());
+    private void addOrUpdateNode(TrackingState state, @NonNull Node parent, String nodeName, Quaternion localRotation, Vector3 localTranslation) {
+        if (state == TrackingState.TRACKING) {
+            Node n = parent.findByName(nodeName);
+            TransformableNode node = n == null ? new TransformableNode(arFragment.getTransformationSystem()) : (TransformableNode)n;
             node.setRenderable(xyzRenderable);
             node.setName(nodeName);
-            Quaternion rot = Quaternion.axisAngle(localRotation, 0.0f).normalized(); // Align arrow to up vector
+            Quaternion rot = localRotation.normalized(); // Align arrow to up vector
             node.setLocalRotation(rot);
             node.setLocalPosition(localTranslation);
+            node.setParent(parent);
+            Log.i("ARScene", "Anchor added: " + nodeName);
+        }
+    }
+
+    private void addOrUpdateNode(TrackingState state, @NonNull NodeParent parent, String nodeName, Pose pose) {
+        if (state == TrackingState.TRACKING) {
+            Node n = parent.findByName(nodeName);
+            TransformableNode node = n == null ? new TransformableNode(arFragment.getTransformationSystem()) : (TransformableNode)n;
+            float[] q = pose.getRotationQuaternion();
+            node.setWorldRotation(new Quaternion(q[0], q[1], q[2], q[3]));
+            float[] t = pose.getTranslation();
+            node.setWorldPosition(new Vector3(t[0], t[1], t[2]));
+            node.setRenderable(xyzRenderable);
+            node.setName(nodeName);
             node.setParent(parent);
             Log.i("ARScene", "Anchor added: " + nodeName);
         }
@@ -465,7 +488,55 @@ public class ARViewFragment extends Fragment {
                 for (ApriltagDetection detection : detections) {
                     Log.i(TAG, "Distance" + MathUtil.getNorm(detection.pose_t));
                     Log.i(TAG, "Pose" + Arrays.toString(detection.pose_r) + "  " + Arrays.toString(detection.pose_t));
-                    Matrix mat = new Matrix(MathUtil.getHomogeneous(ConvertUtil.convertToFloatArray(detection.pose_r), ConvertUtil.convertToFloatArray(detection.pose_t)));
+
+                    float[] homogeneous_m = MathUtil.getHomogeneous(ConvertUtil.convertToFloatArray(detection.pose_r), ConvertUtil.convertToFloatArray(detection.pose_t));
+                    //Matrix.rotateM(homogeneous_m, 0, -90, 0.0f, 0.0f, 1.0f);
+                    float[] inverse = new float[16];
+                    Matrix.invertM(inverse, 0, homogeneous_m, 0);
+                    //Log.i("Homogeneous 1", MathUtil.homogeneousToString(homogeneous_m));
+                    //Log.i("Homogeneous 2", MathUtil.homogeneousToString(inverse));
+
+                    /*parent.addOrUpdateNode(
+                            frame.getCamera().getTrackingState(),
+                            parent.arFragment.getArSceneView().getScene().getCamera(),
+                            "Test",
+                            new Vector3(1.0f, 0.0f, 0.0f),
+                            new Vector3(0.0f, 0.0f, -(float)detection.pose_t[2]));*/
+
+                    float[] tr = {inverse[12], inverse[13], inverse[14]};
+                    Quaternion q = MathUtil.getQuaternion(inverse);
+                    float[] ro = {q.x, q.y, q.z, q.w};
+                    Pose p = new Pose(tr, ro);
+                    Log.i("Translation", Arrays.toString(tr));
+
+                    parent.vValue += 0.01;
+
+                    parent.addOrUpdateNode(frame.getCamera().getTrackingState(),
+                            parent.arFragment.getArSceneView().getScene(),
+                            "Test1",
+                            /*frame.getCamera().getDisplayOrientedPose().compose(Pose.makeRotation(0,0,1,0)).compose(p));*/
+                            frame.getCamera().getDisplayOrientedPose()
+                                    .compose(Pose.makeTranslation(0, 0, -1))
+                    .compose(Pose.makeRotation(ro)));
+
+
+
+
+                    /*parent.addOrUpdateNode(frame.getCamera().getTrackingState(),
+                            parent.arFragment.getArSceneView().getScene().getCamera(),
+                            "Test1",
+                            frame.getCamera().getDisplayOrientedPose().compose(Pose.makeRotation(-0.7071068f, 0f, 0f, 0.7071068f).compose(Pose.makeRotation(0, 1, 0, 0)).compose(p)));*/
+
+                    /*parent.addOrUpdateNode(
+                            frame.getCamera().getTrackingState(),
+                            parent.arFragment.getArSceneView().getScene().getCamera(),
+                            "Test",
+                            MathUtil.getQuaternion(inverse),
+                            new Vector3(inverse[12]/10, inverse[13]/10, inverse[14]));*/
+                            /*new Vector3(0.0f, -inverse[13], inverse[14]));*/
+                            /*new Vector3(0.0f, 0.0f, inverse[14]));*/
+
+                    /*Matrix mat = new Matrix(MathUtil.getHomogeneous(ConvertUtil.convertToFloatArray(detection.pose_r), ConvertUtil.convertToFloatArray(detection.pose_t)));
                     Quaternion q = Quaternion.identity();
                     mat.extractQuaternion(q);
                     q.setIdentity();
@@ -488,7 +559,7 @@ public class ARViewFragment extends Fragment {
                         anchorNode.setParent(parent.arFragment.getArSceneView().getScene());
                         anchorNode.setRenderable(parent.xyzRenderable);
 
-                    }
+                    }*/
 
                 }
             }

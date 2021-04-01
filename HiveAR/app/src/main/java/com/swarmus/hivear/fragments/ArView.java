@@ -47,7 +47,6 @@ import com.swarmus.hivear.computervision.computervision.EdgeDetector;
 import com.swarmus.hivear.computervision.computervision.FrameTimeHelper;
 import com.swarmus.hivear.computervision.computervision.TextureReader;
 import com.swarmus.hivear.computervision.computervision.TextureReaderImage;
-import com.swarmus.hivear.utils.ConvertUtil;
 import com.swarmus.hivear.utils.MathUtil;
 
 import java.io.IOException;
@@ -376,7 +375,7 @@ public class ArView extends Fragment implements GLSurfaceView.Renderer {
                 final Frame frame = session.update();
                 final Camera camera = frame.getCamera();
 
-                Image image = frame.acquireCameraImage();
+                /*Image image = frame.acquireCameraImage();
                 CameraIntrinsics intrinsics = camera.getImageIntrinsics();
 
                 double[] principalPoint = ConvertUtil.convertToDoubleArray(intrinsics.getPrincipalPoint());
@@ -389,7 +388,7 @@ public class ArView extends Fragment implements GLSurfaceView.Renderer {
                         focalLength,
                         this);
                 thread.run();
-                image.close();
+                image.close();*/
 
                 // Keep the screen unlocked while tracking, but allow it to lock when tracking stops.
                 trackingStateHelper.updateKeepScreenOnFlag(camera.getTrackingState());

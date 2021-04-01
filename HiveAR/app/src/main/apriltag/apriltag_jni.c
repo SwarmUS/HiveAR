@@ -237,6 +237,7 @@ JNIEXPORT jobject JNICALL Java_com_swarmus_hivear_apriltag_ApriltagNative_aprilt
     jobject al = (*env)->NewObject(env, state.al_cls, state.al_constructor);
     for (int i = 0; i < zarray_size(detections); i += 1) {
         apriltag_detection_t *det;
+        apriltag_detection_t dett;
         zarray_get(detections, i, &det);
 
         apriltag_detection_info_t detectionInfo = {
@@ -254,6 +255,19 @@ JNIEXPORT jobject JNICALL Java_com_swarmus_hivear_apriltag_ApriltagNative_aprilt
         };
 
         estimate_pose_for_tag_homography(&detectionInfo, &pose);
+
+        // TEST
+        apriltag_detection_info_t di = {
+                .det = det,
+                .tagsize = tagWidth,
+                .fx = ((double*)fLength)[0],
+                .fy = ((double*)fLength)[1],
+                .cx = ((double*)cPoint)[0],
+                .cy = ((double*)cPoint)[1]
+        };
+
+        apriltag_pose_t poseTest;
+        estimate_tag_pose(&di, &poseTest);
 
         // ad = new ApriltagDetection();
         jobject ad = (*env)->NewObject(env, state.ad_cls, state.ad_constructor);
