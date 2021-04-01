@@ -12,7 +12,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.swarmus.hivear.R;
-import com.swarmus.hivear.adapters.BroadcastCommandsAdapter;
+import com.swarmus.hivear.adapters.CommandsAdapter;
 import com.swarmus.hivear.models.FunctionTemplate;
 import com.swarmus.hivear.viewmodels.SwarmAgentInfoViewModel;
 
@@ -49,9 +49,9 @@ public class LocalBuzzCommands extends Fragment {
         if (recyclerView != null)
         {
             if (commandList != null) {
-                BroadcastCommandsAdapter broadcastCommandsAdapter =
-                        new BroadcastCommandsAdapter(requireContext(), commandList);
-                recyclerView.setAdapter(broadcastCommandsAdapter);
+                CommandsAdapter commandsAdapter =
+                        new CommandsAdapter(requireContext(), swarmAgentInfoViewModel.getSwarmAgentID().getValue(), commandList);
+                recyclerView.setAdapter(commandsAdapter);
                 recyclerView.setHasFixedSize(true);
             }
         }

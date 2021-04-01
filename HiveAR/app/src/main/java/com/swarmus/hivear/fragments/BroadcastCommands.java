@@ -12,9 +12,10 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.swarmus.hivear.R;
-import com.swarmus.hivear.adapters.BroadcastCommandsAdapter;
+import com.swarmus.hivear.adapters.CommandsAdapter;
 import com.swarmus.hivear.models.FunctionTemplate;
 import com.swarmus.hivear.viewmodels.BroadcastInfoViewModel;
+import com.swarmus.hivear.viewmodels.SwarmAgentInfoViewModel;
 
 import java.util.List;
 
@@ -56,9 +57,9 @@ public class BroadcastCommands extends Fragment {
         if (recyclerView != null)
         {
             if (commandList != null) {
-                BroadcastCommandsAdapter broadcastCommandsAdapter =
-                        new BroadcastCommandsAdapter(requireContext(), commandList);
-                recyclerView.setAdapter(broadcastCommandsAdapter);
+                CommandsAdapter commandsAdapter =
+                        new CommandsAdapter(requireContext(), SwarmAgentInfoViewModel.BROADCAST_AGENT_ID, commandList);
+                recyclerView.setAdapter(commandsAdapter);
                 recyclerView.setHasFixedSize(true);
             }
         }

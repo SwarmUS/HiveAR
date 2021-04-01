@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.activities.MainActivity;
-import com.swarmus.hivear.adapters.RobotCommandsAdapter;
+import com.swarmus.hivear.adapters.CommandsAdapter;
 import com.swarmus.hivear.commands.FetchRobotCommands;
 import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.viewmodels.RobotListViewModel;
@@ -34,7 +34,8 @@ public class RobotDetailsViewFragment extends Fragment {
         if (getArguments() != null) {
             RobotDetailsViewFragmentArgs args = RobotDetailsViewFragmentArgs.fromBundle(getArguments());
 
-            FetchRobotCommands fetchRobotCommands = new FetchRobotCommands(args.getUid());
+            FetchRobotCommands fetchRobotCommands = new FetchRobotCommands(args.getUid(), false);
+            FetchRobotCommands fetchRobotBuzzCommands = new FetchRobotCommands(args.getUid(), true);
 
             TextView robotNameTV = view.findViewById(R.id.robot_name);
             robotNameTV.setText(args.getRobotname());
@@ -44,6 +45,7 @@ public class RobotDetailsViewFragment extends Fragment {
             FloatingActionButton updateCommands = view.findViewById(R.id.updateCommands);
             updateCommands.setOnClickListener(v -> {
                 ((MainActivity)requireActivity()).sendCommand(fetchRobotCommands);
+                ((MainActivity)requireActivity()).sendCommand(fetchRobotBuzzCommands);
             });
 
             RecyclerView recyclerView = view.findViewById(R.id.robotDetailsRecycler);
@@ -53,9 +55,9 @@ public class RobotDetailsViewFragment extends Fragment {
                 RobotListViewModel robotListViewModel = new ViewModelProvider(requireActivity()).get(RobotListViewModel.class);
                 Robot robot = robotListViewModel.getRobotFromList(args.getUid());
                 if (robot != null) {
-                    RobotCommandsAdapter robotCommandsAdapter =
-                            new RobotCommandsAdapter(requireContext(), robot.getUid(), robot.getCommands());
-                    recyclerView.setAdapter(robotCommandsAdapter);
+                    CommandsAdapter commandsAdapter =
+                            new CommandsAdapter(requireContext(), robot.getUid(), robot.getCommands());
+                    recyclerView.setAdapter(commandsAdapter);
                     recyclerView.setHasFixedSize(true);
                 }
             }

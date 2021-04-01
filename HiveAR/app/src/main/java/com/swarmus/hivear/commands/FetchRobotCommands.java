@@ -4,9 +4,11 @@ import com.swarmus.hivear.MessageOuterClass;
 
 public class FetchRobotCommands extends GenericCommand{
     int uid;
+    boolean isBuzz;
 
-    public FetchRobotCommands(int uid) {
+    public FetchRobotCommands(int uid, boolean isBuzz) {
         this.uid = uid;
+        this.isBuzz = isBuzz;
     }
 
     @Override
@@ -14,7 +16,8 @@ public class FetchRobotCommands extends GenericCommand{
         if (message == null){
             MessageOuterClass.FunctionListLengthRequest functionListLengthRequest =
                     MessageOuterClass.FunctionListLengthRequest.newBuilder().build();
-            MessageOuterClass.UserCallTarget userCallDestination = MessageOuterClass.UserCallTarget.HOST;
+            MessageOuterClass.UserCallTarget userCallDestination = isBuzz ?
+                    MessageOuterClass.UserCallTarget.BUZZ : MessageOuterClass.UserCallTarget.HOST;
             MessageOuterClass.UserCallTarget userCallSource = MessageOuterClass.UserCallTarget.HOST;
             MessageOuterClass.UserCallRequest userCallRequest = MessageOuterClass.UserCallRequest.newBuilder()
                     .setDestination(userCallDestination)

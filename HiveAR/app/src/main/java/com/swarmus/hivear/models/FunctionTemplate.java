@@ -93,8 +93,7 @@ public class FunctionTemplate {
         return message;
     }
 
-    public MessageOuterClass.Message getBuzzProtoMsg(int swarmAgentID) {
-        // TODO
-        return null;
+    public boolean isBuzzFunction() {
+        return isBuzzFunction;
     }
 }

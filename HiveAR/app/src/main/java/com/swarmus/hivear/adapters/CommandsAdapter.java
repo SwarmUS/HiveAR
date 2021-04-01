@@ -19,13 +19,15 @@ import com.swarmus.hivear.models.FunctionTemplateArgument;
 
 import java.util.List;
 
-public class BroadcastCommandsAdapter extends RecyclerView.Adapter<CommandsVH>{
+public class CommandsAdapter extends RecyclerView.Adapter<CommandsVH> {
     private final List<FunctionTemplate> commands;
-    private final Context context;
+    private Context context;
+    private int destinationId;
     private ViewGroup parentGroup;
 
-    public BroadcastCommandsAdapter(@NonNull Context context, List<FunctionTemplate> commands) {
+    public CommandsAdapter(@NonNull Context context, int destinationId, List<FunctionTemplate> commands) {
         this.context = context;
+        this.destinationId = destinationId;
         this.commands = commands;
     }
 
@@ -42,8 +44,12 @@ public class BroadcastCommandsAdapter extends RecyclerView.Adapter<CommandsVH>{
 
         FunctionTemplate function = commands.get(position);
         holder.commandNameTV.setText(function.getName());
+        if (function.isBuzzFunction()) {
+            holder.commandNameTV.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_buzz, 0);
+        }
+
         holder.commandSendButton.setOnClickListener(view -> {
-            ((MainActivity)context).sendBuzzCommand(function);
+            ((MainActivity)context).sendCommand(function, destinationId);
         });
 
         for (FunctionTemplateArgument arg : function.getArguments()) {
@@ -64,11 +70,11 @@ public class BroadcastCommandsAdapter extends RecyclerView.Adapter<CommandsVH>{
             }
             holder.commandArgumentList.addView(argViewBinding.getRoot());
         }
-
     }
 
     @Override
     public int getItemCount() {
-        return commands.size();
+        if (commands != null) { return commands.size(); }
+        else { return 0; }
     }
 }

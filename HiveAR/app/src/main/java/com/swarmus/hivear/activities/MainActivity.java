@@ -30,6 +30,7 @@ import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.arcore.CameraPermissionHelper;
+import com.swarmus.hivear.commands.FetchRobotCommands;
 import com.swarmus.hivear.commands.GenericCommand;
 import com.swarmus.hivear.enums.ConnectionStatus;
 import com.swarmus.hivear.models.CommunicationDevice;
@@ -378,23 +379,24 @@ public class MainActivity extends AppCompatActivity {
                                     // Create calls to fetch all robot's function
                                     break;
                                 case FUNCTION_DESCRIPTION:
-                                    // Fetch robot from swarmAgentID
+                                    MessageOuterClass.FunctionDescription functionDescription = msg.getResponse()
+                                            .getUserCall()
+                                            .getFunctionDescription()
+                                            .getFunctionDescription();
+                                    List<MessageOuterClass.FunctionDescriptionArgument> functionArguments =
+                                            functionDescription.getArgumentsDescriptionList();
+                                    boolean isBuzz =
+                                            msg.getResponse().getUserCall().getDestinationValue() == MessageOuterClass.UserCallTarget.BUZZ_VALUE;
+
+                                    String functionName = functionDescription.getFunctionName();
+                                    FunctionTemplate functionTemplate = new FunctionTemplate(functionName, isBuzz);
+                                    functionTemplate.setArguments(functionArguments);
+
                                     Robot robot = robotListViewModel.getRobotFromList(msg.getSourceId());
-                                    if (robot != null) {
-                                        // Save to robot its function
-                                        MessageOuterClass.FunctionDescription functionDescription = msg.getResponse()
-                                                .getUserCall()
-                                                .getFunctionDescription()
-                                                .getFunctionDescription();
-                                        List<MessageOuterClass.FunctionDescriptionArgument> functionArguments =
-                                                functionDescription.getArgumentsDescriptionList();
-                                        boolean isBuzz =
-                                                msg.getResponse().getUserCall().getDestinationValue() == MessageOuterClass.UserCallTarget.BUZZ_VALUE;
 
-                                        String functionName = functionDescription.getFunctionName();
-                                        FunctionTemplate functionTemplate = new FunctionTemplate(functionName, isBuzz);
-                                        functionTemplate.setArguments(functionArguments);
-
+                                    if (msg.getSourceId() == swarmAgentInfoViewModel.getSwarmAgentID().getValue()) {
+                                        swarmAgentInfoViewModel.getCommands().getValue().add(functionTemplate);
+                                    } else if (robot != null) {
                                         robot.addCommand(functionTemplate);
                                     }
                                     break;
@@ -405,6 +407,9 @@ public class MainActivity extends AppCompatActivity {
                     } else if(msg.hasGreeting()) {
                         int agentID = msg.getGreeting().getId();
                         swarmAgentInfoViewModel.getSwarmAgentID().setValue(agentID);
+                        // Ask what buzz functions are exposed to device
+                        FetchRobotCommands fetchLocalBuzzCommands = new FetchRobotCommands(agentID, true);
+                        sendCommand(fetchLocalBuzzCommands);
                     } else if (!swarmAgentInfoViewModel.isAgentInitialized()){ // If receiving data without initialized, send greet again
                         sendGreet();
                     }
@@ -480,15 +485,6 @@ public class MainActivity extends AppCompatActivity {
     public void sendCommand(@NonNull FunctionTemplate function, int swarmAgentDestination) {
         if (swarmAgentInfoViewModel.isAgentInitialized()) {
             sendProtoMsg(function.getProtoMsg(swarmAgentInfoViewModel.getSwarmAgentID().getValue(), swarmAgentDestination));
-        }
-        else {
-            Toast.makeText(this, "Swarm Agent not initialized, can't send command.", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    public void sendBuzzCommand(@NonNull FunctionTemplate function) {
-        if (swarmAgentInfoViewModel.isAgentInitialized()) {
-            sendProtoMsg(function.getBuzzProtoMsg(swarmAgentInfoViewModel.getSwarmAgentID().getValue()));
         }
         else {
             Toast.makeText(this, "Swarm Agent not initialized, can't send command.", Toast.LENGTH_LONG).show();
