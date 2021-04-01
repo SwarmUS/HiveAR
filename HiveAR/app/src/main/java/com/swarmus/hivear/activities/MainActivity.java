@@ -409,7 +409,8 @@ public class MainActivity extends AppCompatActivity {
                         swarmAgentInfoViewModel.getSwarmAgentID().setValue(agentID);
                         // Ask what buzz functions are exposed to device
                         FetchRobotCommands fetchLocalBuzzCommands = new FetchRobotCommands(agentID, true);
-                        sendCommand(fetchLocalBuzzCommands);
+                        // TODO test before push
+                        //sendCommand(fetchLocalBuzzCommands);
                     } else if (!swarmAgentInfoViewModel.isAgentInitialized()){ // If receiving data without initialized, send greet again
                         sendGreet();
                     }
