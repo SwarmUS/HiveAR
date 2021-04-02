@@ -38,7 +38,7 @@ android {
     sourceSets {
         main {
             proto {
-                srcDir 'src/extern/pheromone/hivemind-host/proto'
+                srcDir 'src/extern/pheromone/src/proto'
             }
         }
     }
