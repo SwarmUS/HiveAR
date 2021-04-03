@@ -16,6 +16,7 @@ abstract public class CommunicationDevice {
     protected Context context;
     protected boolean isActive;
     protected ConnectionCallback connectionCallback;
+    protected ConnectionStatus currentStatus;
 
     public void init(Context context, ConnectionCallback connectionCallback)
     {
@@ -25,6 +26,7 @@ abstract public class CommunicationDevice {
     public void setActive(boolean active) {this.isActive = active;}
     abstract public void establishConnection();
     abstract public void endConnection();
+    abstract public void performConnectionCheck();
     abstract public void sendData(byte[] data);
     abstract public void sendData(String data);
     abstract public void sendData(MessageOuterClass.Message protoMessage);

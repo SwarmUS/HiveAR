@@ -27,6 +27,7 @@ public class TCPDevice extends CommunicationDevice {
     public void establishConnection() {
         // Close previous connection before creating a new one
         endConnection();
+        currentStatus = ConnectionStatus.connecting;
         broadCastConnectionStatus(ConnectionStatus.connecting);
         Thread connectionThread = new Thread(new ConnectionRunnable());
         connectionThread.start();
@@ -42,15 +43,18 @@ public class TCPDevice extends CommunicationDevice {
                 socket = new Socket(serverAddr, serverPort);
 
                 if (socket != null && socket.isConnected()) {
+                    currentStatus = ConnectionStatus.connected;
                     connectionCallback.onConnect();
                 }
                 else {
                     connectionCallback.onConnectError();
+                    currentStatus = ConnectionStatus.notConnected;
                     if (socket!=null) { socket.close(); }
                 }
 
             } catch (Exception e) {
                 Log.e("TCP", "C: Error", e);
+                currentStatus = ConnectionStatus.notConnected;
                 connectionCallback.onConnectError();
             }
         }
@@ -65,7 +69,15 @@ public class TCPDevice extends CommunicationDevice {
                 e.printStackTrace();
             }
         }
+        currentStatus = ConnectionStatus.notConnected;
         connectionCallback.onDisconnect();
+    }
+
+    @Override
+    public void performConnectionCheck() {
+        if (socket == null && currentStatus == ConnectionStatus.connected) {
+            endConnection();
+        }
     }
 
     @Override
@@ -119,6 +131,7 @@ public class TCPDevice extends CommunicationDevice {
                 e.printStackTrace();
             }
         }
+        currentStatus = ConnectionStatus.notConnected;
         connectionCallback.onConnectError();
         return null;
     }
@@ -138,6 +151,7 @@ public class TCPDevice extends CommunicationDevice {
                 e.printStackTrace();
             }
         }
+        currentStatus = ConnectionStatus.notConnected;
         connectionCallback.onConnectError();
         return null;
     }
