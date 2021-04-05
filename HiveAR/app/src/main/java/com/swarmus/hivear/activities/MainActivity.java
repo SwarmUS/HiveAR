@@ -66,8 +66,10 @@ public class MainActivity extends AppCompatActivity {
 
     private SwarmAgentInfoViewModel swarmAgentInfoViewModel;
     private static final String BROADCAST_PROTO_MSG_RECEIVED = "Proto Message Received";
+    private static final String BROADCAST_PROTO_MSG_TO_SEND = "Proto Message To Send";
     private ProtoMsgStorer protoMsgStorer;
     private Queue<MessageOuterClass.Message> receivedMessages;
+    private Queue<MessageOuterClass.Message> toSendMessages;
 
     private RobotListViewModel robotListViewModel;
 
@@ -272,6 +274,9 @@ public class MainActivity extends AppCompatActivity {
         IntentFilter filterProtoMsgReceived = new IntentFilter(BROADCAST_PROTO_MSG_RECEIVED);
         registerReceiver(protoMsgReadReceiver, filterProtoMsgReceived);
 
+        IntentFilter filterProtoMsgToSend = new IntentFilter(BROADCAST_PROTO_MSG_TO_SEND);
+        registerReceiver(protoMsgWriteReceiver, filterProtoMsgToSend);
+
         IntentFilter filterConnectionStatus = new IntentFilter(CommunicationDevice.CONNECTION_STATUS_RESULT);
         registerReceiver(deviceConnectionStatusReceiver, filterConnectionStatus);
 
@@ -410,7 +415,7 @@ public class MainActivity extends AppCompatActivity {
                                     FunctionTemplate functionTemplate = new FunctionTemplate(functionName, isBuzz);
                                     functionTemplate.setArguments(functionArguments);
 
-                                    Robot robot = robotListViewModel.getRobotFromList(msg.getSourceId());
+                                    Robot robot = robotListViewModel.getRobotFromList(msg.getDestinationId());
 
                                     if (msg.getSourceId() == swarmAgentInfoViewModel.getSwarmAgentID().getValue()) {
                                         swarmAgentInfoViewModel.getCommandList().getValue().add(functionTemplate);
@@ -433,6 +438,20 @@ public class MainActivity extends AppCompatActivity {
                         sendGreet();
                     }
                     Log.i(MainActivity.class.getName(), msgProcessed);
+                }
+            }
+        }
+    };
+
+    private final BroadcastReceiver protoMsgWriteReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (BROADCAST_PROTO_MSG_TO_SEND.equals(action)) {
+                MessageOuterClass.Message msg;
+                while ((msg = toSendMessages.poll()) != null) {
+                    sendProtoMsg(msg);
+                    Log.i(TAG, "Sending message: " + msg);
                 }
             }
         }
@@ -503,7 +522,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void sendCommand(@NonNull GenericCommand command) {
         if (swarmAgentInfoViewModel.isAgentInitialized()) {
-            sendProtoMsg(command.getCommand(swarmAgentInfoViewModel.getSwarmAgentID().getValue()));
+            toSendMessages.add(command.getCommand(swarmAgentInfoViewModel.getSwarmAgentID().getValue()));
+            Intent msgToSendIntent = new Intent();
+            msgToSendIntent.setAction(BROADCAST_PROTO_MSG_TO_SEND);
+            sendBroadcast(msgToSendIntent);
         }
         else {
             Toast.makeText(this, "Swarm Agent not initialized, can't send command.", Toast.LENGTH_LONG).show();
@@ -512,7 +534,10 @@ public class MainActivity extends AppCompatActivity {
 
     public void sendCommand(@NonNull FunctionTemplate function, int swarmAgentDestination) {
         if (swarmAgentInfoViewModel.isAgentInitialized()) {
-            sendProtoMsg(function.getProtoMsg(swarmAgentInfoViewModel.getSwarmAgentID().getValue(), swarmAgentDestination));
+            toSendMessages.add(function.getProtoMsg(swarmAgentInfoViewModel.getSwarmAgentID().getValue(), swarmAgentDestination));
+            Intent msgToSendIntent = new Intent();
+            msgToSendIntent.setAction(BROADCAST_PROTO_MSG_TO_SEND);
+            sendBroadcast(msgToSendIntent);
         }
         else {
             Toast.makeText(this, "Swarm Agent not initialized, can't send command.", Toast.LENGTH_LONG).show();
