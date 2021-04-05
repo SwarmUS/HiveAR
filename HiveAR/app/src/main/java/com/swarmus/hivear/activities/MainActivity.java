@@ -443,7 +443,7 @@ public class MainActivity extends AppCompatActivity {
                                     Robot robot = robotListViewModel.getRobotFromList(msg.getDestinationId());
 
                                     if (msg.getDestinationId() == swarmAgentInfoViewModel.getSwarmAgentID().getValue()) {
-                                        swarmAgentInfoViewModel.getCommandList().getValue().add(functionTemplate);
+                                        swarmAgentInfoViewModel.addFunction(functionTemplate);
                                     } else if (robot != null) {
                                         robot.addCommand(functionTemplate);
                                     }

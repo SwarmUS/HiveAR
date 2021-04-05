@@ -29,6 +29,7 @@ public class CommandsAdapter extends RecyclerView.Adapter<CommandsVH> {
     private int destinationId;
     private ViewGroup parentGroup;
     private BroadcastInfoViewModel broadcastInfoViewModel;
+    private boolean isBroadcast; // OnLongClickListenner differs for broadcast
 
     public CommandsAdapter(@NonNull Context context, int destinationId, List<FunctionTemplate> commands) {
         this.context = context;
@@ -36,6 +37,8 @@ public class CommandsAdapter extends RecyclerView.Adapter<CommandsVH> {
         this.commands = commands;
         this.broadcastInfoViewModel = new ViewModelProvider((ViewModelStoreOwner)context).get(BroadcastInfoViewModel.class);
     }
+
+    public void setBroadcastMode(boolean isBroadcast) {this.isBroadcast = isBroadcast;}
 
     @NonNull
     @Override
@@ -53,18 +56,33 @@ public class CommandsAdapter extends RecyclerView.Adapter<CommandsVH> {
         holder.cardView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
-                // Open delete popup
-                String alertMsg = String.format("Add %s function to broadcast list?", function.getName());
-                new AlertDialog.Builder(context)
-                        .setTitle("Add broadcast function")
-                        .setMessage(alertMsg)
-                        .setPositiveButton("Yes", (dialog, whichButton) -> {
-                            if (broadcastInfoViewModel != null) {
-                                broadcastInfoViewModel.getCommandList().getValue().add(function);
-                            }
-                        }).setNegativeButton("No", (dialog, whichButton) -> {
-                    // Do nothing.
-                }).show();
+                if (isBroadcast) {
+                    // Open delete popup
+                    String alertMsg = String.format("Remove %s function from broadcast list?", function.getName());
+                    new AlertDialog.Builder(context)
+                            .setTitle("Remove broadcast function")
+                            .setMessage(alertMsg)
+                            .setPositiveButton("Yes", (dialog, whichButton) -> {
+                                if (broadcastInfoViewModel != null) {
+                                    broadcastInfoViewModel.removeFunction(function);
+                                }
+                            }).setNegativeButton("No", (dialog, whichButton) -> {
+                        // Do nothing.
+                    }).show();
+                } else {
+                    // Open add function popup
+                    String alertMsg = String.format("Add %s function to broadcast list?", function.getName());
+                    new AlertDialog.Builder(context)
+                            .setTitle("Add broadcast function")
+                            .setMessage(alertMsg)
+                            .setPositiveButton("Yes", (dialog, whichButton) -> {
+                                if (broadcastInfoViewModel != null) {
+                                    broadcastInfoViewModel.addFunction(function);
+                                }
+                            }).setNegativeButton("No", (dialog, whichButton) -> {
+                        // Do nothing.
+                    }).show();
+                }
                 return true;
             }
         });

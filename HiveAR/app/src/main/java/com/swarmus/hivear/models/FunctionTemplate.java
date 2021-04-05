@@ -17,6 +17,16 @@ public class FunctionTemplate {
         this.isBuzzFunction = isBuzz;
     }
 
+    // Deep copy
+    public FunctionTemplate(FunctionTemplate f) {
+        this.arguments = new ArrayList<>();
+        for (FunctionTemplateArgument argument : f.arguments) {
+            this.arguments.add(new FunctionTemplateArgument(argument));
+        }
+        this.name = f.name;
+        this.isBuzzFunction = f.isBuzzFunction;
+    }
+
     public void setArguments(List<MessageOuterClass.FunctionDescriptionArgument> protoArgs) {
         arguments = new ArrayList<>();
         for (MessageOuterClass.FunctionDescriptionArgument arg : protoArgs) {
@@ -96,4 +106,6 @@ public class FunctionTemplate {
     public boolean isBuzzFunction() {
         return isBuzzFunction;
     }
+
+
 }

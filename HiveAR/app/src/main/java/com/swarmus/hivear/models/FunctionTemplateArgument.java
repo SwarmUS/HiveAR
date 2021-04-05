@@ -15,6 +15,12 @@ public class FunctionTemplateArgument extends BaseObservable {
         this.value = value;
     }
 
+    public FunctionTemplateArgument(FunctionTemplateArgument f) {
+        this.name = f.name;
+        this.value = f.value;
+        this.argumentType = f.argumentType;
+    }
+
     public Class getArgumentType() {return this.argumentType;}
 
     @Bindable

@@ -21,4 +21,20 @@ public abstract class CommandListVM extends ViewModel {
     }
 
     public String getListTitle() {return listTitle;}
+
+    public void addFunction(FunctionTemplate functionTemplate) {
+        List<FunctionTemplate> l = getCommandList().getValue();
+        if (!l.contains(functionTemplate)) {
+            l.add(new FunctionTemplate(functionTemplate)); // Don't link functions
+            commands.setValue(l);
+        }
+    }
+
+    public void removeFunction(FunctionTemplate functionTemplate) {
+        List<FunctionTemplate> l = getCommandList().getValue();
+        if (l.contains(functionTemplate)) {
+            l.remove(functionTemplate);
+            commands.setValue(l);
+        }
+    }
 }
