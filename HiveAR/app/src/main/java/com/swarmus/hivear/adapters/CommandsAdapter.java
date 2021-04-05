@@ -8,7 +8,10 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.databinding.DataBindingUtil;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.swarmus.hivear.R;
@@ -16,6 +19,7 @@ import com.swarmus.hivear.activities.MainActivity;
 import com.swarmus.hivear.databinding.CommandArgumentBinding;
 import com.swarmus.hivear.models.FunctionTemplate;
 import com.swarmus.hivear.models.FunctionTemplateArgument;
+import com.swarmus.hivear.viewmodels.BroadcastInfoViewModel;
 
 import java.util.List;
 
@@ -24,11 +28,13 @@ public class CommandsAdapter extends RecyclerView.Adapter<CommandsVH> {
     private Context context;
     private int destinationId;
     private ViewGroup parentGroup;
+    private BroadcastInfoViewModel broadcastInfoViewModel;
 
     public CommandsAdapter(@NonNull Context context, int destinationId, List<FunctionTemplate> commands) {
         this.context = context;
         this.destinationId = destinationId;
         this.commands = commands;
+        this.broadcastInfoViewModel = new ViewModelProvider((ViewModelStoreOwner)context).get(BroadcastInfoViewModel.class);
     }
 
     @NonNull
@@ -43,6 +49,26 @@ public class CommandsAdapter extends RecyclerView.Adapter<CommandsVH> {
     public void onBindViewHolder(@NonNull CommandsVH holder, int position) {
 
         FunctionTemplate function = commands.get(position);
+
+        holder.cardView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                // Open delete popup
+                String alertMsg = String.format("Add %s function to broadcast list?", function.getName());
+                new AlertDialog.Builder(context)
+                        .setTitle("Add broadcast function")
+                        .setMessage(alertMsg)
+                        .setPositiveButton("Yes", (dialog, whichButton) -> {
+                            if (broadcastInfoViewModel != null) {
+                                broadcastInfoViewModel.getCommandList().getValue().add(function);
+                            }
+                        }).setNegativeButton("No", (dialog, whichButton) -> {
+                    // Do nothing.
+                }).show();
+                return true;
+            }
+        });
+
         holder.commandNameTV.setText(function.getName());
         if (function.isBuzzFunction()) {
             holder.commandNameTV.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_buzz, 0);
