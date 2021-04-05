@@ -398,8 +398,32 @@ public class MainActivity extends AppCompatActivity {
                         if (msg.getResponse().hasUserCall()) {
                             switch (msg.getResponse().getUserCall().getResponseCase()) {
                                 case FUNCTION_LIST_LENGTH:
-                                    // TODO
                                     // Create calls to fetch all robot's function
+                                    int functionListLength = msg.getResponse().getUserCall().getFunctionListLength().getFunctionArrayLength();
+                                    int robotID = msg.getResponse().getUserCall().getSource().getNumber();
+                                    int localID = swarmAgentInfoViewModel.getSwarmAgentID().getValue();
+                                    MessageOuterClass.UserCallTarget destination = msg.getResponse().getUserCall().getSource();
+
+                                    for (int i = 0; i < functionListLength; i++) {
+                                        MessageOuterClass.FunctionDescriptionRequest functionDescriptionRequest = MessageOuterClass.FunctionDescriptionRequest.newBuilder()
+                                                .setFunctionListIndex(i)
+                                                .build();
+
+                                        MessageOuterClass.UserCallRequest userCallRequest = MessageOuterClass.UserCallRequest.newBuilder()
+                                                .setDestination(destination)
+                                                .setSource(MessageOuterClass.UserCallTarget.HOST)
+                                                .setFunctionDescription(functionDescriptionRequest)
+                                                .build();
+                                        MessageOuterClass.Request request = MessageOuterClass.Request.newBuilder()
+                                                .setUserCall(userCallRequest).build();
+                                        MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder()
+                                                .setDestinationId(robotID)
+                                                .setSourceId(localID)
+                                                .setRequest(request)
+                                                .build();
+                                        sendCommand(message);
+                                    }
+
                                     break;
                                 case FUNCTION_DESCRIPTION:
                                     MessageOuterClass.FunctionDescription functionDescription = msg.getResponse()
@@ -432,8 +456,7 @@ public class MainActivity extends AppCompatActivity {
                         swarmAgentInfoViewModel.getSwarmAgentID().setValue(agentID);
                         // Ask what buzz functions are exposed to device
                         FetchRobotCommands fetchLocalBuzzCommands = new FetchRobotCommands(agentID, true);
-                        // TODO test before push
-                        //sendCommand(fetchLocalBuzzCommands);
+                        sendCommand(fetchLocalBuzzCommands);
                     } else if (!swarmAgentInfoViewModel.isAgentInitialized()){ // If receiving data without initialized, send greet again
                         sendGreet();
                     }
@@ -535,6 +558,18 @@ public class MainActivity extends AppCompatActivity {
     public void sendCommand(@NonNull FunctionTemplate function, int swarmAgentDestination) {
         if (swarmAgentInfoViewModel.isAgentInitialized()) {
             toSendMessages.add(function.getProtoMsg(swarmAgentInfoViewModel.getSwarmAgentID().getValue(), swarmAgentDestination));
+            Intent msgToSendIntent = new Intent();
+            msgToSendIntent.setAction(BROADCAST_PROTO_MSG_TO_SEND);
+            sendBroadcast(msgToSendIntent);
+        }
+        else {
+            Toast.makeText(this, "Swarm Agent not initialized, can't send command.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public void sendCommand(@NonNull MessageOuterClass.Message msg) {
+        if (swarmAgentInfoViewModel.isAgentInitialized()) {
+            toSendMessages.add(msg);
             Intent msgToSendIntent = new Intent();
             msgToSendIntent.setAction(BROADCAST_PROTO_MSG_TO_SEND);
             sendBroadcast(msgToSendIntent);

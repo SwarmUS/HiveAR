@@ -50,9 +50,8 @@ public class RobotDetailsViewFragment extends Fragment {
 
             FloatingActionButton updateCommands = view.findViewById(R.id.updateCommands);
             updateCommands.setOnClickListener(v -> {
-                // TODO test before merge
-                //((MainActivity)requireActivity()).sendCommand(fetchRobotCommands);
-                //((MainActivity)requireActivity()).sendCommand(fetchRobotBuzzCommands);
+                ((MainActivity)requireActivity()).sendCommand(fetchRobotCommands);
+                ((MainActivity)requireActivity()).sendCommand(fetchRobotBuzzCommands);
             });
 
             tabLayout = view.findViewById(R.id.tabLayout);
