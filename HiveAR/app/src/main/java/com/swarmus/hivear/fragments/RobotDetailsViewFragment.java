@@ -15,7 +15,6 @@ import androidx.viewpager.widget.ViewPager;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.swarmus.hivear.R;
-import com.swarmus.hivear.activities.MainActivity;
 import com.swarmus.hivear.adapters.CommandViewPagerAdapter;
 import com.swarmus.hivear.commands.FetchRobotCommands;
 import com.swarmus.hivear.models.Robot;
@@ -66,11 +65,11 @@ public class RobotDetailsViewFragment extends Fragment {
             RobotBuzzCommandsVM robotBuzzCommandsVM = new ViewModelProvider(requireActivity()).get(RobotBuzzCommandsVM.class);
 
             // Bind current robot's function to view functions
-            robotCommandsVM.getCommandList().setValue(robot.getCommands());
-            robot.addObserver((observable, o) -> robotCommandsVM.getCommandList().setValue(robot.getCommands()));
+            robotCommandsVM.setList(robot.getCommands());
+            robot.addObserver((observable, o) -> robotCommandsVM.setList(robot.getCommands()));
 
-            robotBuzzCommandsVM.getCommandList().setValue(robot.getBuzzCommands());
-            robot.addObserver(((observable, o) -> robotBuzzCommandsVM.getCommandList().setValue(robot.getBuzzCommands())));
+            robotBuzzCommandsVM.setList(robot.getBuzzCommands());
+            robot.addObserver(((observable, o) -> robotBuzzCommandsVM.setList(robot.getBuzzCommands())));
 
             commandViewPagerAdapter.addFragment(new CommandList(robotCommandsVM,
                             robot.getUid()),

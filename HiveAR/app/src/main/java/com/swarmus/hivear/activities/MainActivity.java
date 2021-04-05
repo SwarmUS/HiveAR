@@ -528,7 +528,7 @@ public class MainActivity extends AppCompatActivity {
         hide.addArgument(new FunctionTemplateArgument("Time", String.valueOf(10), Integer.class));
         hide.addArgument(new FunctionTemplateArgument("Speed", String.valueOf(1000.0), Float.class));
         SwarmAgentInfoViewModel swarmAgentInfoViewModel = new ViewModelProvider(this).get(SwarmAgentInfoViewModel.class);
-        swarmAgentInfoViewModel.getCommandList().setValue(Arrays.asList(assemble, hide));
+        swarmAgentInfoViewModel.setList(Arrays.asList(assemble, hide));
     }
 
     public CommunicationDevice getCurrentCommunicationDevice() {return currentCommunicationDevice;}
