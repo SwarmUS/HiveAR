@@ -3,6 +3,7 @@ package com.swarmus.hivear.fragments;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -52,6 +53,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 public class ARViewFragment extends Fragment {
 
@@ -64,11 +66,34 @@ public class ARViewFragment extends Fragment {
     private final static String AR_ROBOT_NAME = "Robot Name";
     private final static float QRCodeWidth = 0.1f; // m
 
+    private Handler timerHandler;
+    private HashMap<Robot,TextView> timerTextViews = new HashMap();
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-         robotListViewModel = new ViewModelProvider(requireActivity()).get(RobotListViewModel.class);
+        robotListViewModel = new ViewModelProvider(requireActivity()).get(RobotListViewModel.class);
+
+        timerHandler = new Handler();
+        Runnable timerRunnable =  new Runnable() {
+            @Override
+            public void run() {
+                // Update all timer text
+                timerTextViews.forEach((r,tv) -> {
+                    long millis = System.currentTimeMillis() - r.getLastUpdateTimeMillis();
+                    String text = getResources().getString(R.string.last_update);
+                    text += String.format(" %02dm : %02ds",
+                            TimeUnit.MILLISECONDS.toMinutes(millis),
+                            TimeUnit.MILLISECONDS.toSeconds(millis) -
+                                    TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis))
+                    );
+                    tv.setText(text);
+                });
+                timerHandler.postDelayed(this, 1000);
+            }
+        };
+        timerHandler.postDelayed(timerRunnable, 1000); // pick every second by evaluating at each 0.5s
 
         ModelRenderable.builder()
                 .setSource(getContext(), R.raw.arrow)
@@ -203,7 +228,7 @@ public class ARViewFragment extends Fragment {
                         });
 
                         TransformableNode uiNode = new CameraFacingNode(arFragment.getTransformationSystem(), arFragment.getArSceneView().getScene().getCamera());
-                        setRobotARInfoRenderable(uiNode, selectedRobot.getName(), node.getLocalPosition(), node.getLocalRotation());
+                        setRobotARInfoRenderable(uiNode, selectedRobot, node.getLocalPosition(), node.getLocalRotation());
                         uiNode.setParent(anchorNode);
                     }
 
@@ -252,7 +277,7 @@ public class ARViewFragment extends Fragment {
         return robot;
     }
 
-    private void setRobotARInfoRenderable(TransformableNode tNode, String name, Vector3 pos, Quaternion rot)
+    private void setRobotARInfoRenderable(TransformableNode tNode, Robot robot, Vector3 pos, Quaternion rot)
     {
         ViewRenderable.builder()
                 .setView(requireContext(), R.layout.ar_robot_base_info)
@@ -267,6 +292,7 @@ public class ARViewFragment extends Fragment {
                                 .setTitle("Unrelevant AR Marker")
                                 .setMessage(alertMsg)
                                 .setPositiveButton("Yes", (dialog, whichButton) -> {
+                                    timerTextViews.computeIfPresent(robot, (k,v) -> null); // remove from list
                                     AnchorNode arRobotNode = (AnchorNode) tNode.getParent();
                                     arFragment.getArSceneView().getScene().removeChild(arRobotNode);
                                     arRobotNode.getAnchor().detach();
@@ -277,7 +303,10 @@ public class ARViewFragment extends Fragment {
                                 }).show();
                         return true;
                     });
-                    ((TextView)viewRenderable.getView().findViewById(R.id.robot_ar_name)).setText(name);
+                    ((TextView)viewRenderable.getView().findViewById(R.id.robot_ar_name)).setText(robot.getName());
+                    TextView robotTimer = viewRenderable.getView().findViewById(R.id.last_update_timer);
+                    timerTextViews.computeIfPresent(robot, (k,v) -> robotTimer);
+                    timerTextViews.computeIfAbsent(robot, v -> robotTimer);
                     // Set in AR
                     tNode.setName(AR_ROBOT_NAME);
                     Quaternion oriChange = Quaternion.axisAngle(new Vector3(0.0f, 0.0f, 1.0f), 180.0f).normalized(); // Align arrow to up vector
