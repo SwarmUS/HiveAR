@@ -69,7 +69,8 @@ public class SerialDevice extends CommunicationDevice {
     @Override
     public void establishConnection() {
         endConnection();
-        broadCastConnectionStatus(ConnectionStatus.connecting);
+        currentStatus = ConnectionStatus.connecting;
+        broadCastConnectionStatus(currentStatus);
         HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
         device = deviceList.get(selectedDeviceName);
         listenToSerial();
@@ -77,10 +78,21 @@ public class SerialDevice extends CommunicationDevice {
 
     @Override
     public void endConnection() {
+        currentStatus = ConnectionStatus.notConnected;
         stopListenToSerial();
         setStreamsActive(false);
         if (connectionCallback != null) {
             connectionCallback.onDisconnect();
+        }
+    }
+
+    @Override
+    public void performConnectionCheck() {
+        if (pipedOutputStream == null || uartOutputStream == null) {
+            // Detect no more connection: end
+            if ( currentStatus == ConnectionStatus.connected) {
+                endConnection();
+            }
         }
     }
 
@@ -164,6 +176,7 @@ public class SerialDevice extends CommunicationDevice {
                 Log.d("Serial", "Device doesn't have permissions");
             }
         }
+        currentStatus = ConnectionStatus.notConnected;
         connectionCallback.onConnectError();
     }
 
@@ -185,10 +198,12 @@ public class SerialDevice extends CommunicationDevice {
             serial.setFlowControl(UsbSerialInterface.FLOW_CONTROL_OFF);
             serial.read(usbReadCallback);
             setStreamsActive(true);
+            currentStatus = ConnectionStatus.connected;
             connectionCallback.onConnect();
         }
         else {
             setStreamsActive(false);
+            currentStatus = ConnectionStatus.notConnected;
             connectionCallback.onConnectError();
         }
     }

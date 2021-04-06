@@ -78,6 +78,10 @@ public class MainActivity extends AppCompatActivity {
     private boolean userRequestedInstall = true;
     private boolean arEnabled = false;
 
+    Handler handler = new Handler();
+    Runnable runnable;
+    int delay = 10*1000; //Delay for 10 seconds.  One second = 1000 milliseconds.
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -93,8 +97,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-        super.onResume();
-
         if (!arEnabled) {
             Exception exception = null;
             String message = null;
@@ -130,6 +132,14 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
         }
+
+        //start handler as activity become visible
+        handler.postDelayed( runnable = () -> {
+            currentCommunicationDevice.performConnectionCheck();
+            handler.postDelayed(runnable, delay);
+        }, delay);
+
+        super.onResume();
     }
 
     @Override
@@ -140,6 +150,14 @@ public class MainActivity extends AppCompatActivity {
         if (!CameraPermissionHelper.hasCameraPermission(this)) {
             CameraPermissionHelper.requestCameraPermission(this);
         }
+    }
+
+    // If onPause() is not included the threads will double up when you reload the activity
+
+    @Override
+    protected void onPause() {
+        handler.removeCallbacks(runnable); //stop handler when activity not visible
+        super.onPause();
     }
 
     @Override
