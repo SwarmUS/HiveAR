@@ -75,8 +75,14 @@ public class TCPDevice extends CommunicationDevice {
 
     @Override
     public void performConnectionCheck() {
-        if (socket == null && currentStatus == ConnectionStatus.connected) {
-            endConnection();
+        if (currentStatus == ConnectionStatus.connected) {
+            if (socket == null ||
+                socket.isClosed() ||
+                !socket.isConnected() ||
+                socket.isInputShutdown() ||
+                socket.isOutputShutdown()) {
+                endConnection();
+            }
         }
     }
 

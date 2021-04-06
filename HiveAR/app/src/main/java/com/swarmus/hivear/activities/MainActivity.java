@@ -267,6 +267,7 @@ public class MainActivity extends AppCompatActivity {
         swarmAgentInfoViewModel = new ViewModelProvider(this).get(SwarmAgentInfoViewModel.class);
 
         receivedMessages = new LinkedList<>();
+        toSendMessages = new LinkedList<>();
         protoMsgStorer = new ProtoMsgStorer(6);
         ProtoMsgViewModel protoMsgViewModel = new ViewModelProvider(this).get(ProtoMsgViewModel.class);
         protoMsgViewModel.getProtoMessages().observe(this, s -> Log.i(TAG, protoMsgViewModel.getProtoMessages().getValue()));
@@ -373,7 +374,7 @@ public class MainActivity extends AppCompatActivity {
         public void onDisconnect() {
             Log.d(TAG, "End of Connection");
             currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.notConnected);
-            swarmAgentInfoViewModel.getSwarmAgentID().setValue(SwarmAgentInfoViewModel.DEFAULT_SWARM_AGENT_ID);
+            swarmAgentInfoViewModel.setSwarmAgentID(SwarmAgentInfoViewModel.DEFAULT_SWARM_AGENT_ID);
         }
 
         @Override
@@ -400,7 +401,7 @@ public class MainActivity extends AppCompatActivity {
                                 case FUNCTION_LIST_LENGTH:
                                     // Create calls to fetch all robot's function
                                     int functionListLength = msg.getResponse().getUserCall().getFunctionListLength().getFunctionArrayLength();
-                                    int robotID = msg.getResponse().getUserCall().getSource().getNumber();
+                                    int robotID = msg.getSourceId();
                                     int localID = swarmAgentInfoViewModel.getSwarmAgentID().getValue();
                                     MessageOuterClass.UserCallTarget destination = msg.getResponse().getUserCall().getSource();
 
@@ -441,7 +442,7 @@ public class MainActivity extends AppCompatActivity {
 
                                     Robot robot = robotListViewModel.getRobotFromList(msg.getDestinationId());
 
-                                    if (msg.getSourceId() == swarmAgentInfoViewModel.getSwarmAgentID().getValue()) {
+                                    if (msg.getDestinationId() == swarmAgentInfoViewModel.getSwarmAgentID().getValue()) {
                                         swarmAgentInfoViewModel.getCommandList().getValue().add(functionTemplate);
                                     } else if (robot != null) {
                                         robot.addCommand(functionTemplate);
@@ -453,7 +454,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     } else if(msg.hasGreeting()) {
                         int agentID = msg.getGreeting().getId();
-                        swarmAgentInfoViewModel.getSwarmAgentID().setValue(agentID);
+                        swarmAgentInfoViewModel.setSwarmAgentID(agentID);
                         // Ask what buzz functions are exposed to device
                         FetchRobotCommands fetchLocalBuzzCommands = new FetchRobotCommands(agentID, true);
                         sendCommand(fetchLocalBuzzCommands);
