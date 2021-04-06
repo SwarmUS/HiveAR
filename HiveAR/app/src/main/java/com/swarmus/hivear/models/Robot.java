@@ -11,16 +11,20 @@ public class Robot extends Observable {
     private List<FunctionTemplate> commands;
     private List<FunctionTemplate> buzzCommands;
 
+    private long lastUpdateTimeMillis;
+
     public Robot(String name, int uid) {
         this(name, uid, new ArrayList<>());
     }
 
     public Robot(String name, int uid, List<FunctionTemplate> commands) {
+        lastUpdateTimeMillis = System.currentTimeMillis();
         this.name = name;
         this.uid = uid;
         this.commands = new ArrayList<>();
         this.buzzCommands = new ArrayList<>();
         setCommands(commands);
+        this.addObserver((observable, o) -> {lastUpdateTimeMillis = System.currentTimeMillis();});
     }
 
     @Override
@@ -30,6 +34,8 @@ public class Robot extends Observable {
                 ", uid=" + uid +
                 '}';
     }
+
+    public long getLastUpdateTimeMillis() {return lastUpdateTimeMillis;}
 
     public int getUid() {
         return uid;

@@ -38,4 +38,6 @@
     <string name="cancel">Cancel</string>
     <string name="update_commands">update commands</string>
     <string name="commands_menu">Commands</string>
+    <string name="status">Status</string>
+    <string name="last_update">Last Update: </string>
 </resources>
