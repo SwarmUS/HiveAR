@@ -8,48 +8,53 @@ import com.swarmus.hivear.enums.ConnectionStatus;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 
-public class TCPDevice extends CommunicationDevice {
-    private String serverIP;
+
+public class TCPDeviceServer extends CommunicationDevice {
     private int serverPort;
-    private Socket socket;
+    private ServerSocket server;
+    private Socket clientFd;
 
-    private static final String TCP_INFO_LOG_TAG = "TCP";
+    private static final String TCP_INFO_LOG_TAG = "TCP-Client";
 
-    public TCPDevice(String ip, int port) {
-        this.serverIP = ip;
-        this.serverPort = port;
+    TCPDeviceServer(int port) {
+        serverPort = port;
     }
+
 
     @Override
     public void establishConnection() {
-        // Close previous connection before creating a new one
         endConnection();
         currentStatus = ConnectionStatus.connecting;
         broadCastConnectionStatus(ConnectionStatus.connecting);
         Thread connectionThread = new Thread(new ConnectionRunnable());
         connectionThread.start();
+
     }
 
     private class ConnectionRunnable implements Runnable {
         public void run() {
             try {
-                InetAddress serverAddr = InetAddress.getByName(serverIP);
 
-                Log.d(TCP_INFO_LOG_TAG, "Connecting...");
+                Log.d(TCP_INFO_LOG_TAG, "Starting server...");
 
-                socket = new Socket(serverAddr, serverPort);
+                server = new ServerSocket(serverPort);
 
-                if (socket != null && socket.isConnected()) {
+                if (server != null) {
+                    Log.d(TCP_INFO_LOG_TAG, "Server, awaiting connection");
+                    // Accept is blocking and should only return once client connection has been established
+                    clientFd = server.accept();
+                    Log.d(TCP_INFO_LOG_TAG, "Server obtained client!");
                     currentStatus = ConnectionStatus.connected;
                     connectionCallback.onConnect();
                 }
                 else {
+                    Log.d(TCP_INFO_LOG_TAG, "Failed to start server...");
                     connectionCallback.onConnectError();
                     currentStatus = ConnectionStatus.notConnected;
-                    if (socket!=null) { socket.close(); }
+                    if (server!=null) { server.close(); }
                 }
 
             } catch (Exception e) {
@@ -62,22 +67,21 @@ public class TCPDevice extends CommunicationDevice {
 
     @Override
     public void endConnection() {
-        if (socket != null) {
-            try {
-                socket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        // End client connect if connected and server if running
+        try {
+            if (clientFd != null){ clientFd.close();}
+            if (server != null){ server.close();}
+        } catch (IOException e) {
+            Log.e("TCP", "C: Error", e);
         }
-        currentStatus = ConnectionStatus.notConnected;
-        connectionCallback.onDisconnect();
     }
 
     @Override
     public void performConnectionCheck() {
-        if (socket == null && currentStatus == ConnectionStatus.connected) {
+        if (server == null && clientFd == null && currentStatus == ConnectionStatus.connected) {
             endConnection();
         }
+
     }
 
     @Override
@@ -95,6 +99,7 @@ public class TCPDevice extends CommunicationDevice {
 
             thread.start();
         }
+
     }
 
     @Override
@@ -121,12 +126,10 @@ public class TCPDevice extends CommunicationDevice {
     }
 
     @Override
-    public InputStream getDataStream()
-    {
-        if (socket != null && socket.isConnected())
-        {
+    public InputStream getDataStream() {
+        if (clientFd != null && clientFd.isConnected()) {
             try {
-                return socket.getInputStream();
+                return clientFd.getInputStream();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -135,18 +138,11 @@ public class TCPDevice extends CommunicationDevice {
         connectionCallback.onConnectError();
         return null;
     }
-    public void setServerIP(String ip) {this.serverIP=ip;}
-    public void setServerPort(int port) {this.serverPort=port;}
 
-    public String getServerIP() {return serverIP;}
-    public int getServerPort() {return serverPort;}
-
-    public OutputStream getSocketOutputStream()
-    {
-        if (socket != null && socket.isConnected())
-        {
+    public OutputStream getSocketOutputStream() {
+        if (clientFd != null && clientFd.isConnected()) {
             try {
-                return socket.getOutputStream();
+                return clientFd.getOutputStream();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -156,3 +152,5 @@ public class TCPDevice extends CommunicationDevice {
         return null;
     }
 }
+
+

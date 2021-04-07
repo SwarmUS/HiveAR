@@ -38,7 +38,7 @@ import com.swarmus.hivear.models.FunctionTemplate;
 import com.swarmus.hivear.models.FunctionTemplateArgument;
 import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.models.SerialDevice;
-import com.swarmus.hivear.models.TCPDevice;
+import com.swarmus.hivear.models.TCPDeviceClient;
 import com.swarmus.hivear.utils.ProtoMsgStorer;
 import com.swarmus.hivear.viewmodels.ProtoMsgViewModel;
 import com.swarmus.hivear.viewmodels.RobotListViewModel;
@@ -283,14 +283,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setUpTCPCommunication() {
-        tcpDevice = new TCPDevice(DEFAULT_IP_ADDRESS, DEFAULT_PORT);
+        tcpDevice = new TCPDeviceClient(DEFAULT_IP_ADDRESS, DEFAULT_PORT);
         tcpDevice.init(this, connectionCallback);
 
         TcpSettingsViewModel tcpSettingsViewModel = new ViewModelProvider(this).get(TcpSettingsViewModel.class);
-        final Observer<String> ipAddressObserver = s -> ((TCPDevice)tcpDevice).setServerIP(s);
+        final Observer<String> ipAddressObserver = s -> ((TCPDeviceClient)tcpDevice).setServerIP(s);
         tcpSettingsViewModel.getIpAddress().observe(this, ipAddressObserver);
 
-        final Observer<Integer> portObserver = p -> ((TCPDevice)tcpDevice).setServerPort(p);
+        final Observer<Integer> portObserver = p -> ((TCPDeviceClient)tcpDevice).setServerPort(p);
         tcpSettingsViewModel.getPort().observe(this, portObserver);
     }
 
@@ -495,7 +495,7 @@ public class MainActivity extends AppCompatActivity {
         currentCommunicationDevice.setActive(false);
         if (currentCommunicationDevice instanceof SerialDevice) {
             currentCommunicationDevice = tcpDevice;
-        } else if (currentCommunicationDevice instanceof TCPDevice) {
+        } else if (currentCommunicationDevice instanceof TCPDeviceClient) {
             currentCommunicationDevice = serialDevice;
         }
         currentCommunicationDevice.setActive(true);
