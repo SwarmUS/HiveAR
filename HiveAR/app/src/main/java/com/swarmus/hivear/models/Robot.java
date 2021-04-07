@@ -73,9 +73,11 @@ public class Robot extends Observable {
     }
 
     public void addCommand(FunctionTemplate command) {
-        if (command.isBuzzFunction() && !buzzCommands.contains(command)) {
-            this.buzzCommands.add(command);
-        } else if (!commands.contains(command)){
+        if (command.isBuzzFunction()) {
+            if (!buzzCommands.contains(command)) {
+                this.buzzCommands.add(command);
+            }
+        } else if (!commands.contains(command)) {
             this.commands.add(command);
         }
         setChanged();

@@ -90,6 +90,8 @@ public class CommandsAdapter extends RecyclerView.Adapter<CommandsVH> {
         holder.commandNameTV.setText(function.getName());
         if (function.isBuzzFunction()) {
             holder.commandNameTV.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_buzz, 0);
+        } else {
+            holder.commandNameTV.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
         }
 
         holder.commandSendButton.setOnClickListener(view -> {

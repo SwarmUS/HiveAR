@@ -388,8 +388,6 @@ public class MainActivity extends AppCompatActivity {
                     // For logging purposes
                     storeProtoMessage(msg);
 
-                    String msgProcessed = "Proto msg couldn't be used";
-
                     if (msg.hasResponse() && swarmAgentInfoViewModel.isAgentInitialized()) {
                         if (msg.getResponse().hasUserCall()) {
                             switch (msg.getResponse().getUserCall().getResponseCase()) {
@@ -437,10 +435,10 @@ public class MainActivity extends AppCompatActivity {
 
                                     Robot robot = robotListViewModel.getRobotFromList(msg.getSourceId());
 
-                                    if (robot != null) {
-                                        robot.addCommand(functionTemplate);
-                                    } else if (msg.getDestinationId() == swarmAgentInfoViewModel.getSwarmAgentID().getValue()) { // TODO FOR TEST IS DESTINATION, FINAL WILL BE SOURCEID
+                                    if (msg.getSourceId() == swarmAgentInfoViewModel.getSwarmAgentID().getValue()) {
                                         swarmAgentInfoViewModel.addFunction(functionTemplate);
+                                    } else if (robot != null) {
+                                        robot.addCommand(functionTemplate);
                                     }
                                     break;
                                 default:
@@ -456,7 +454,6 @@ public class MainActivity extends AppCompatActivity {
                     } else if (!swarmAgentInfoViewModel.isAgentInitialized()){ // If receiving data without initialized, send greet again
                         sendGreet();
                     }
-                    Log.i(MainActivity.class.getName(), msgProcessed);
                 }
             }
         }
