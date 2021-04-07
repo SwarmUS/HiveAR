@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 public class TCPDevice extends CommunicationDevice {
     private String serverIP;
@@ -43,6 +44,7 @@ public class TCPDevice extends CommunicationDevice {
                 Log.d(TCP_INFO_LOG_TAG, "Connecting...");
 
                 socket = new Socket(serverAddr, serverPort);
+                socket.setSoTimeout(10000); // Max time to connect = 10 seconds
 
                 if (socket != null && socket.isConnected()) {
                     currentStatus = ConnectionStatus.connected;
@@ -54,7 +56,12 @@ public class TCPDevice extends CommunicationDevice {
                     if (socket!=null) { socket.close(); }
                 }
 
-            } catch (Exception e) {
+            } catch (SocketTimeoutException e) {
+                Log.w(TCP_INFO_LOG_TAG, "Connection timeout.");
+                currentStatus = ConnectionStatus.notConnected;
+                connectionCallback.onConnectError();
+            }
+            catch (Exception e) {
                 Log.e("TCP", "C: Error", e);
                 currentStatus = ConnectionStatus.notConnected;
                 connectionCallback.onConnectError();
