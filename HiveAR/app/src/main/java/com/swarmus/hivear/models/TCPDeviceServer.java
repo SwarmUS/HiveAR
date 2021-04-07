@@ -8,19 +8,29 @@ import com.swarmus.hivear.enums.ConnectionStatus;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 
 public class TCPDeviceServer extends CommunicationDevice {
     private int serverPort;
+    private String serverBindingAddress;
     private ServerSocket server;
     private Socket clientFd;
 
-    private static final String TCP_INFO_LOG_TAG = "TCP-Client";
+    private static final String TCP_INFO_LOG_TAG = "TCP-Server";
 
-    TCPDeviceServer(int port) {
+    public TCPDeviceServer(int port) {
         serverPort = port;
+        serverBindingAddress = new  String("10.0.2.15");
+        // This default address corresponds to the emulated network interface in the emulator.
+        // See https://developer.android.com/studio/run/emulator-networking for details
+    }
+
+    public TCPDeviceServer(String serverBindingAddress, int port) {
+        this.serverBindingAddress = serverBindingAddress;
+        this.serverPort = port;
     }
 
 
@@ -40,7 +50,9 @@ public class TCPDeviceServer extends CommunicationDevice {
 
                 Log.d(TCP_INFO_LOG_TAG, "Starting server...");
 
-                server = new ServerSocket(serverPort);
+                // Forcing the binding address to be able to set the emulated network interface
+                server = new ServerSocket(serverPort, 1, InetAddress.getByName(serverBindingAddress));
+
 
                 if (server != null) {
                     Log.d(TCP_INFO_LOG_TAG, "Server, awaiting connection");
@@ -151,6 +163,14 @@ public class TCPDeviceServer extends CommunicationDevice {
         connectionCallback.onConnectError();
         return null;
     }
+
+    public void setServerPort(int port) {
+        this.serverPort=port;}
+    public int getServerPort() { return this.serverPort;}
+
+    public void setServerAddress(String address) {
+        this.serverBindingAddress=address;}
+    public String getServerAddress() { return this.serverBindingAddress;}
 }
 
 
