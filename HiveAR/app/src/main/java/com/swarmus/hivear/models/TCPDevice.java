@@ -1,5 +1,6 @@
 package com.swarmus.hivear.models;
 
+import android.content.Context;
 import android.util.Log;
 
 import com.swarmus.hivear.MessageOuterClass;
@@ -18,7 +19,8 @@ public class TCPDevice extends CommunicationDevice {
 
     private static final String TCP_INFO_LOG_TAG = "TCP";
 
-    public TCPDevice(String ip, int port) {
+    public TCPDevice(Context context, ConnectionCallback connectionCallback, String ip, int port) {
+        super(context, connectionCallback);
         this.serverIP = ip;
         this.serverPort = port;
     }

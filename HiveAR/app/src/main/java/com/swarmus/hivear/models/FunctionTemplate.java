@@ -69,9 +69,9 @@ public class FunctionTemplate {
             List<MessageOuterClass.FunctionArgument> functionArguments = new ArrayList<>();
             for (FunctionTemplateArgument argument : arguments) {
                 if (argument.getArgumentType().equals(Integer.class)) {
-                    functionArguments.add(MessageOuterClass.FunctionArgument.newBuilder().setIntArg((int)argument.getValueFromType()).build());
+                    functionArguments.add(MessageOuterClass.FunctionArgument.newBuilder().setIntArg((Integer)argument.getValueFromType()).build());
                 } else if (argument.getArgumentType().equals(Float.class)) {
-                    functionArguments.add(MessageOuterClass.FunctionArgument.newBuilder().setFloatArg((float)argument.getValueFromType()).build());
+                    functionArguments.add(MessageOuterClass.FunctionArgument.newBuilder().setFloatArg((Float)argument.getValueFromType()).build());
                 }
             }
             functionCallRequest = MessageOuterClass.FunctionCallRequest.newBuilder()
@@ -105,6 +105,29 @@ public class FunctionTemplate {
 
     public boolean isBuzzFunction() {
         return isBuzzFunction;
+    }
+
+    public boolean equals(Object other) {
+        if (other instanceof FunctionTemplate) {
+            FunctionTemplate otherF = (FunctionTemplate)other;
+            if (!this.name.equals(otherF.name) ||
+                    this.isBuzzFunction != otherF.isBuzzFunction ||
+                    this.arguments.size() != otherF.arguments.size()) {
+                return false;
+            }
+
+            for(FunctionTemplateArgument a : arguments) {
+                if (!otherF.arguments.contains(a)) {
+                    return false;
+                }
+            }
+
+            // All exceptions have passed, consider as same method
+            return true;
+        }
+
+        return false;
+
     }
 
 

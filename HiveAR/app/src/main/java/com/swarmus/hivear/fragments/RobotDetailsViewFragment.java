@@ -15,6 +15,7 @@ import androidx.viewpager.widget.ViewPager;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.swarmus.hivear.R;
+import com.swarmus.hivear.activities.MainActivity;
 import com.swarmus.hivear.adapters.CommandViewPagerAdapter;
 import com.swarmus.hivear.commands.FetchRobotCommands;
 import com.swarmus.hivear.models.Robot;

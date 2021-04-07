@@ -289,8 +289,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setUpTCPCommunication() {
-        tcpDevice = new TCPDevice(DEFAULT_IP_ADDRESS, DEFAULT_PORT);
-        tcpDevice.init(this, connectionCallback);
+        tcpDevice = new TCPDevice(this, connectionCallback, DEFAULT_IP_ADDRESS, DEFAULT_PORT);
 
         TcpSettingsViewModel tcpSettingsViewModel = new ViewModelProvider(this).get(TcpSettingsViewModel.class);
         final Observer<String> ipAddressObserver = s -> ((TCPDevice)tcpDevice).setServerIP(s);
@@ -301,16 +300,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setUpSerialCommunication() {
-        serialDevice = new SerialDevice();
-
         IntentFilter filter = new IntentFilter(SerialDevice.ACTION_SERIAL_DEVICE_CHANGED);
         registerReceiver(serialDeviceChangedReceiver, filter);
 
         SerialSettingsViewModel serialSettingsViewModel = new ViewModelProvider(this).get(SerialSettingsViewModel.class);
+        serialDevice = new SerialDevice(this, connectionCallback);
         serialSettingsViewModel.getSelectedDevice().observe(this, deviceName -> ((SerialDevice)serialDevice).setSelectedUsbDeviceName(deviceName));
-
-        // Must be after receiver
-        serialDevice.init(this, connectionCallback);
     }
 
     private final BroadcastReceiver serialDeviceChangedReceiver = new BroadcastReceiver() {
@@ -434,18 +429,18 @@ public class MainActivity extends AppCompatActivity {
                                     List<MessageOuterClass.FunctionDescriptionArgument> functionArguments =
                                             functionDescription.getArgumentsDescriptionList();
                                     boolean isBuzz =
-                                            msg.getResponse().getUserCall().getDestinationValue() == MessageOuterClass.UserCallTarget.BUZZ_VALUE;
+                                            msg.getResponse().getUserCall().getSourceValue() == MessageOuterClass.UserCallTarget.BUZZ_VALUE;
 
                                     String functionName = functionDescription.getFunctionName();
                                     FunctionTemplate functionTemplate = new FunctionTemplate(functionName, isBuzz);
                                     functionTemplate.setArguments(functionArguments);
 
-                                    Robot robot = robotListViewModel.getRobotFromList(msg.getDestinationId());
+                                    Robot robot = robotListViewModel.getRobotFromList(msg.getSourceId());
 
-                                    if (msg.getDestinationId() == swarmAgentInfoViewModel.getSwarmAgentID().getValue()) {
-                                        swarmAgentInfoViewModel.addFunction(functionTemplate);
-                                    } else if (robot != null) {
+                                    if (robot != null) {
                                         robot.addCommand(functionTemplate);
+                                    } else if (msg.getDestinationId() == swarmAgentInfoViewModel.getSwarmAgentID().getValue()) { // TODO FOR TEST IS DESTINATION, FINAL WILL BE SOURCEID
+                                        swarmAgentInfoViewModel.addFunction(functionTemplate);
                                     }
                                     break;
                                 default:
@@ -495,40 +490,12 @@ public class MainActivity extends AppCompatActivity {
     {
         // TODO Retrieve all robots in the swarm
         List<Robot> robotList = new ArrayList<>();
-
-        FunctionTemplate f11 = new FunctionTemplate("Test1", false);
-        f11.addArgument(new FunctionTemplateArgument("Arg int", String.valueOf(0), Integer.class));
-        FunctionTemplate f12 = new FunctionTemplate("Test2", true);
-        f12.addArgument(new FunctionTemplateArgument("Arg Float", String.valueOf(0.0f), Float.class));
-
-        Robot robot1 = new Robot("pioneer_0", 0);
-        robot1.addCommand(f11);
-        robot1.addCommand(f12);
-        robot1.addCommand(new FunctionTemplate("Test3", false));
-        robotList.add(robot1);
-
-        FunctionTemplate f21 = new FunctionTemplate("Test1", false);
-        f21.addArgument(new FunctionTemplateArgument("Arg int", String.valueOf(0), Integer.class));
-        FunctionTemplate f22 = new FunctionTemplate("Test2", true);
-        f22.addArgument(new FunctionTemplateArgument("Arg Float", String.valueOf(0.0f), Float.class));
-        Robot robot2 = new Robot("Robot2", 1);
-        robot2.addCommand(f21);
-        robot2.addCommand(f22);
-        robotList.add(robot2);
-
-        robotList.add(new Robot("Robot3", 2));
+        robotList.add(new Robot("pioneer_0", 1));
+        robotList.add(new Robot("pioneer_1", 2));
+        robotList.add(new Robot("pioneer_2", 3));
 
         RobotListViewModel robotListViewModel = new ViewModelProvider(this).get(RobotListViewModel.class);
         robotListViewModel.getRobotList().setValue(robotList);
-
-        // TODO retrieve swarm functions
-        FunctionTemplate assemble = new FunctionTemplate("Assemble", true);
-        assemble.addArgument(new FunctionTemplateArgument("Count", String.valueOf(4), Integer.class));
-        FunctionTemplate hide = new FunctionTemplate("Hide", true);
-        hide.addArgument(new FunctionTemplateArgument("Time", String.valueOf(10), Integer.class));
-        hide.addArgument(new FunctionTemplateArgument("Speed", String.valueOf(1000.0), Float.class));
-        SwarmAgentInfoViewModel swarmAgentInfoViewModel = new ViewModelProvider(this).get(SwarmAgentInfoViewModel.class);
-        swarmAgentInfoViewModel.setList(Arrays.asList(assemble, hide));
     }
 
     public CommunicationDevice getCurrentCommunicationDevice() {return currentCommunicationDevice;}

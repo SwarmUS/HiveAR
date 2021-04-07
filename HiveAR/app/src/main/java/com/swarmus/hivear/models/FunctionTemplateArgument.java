@@ -45,13 +45,21 @@ public class FunctionTemplateArgument extends BaseObservable {
         if (Integer.class.equals(argumentType)) {
             return Integer.valueOf(value);
         }
-        else if (Integer.class.equals(argumentType)) {
+        else if (Float.class.equals(argumentType)) {
             return Float.valueOf(value);
         }
         else {
             // By default, return as string
             return value;
         }
+    }
+
+    public boolean equals(Object other) {
+        if (other instanceof FunctionTemplateArgument) {
+            FunctionTemplateArgument otherA = (FunctionTemplateArgument)other;
+            return this.argumentType.equals(otherA.argumentType) && this.name.equals(otherA.name);
+        }
+        return false;
     }
 
 }
