@@ -37,3 +37,19 @@ git push
 ## Usage
 
 This project is meant to deploy the application to an android device and to debug it.
+
+## Emulator set-up
+
+### ArCore
+
+In order to be able to run the app, ArCore needs to be installed on emulator. Refer to this [link](https://developers.google.com/ar/develop/c/emulator#run_your_app) for installation steps
+
+### Port forwarding
+
+In order to be able to connect to a server running in the emulator, you will need the redirect the port from your system to the one on the emulator. To do this you will need to telnet in the emulator. First, get the token in the file `/home/<USER>/.emulator_console_auth_token`. Then run the following commands after starting the emulator:
+```bash
+telnet localhost 5554
+auth <TOKEN>
+redir tcp:SYSTEM_PORT:EMULATOR_PORT
+```
+This will route any packet sent to the host's TCP port SYSTEM_PORT to TCP port EMULATOR_PORT of the emulated android device.
