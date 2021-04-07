@@ -456,16 +456,17 @@ matd_t* fix_pose_ambiguities(matd_t** v, matd_t** p, matd_t* t, matd_t* R, int n
 void estimate_pose_for_tag_homography(apriltag_detection_info_t* info, apriltag_pose_t* solution) {
     double scale = info->tagsize/2.0;
 
-    matd_t *M_H = homography_to_pose(info->det->H, -info->fx, info->fy, info->cx, info->cy);
+    matd_t *M_H = homography_to_pose(info->det->H, info->fx, info->fy, info->cx, info->cy);
     MATD_EL(M_H, 0, 3) *= scale;
     MATD_EL(M_H, 1, 3) *= scale;
     MATD_EL(M_H, 2, 3) *= scale;
 
-    matd_t* fix = matd_create(4, 4);
+    /*matd_t* fix = matd_create(4, 4);
     MATD_EL(fix, 0, 0) = 1;
     MATD_EL(fix, 1, 1) = -1;
     MATD_EL(fix, 2, 2) = -1;
-    MATD_EL(fix, 3, 3) = 1;
+    MATD_EL(fix, 3, 3) = 1;*/
+    matd_t* fix = matd_identity(4);
 
     matd_t* initial_pose = matd_multiply(fix, M_H);
     matd_destroy(M_H);

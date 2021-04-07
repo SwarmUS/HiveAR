@@ -47,11 +47,13 @@ import com.swarmus.hivear.computervision.computervision.EdgeDetector;
 import com.swarmus.hivear.computervision.computervision.FrameTimeHelper;
 import com.swarmus.hivear.computervision.computervision.TextureReader;
 import com.swarmus.hivear.computervision.computervision.TextureReaderImage;
+import com.swarmus.hivear.utils.ConvertUtil;
 import com.swarmus.hivear.utils.MathUtil;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -152,7 +154,7 @@ public class ArView extends Fragment implements GLSurfaceView.Renderer {
     int previewWidth;
     int previewHeight;
 
-    private static final double APRIL_TAG_SCALE_M = 0.2;
+    private static final double APRIL_TAG_SCALE_M = 0.1053;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -239,7 +241,7 @@ public class ArView extends Fragment implements GLSurfaceView.Renderer {
                     return;
                 }
 
-                session = session == null ? session : new Session(requireContext());
+                session = session != null ? session : new Session(requireContext());
                 config = new Config(session);
             } catch (UnavailableArcoreNotInstalledException
                     | UnavailableUserDeclinedInstallationException e) {
@@ -430,6 +432,17 @@ public class ArView extends Fragment implements GLSurfaceView.Renderer {
                                 image.getHeight(),
                                 image.getPlanes()[0].getRowStride(),
                                 image.getPlanes()[0].getBuffer());
+            }
+
+            if (processedImageBytesGrayscale != null) {
+                ProcessingThread processingThread = new ProcessingThread(
+                        processedImageBytesGrayscale.array(),
+                        image.getWidth(),
+                        image.getHeight(),
+                        ConvertUtil.convertToDoubleArray(frame.getCamera().getImageIntrinsics().getFocalLength()),
+                        ConvertUtil.convertToDoubleArray(frame.getCamera().getImageIntrinsics().getPrincipalPoint()),
+                        this);
+                processingThread.run();
             }
 
             cpuImageRenderer.drawWithCpuImage(
@@ -728,6 +741,7 @@ public class ArView extends Fragment implements GLSurfaceView.Renderer {
             if (parent.mDetections.size() > 0) {
                 Log.i(TAG, "Detections: " + parent.mDetections.size());
                 for (ApriltagDetection detection : parent.mDetections) {
+                    Log.i(TAG, Arrays.toString(detection.c));
                     Log.i(TAG, "Distance" + MathUtil.getNorm(detection.pose_t));
                 }
             }

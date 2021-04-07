@@ -3,7 +3,7 @@
 #include <android/bitmap.h>
 #include <android/log.h>
 
-#include "apriltag.h"
+#include "common/homography.h"include "apriltag.h"
 #include "apriltag_pose.h"
 #include "tag36h11.h"
 #include "tag36h10.h"
@@ -16,6 +16,7 @@ static struct {
     apriltag_detector_t *td;
     apriltag_family_t *tf;
     void(*tf_destroy)(apriltag_family_t*);
+    apriltag_detection_info_t  info;
 
     jclass al_cls;
     jmethodID al_constructor, al_add;
@@ -237,37 +238,27 @@ JNIEXPORT jobject JNICALL Java_com_swarmus_hivear_apriltag_ApriltagNative_aprilt
     jobject al = (*env)->NewObject(env, state.al_cls, state.al_constructor);
     for (int i = 0; i < zarray_size(detections); i += 1) {
         apriltag_detection_t *det;
-        apriltag_detection_t dett;
         zarray_get(detections, i, &det);
 
-        apriltag_detection_info_t detectionInfo = {
-                .det = det,
-                .tagsize = tagWidth,
-                .fx = ((double*)fLength)[0],
-                .fy = ((double*)fLength)[1],
-                .cx = ((double*)cPoint)[0],
-                .cy = ((double*)cPoint)[1]
-        };
+        state.info.det = det;
+        state.info.tagsize = tagWidth;
+        /*state.info.fx = det->p[0][0];
+        state.info.fy = det->p[0][1];
+        state.info.cx = det->c[0];
+        state.info.cy = det->c[1];*/
+        state.info.fx = ((double*)fLength)[0];
+        state.info.fy = ((double*)fLength)[1];
+        state.info.cx = ((double*)cPoint)[0];
+        state.info.cy = ((double*)cPoint)[1];
+        apriltag_pose_t pose;
 
-        apriltag_pose_t pose = {
-                .R = matd_identity(3),
-                .t = matd_create(3, 1)
-        };
+        /*matd_t *M = homography_to_pose(det->H, -fLength[0], fLength[1], cPoint[0], cPoint[1]);
+        double scale = tagWidth / 2.0;
+        MATD_EL(M, 0, 3) *= scale;
+        MATD_EL(M, 1, 3) *= scale;
+        MATD_EL(M, 2, 3) *= scale;*/
 
-        estimate_pose_for_tag_homography(&detectionInfo, &pose);
-
-        // TEST
-        apriltag_detection_info_t di = {
-                .det = det,
-                .tagsize = tagWidth,
-                .fx = ((double*)fLength)[0],
-                .fy = ((double*)fLength)[1],
-                .cx = ((double*)cPoint)[0],
-                .cy = ((double*)cPoint)[1]
-        };
-
-        apriltag_pose_t poseTest;
-        estimate_tag_pose(&di, &poseTest);
+        estimate_pose_for_tag_homography(&state.info, &pose);
 
         // ad = new ApriltagDetection();
         jobject ad = (*env)->NewObject(env, state.ad_cls, state.ad_constructor);

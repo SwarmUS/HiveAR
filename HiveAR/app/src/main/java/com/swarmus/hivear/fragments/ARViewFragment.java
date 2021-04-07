@@ -20,6 +20,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+
 import com.google.ar.core.AugmentedImage;
 import com.google.ar.core.AugmentedImageDatabase;
 import com.google.ar.core.CameraIntrinsics;
@@ -57,6 +58,10 @@ import com.swarmus.hivear.viewmodels.SettingsViewModel;
 import com.swarmus.hivear.utils.ConvertUtil;
 import com.swarmus.hivear.utils.MathUtil;
 
+import org.ddogleg.solver.PolynomialOps;
+import org.ddogleg.solver.RootFinderType;
+import org.ddogleg.struct.FastQueue;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
@@ -69,10 +74,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
+import boofcv.alg.geo.pose.P3PGrunert;
+import boofcv.alg.geo.pose.PointDistance3;
+import georegression.struct.point.Point2D_F64;
+
 public class ARViewFragment extends Fragment {
 
     private static final String TAG = ARViewFragment.class.getName();
-    private static final double APRIL_TAG_SCALE_M = 0.2;
+    private static final double APRIL_TAG_SCALE_M = 0.1053;
 
     private ArFragment arFragment;
     private HashMap<String, AugmentedImage.TrackingMethod> trackableInfos;
@@ -297,6 +306,14 @@ public class ARViewFragment extends Fragment {
                         worldNode.setName("World");
                         worldNode.setRenderable(xyzRenderable);
                         worldNode.setParent(arFragment.getArSceneView().getScene());
+
+
+                        AnchorNode cameraNode = new AnchorNode();
+                        cameraNode.setAnchor(arFragment.getArSceneView().getSession().createAnchor(frame.getCamera().getPose()));
+                        cameraNode.setName("Camera");
+                        cameraNode.setRenderable(xyzRenderable);
+                        cameraNode.setParent(arFragment.getArSceneView().getScene());
+
                         Log.i("ARScene", "World anchor added.");
                     }
 
@@ -489,6 +506,35 @@ public class ARViewFragment extends Fragment {
                     Log.i(TAG, "Distance" + MathUtil.getNorm(detection.pose_t));
                     Log.i(TAG, "Pose" + Arrays.toString(detection.pose_r) + "  " + Arrays.toString(detection.pose_t));
 
+                    ///////
+                    /*P3PGrunert grunert = new P3PGrunert(PolynomialOps.createRootFinder(5, RootFinderType.STURM));
+                    Point2D_F64 obs1 = new Point2D_F64(detection.p[0], detection.p[1]);
+                    Point2D_F64 obs2 = new Point2D_F64(detection.p[2], detection.p[3]);
+                    Point2D_F64 obs3 = new Point2D_F64(detection.p[4], detection.p[5]);
+
+         Tags are square, so the distances are either that of the square side or the one from one
+           vertex to the oposite, this last distance is the same as the hipotenuse of a triangle
+           with the same base and height as the square side.
+                    double length23 = APRIL_TAG_SCALE_M;
+                    double length13 = Math.sqrt(APRIL_TAG_SCALE_M * APRIL_TAG_SCALE_M + APRIL_TAG_SCALE_M * APRIL_TAG_SCALE_M);
+                    double length12 = APRIL_TAG_SCALE_M;
+
+                    boolean solved = grunert.process(obs1, obs2, obs3, length23, length13, length12);
+                    PointDistance3 distance = null;
+                    Log.d("APRIL", "Solved: " + solved);
+
+                    if (solved){
+                        FastQueue<PointDistance3> points = grunert.getSolutions();
+                        Log.d("APRIL", points.size() + " solutions!");
+                        for (PointDistance3 p : points.toList()){
+                            if (distance == null){
+                                distance = p;
+                            }
+                            Log.d("APRIL", "X: " + p.dist1 + " | Y: " + p.dist2 + " | Z: " + p.dist3);
+                        }
+                    }*/
+                    ///////
+
                     float[] homogeneous_m = MathUtil.getHomogeneous(ConvertUtil.convertToFloatArray(detection.pose_r), ConvertUtil.convertToFloatArray(detection.pose_t));
                     //Matrix.rotateM(homogeneous_m, 0, -90, 0.0f, 0.0f, 1.0f);
                     float[] inverse = new float[16];
@@ -503,11 +549,12 @@ public class ARViewFragment extends Fragment {
                             new Vector3(1.0f, 0.0f, 0.0f),
                             new Vector3(0.0f, 0.0f, -(float)detection.pose_t[2]));*/
 
-                    float[] tr = {inverse[12], inverse[13], inverse[14]};
-                    Quaternion q = MathUtil.getQuaternion(inverse);
+                    float[] tr = {homogeneous_m[12], homogeneous_m[13], homogeneous_m[14]};
+                    Quaternion q = MathUtil.getQuaternion(homogeneous_m);
                     float[] ro = {q.x, q.y, q.z, q.w};
                     Pose p = new Pose(tr, ro);
                     Log.i("Translation", Arrays.toString(tr));
+                    Log.i("POSE", p.toString());
 
                     parent.vValue += 0.01;
 
@@ -515,9 +562,9 @@ public class ARViewFragment extends Fragment {
                             parent.arFragment.getArSceneView().getScene(),
                             "Test1",
                             /*frame.getCamera().getDisplayOrientedPose().compose(Pose.makeRotation(0,0,1,0)).compose(p));*/
-                            frame.getCamera().getDisplayOrientedPose()
-                                    .compose(Pose.makeTranslation(0, 0, -1))
-                    .compose(Pose.makeRotation(ro)));
+                            frame.getCamera().getPose()
+                                    .compose(Pose.makeTranslation(tr[0], tr[1], tr[2])));
+                    //.compose(Pose.makeRotation(ro)));
 
 
 

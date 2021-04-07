@@ -58,7 +58,9 @@ public class EdgeDetector {
         // Offset of the pixel at [i, j] of the input image.
         int offset = (j * stride) + i;
 
-        // Neighbour pixels around the pixel at [i, j].
+        outputPixels[(j * width + i)] = inputPixels[offset];
+
+        /*// Neighbour pixels around the pixel at [i, j].
         int a00 = inputPixels[offset - stride - 1];
         int a01 = inputPixels[offset - stride];
         int a02 = inputPixels[offset - stride + 1];
@@ -84,7 +86,7 @@ public class EdgeDetector {
           outputPixels[(j * width) + i] = (byte) 0xFF;
         } else {
           outputPixels[(j * width) + i] = (byte) 0x1F;
-        }
+        }*/
       }
     }
 
