@@ -11,8 +11,13 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.util.concurrent.TimeoutException;
 
-
+// To use the server, you need to provide the ip address and the port on which to create it.
+// On the cellphone, the address is simply the ip address of the cellphone and on the emulator,
+// use address 10.0.2.15m which corresponds to the emulated network interface in the emulator.
+// See https://developer.android.com/studio/run/emulator-networking for details
 public class TCPDeviceServer extends CommunicationDevice {
     private int serverPort;
     private String serverBindingAddress;
@@ -20,13 +25,6 @@ public class TCPDeviceServer extends CommunicationDevice {
     private Socket clientFd;
 
     private static final String TCP_INFO_LOG_TAG = "TCP-Server";
-
-    public TCPDeviceServer(int port) {
-        serverPort = port;
-        serverBindingAddress = new  String("10.0.2.15");
-        // This default address corresponds to the emulated network interface in the emulator.
-        // See https://developer.android.com/studio/run/emulator-networking for details
-    }
 
     public TCPDeviceServer(String serverBindingAddress, int port) {
         this.serverBindingAddress = serverBindingAddress;
@@ -52,6 +50,7 @@ public class TCPDeviceServer extends CommunicationDevice {
 
                 // Forcing the binding address to be able to set the emulated network interface
                 server = new ServerSocket(serverPort, 1, InetAddress.getByName(serverBindingAddress));
+                server.setSoTimeout(10000); // Set a connection timeout
 
 
                 if (server != null) {
@@ -69,7 +68,13 @@ public class TCPDeviceServer extends CommunicationDevice {
                     if (server!=null) { server.close(); }
                 }
 
-            } catch (Exception e) {
+            }
+            catch (SocketTimeoutException e) {
+                Log.w(TCP_INFO_LOG_TAG, "Connection timeout on server. Closing server...");
+                Log.w("TCP", "C: Timeout", e);
+                connectionCallback.onConnectError();
+            }
+            catch (Exception e) {
                 Log.e("TCP", "C: Error", e);
                 currentStatus = ConnectionStatus.notConnected;
                 connectionCallback.onConnectError();
@@ -86,6 +91,8 @@ public class TCPDeviceServer extends CommunicationDevice {
         } catch (IOException e) {
             Log.e("TCP", "C: Error", e);
         }
+        currentStatus = ConnectionStatus.notConnected;
+        connectionCallback.onDisconnect();
     }
 
     @Override
