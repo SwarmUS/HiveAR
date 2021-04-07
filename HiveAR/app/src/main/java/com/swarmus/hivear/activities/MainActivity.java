@@ -164,17 +164,6 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
     }
 
-    // Simple overrides to insure proper closure
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
         if (!CameraPermissionHelper.hasCameraPermission(this)) {
