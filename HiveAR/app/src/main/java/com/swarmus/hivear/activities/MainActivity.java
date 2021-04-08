@@ -35,7 +35,6 @@ import com.swarmus.hivear.commands.GenericCommand;
 import com.swarmus.hivear.enums.ConnectionStatus;
 import com.swarmus.hivear.models.CommunicationDevice;
 import com.swarmus.hivear.models.FunctionTemplate;
-import com.swarmus.hivear.models.FunctionTemplateArgument;
 import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.models.SerialDevice;
 import com.swarmus.hivear.models.TCPDevice;
@@ -50,7 +49,6 @@ import com.swarmus.hivear.viewmodels.TcpSettingsViewModel;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -99,6 +97,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
+        super.onResume();
         if (!arEnabled) {
             Exception exception = null;
             String message = null;
@@ -140,8 +139,6 @@ public class MainActivity extends AppCompatActivity {
             currentCommunicationDevice.performConnectionCheck();
             handler.postDelayed(runnable, delay);
         }, delay);
-
-        super.onResume();
     }
 
     @Override
