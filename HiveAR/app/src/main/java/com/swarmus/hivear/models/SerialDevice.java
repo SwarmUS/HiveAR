@@ -97,7 +97,9 @@ public class SerialDevice extends CommunicationDevice {
     @Override
     public void sendData(byte[] data) {
         if (serial != null)
-            serial.write(data);
+            synchronized (mutex) {
+                serial.write(data);
+            }
     }
 
     @Override
@@ -110,12 +112,14 @@ public class SerialDevice extends CommunicationDevice {
     public void sendData(MessageOuterClass.Message protoMessage) {
         if (protoMessage != null && protoMessage.isInitialized())
         {
-            try {
-                protoMessage.writeDelimitedTo(uartOutputStream);
-                sendData(uartOutputStream.toByteArray());
-                uartOutputStream = new ByteArrayOutputStream();
-            } catch (IOException e) {
-                e.printStackTrace();
+            synchronized (mutex) {
+                try {
+                    protoMessage.writeDelimitedTo(uartOutputStream);
+                    sendData(uartOutputStream.toByteArray());
+                    uartOutputStream = new ByteArrayOutputStream();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
