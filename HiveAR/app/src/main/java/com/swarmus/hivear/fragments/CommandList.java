@@ -22,11 +22,14 @@ public class CommandList extends Fragment {
 
     CommandListVM commandListVM;
     int destinationID;
+    boolean isBroadcast = false;
 
     public CommandList(CommandListVM commandListVM, int destinationID) {
         this.commandListVM = commandListVM;
         this.destinationID = destinationID;
     }
+
+    public void setBroadcastMode(boolean isBroadcast) {this.isBroadcast = isBroadcast;}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -55,6 +58,7 @@ public class CommandList extends Fragment {
             if (commandList != null) {
                 CommandsAdapter commandsAdapter =
                         new CommandsAdapter(requireContext(), destinationID, commandList);
+                commandsAdapter.setBroadcastMode(isBroadcast);
                 recyclerView.setAdapter(commandsAdapter);
                 recyclerView.setHasFixedSize(true);
             }

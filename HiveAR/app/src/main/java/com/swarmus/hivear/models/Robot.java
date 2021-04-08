@@ -43,6 +43,7 @@ public class Robot extends Observable {
 
     public void setUid(int uid) {
         this.uid = uid;
+        setChanged();
         notifyObservers();
     }
 
@@ -52,6 +53,7 @@ public class Robot extends Observable {
 
     public void setName(String name) {
         this.name = name;
+        setChanged();
         notifyObservers();
     }
 
@@ -72,16 +74,20 @@ public class Robot extends Observable {
 
     public void addCommand(FunctionTemplate command) {
         if (command.isBuzzFunction()) {
-            this.buzzCommands.add(command);
-        } else {
+            if (!buzzCommands.contains(command)) {
+                this.buzzCommands.add(command);
+            }
+        } else if (!commands.contains(command)) {
             this.commands.add(command);
         }
+        setChanged();
         notifyObservers();
     }
 
     public void clearCommands() {
         this.commands.clear();
         this.buzzCommands.clear();
+        setChanged();
         notifyObservers();
     }
 }

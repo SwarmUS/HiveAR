@@ -8,7 +8,10 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.databinding.DataBindingUtil;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.swarmus.hivear.R;
@@ -16,6 +19,7 @@ import com.swarmus.hivear.activities.MainActivity;
 import com.swarmus.hivear.databinding.CommandArgumentBinding;
 import com.swarmus.hivear.models.FunctionTemplate;
 import com.swarmus.hivear.models.FunctionTemplateArgument;
+import com.swarmus.hivear.viewmodels.BroadcastInfoViewModel;
 
 import java.util.List;
 
@@ -24,12 +28,17 @@ public class CommandsAdapter extends RecyclerView.Adapter<CommandsVH> {
     private Context context;
     private int destinationId;
     private ViewGroup parentGroup;
+    private BroadcastInfoViewModel broadcastInfoViewModel;
+    private boolean isBroadcast; // OnLongClickListenner differs for broadcast
 
     public CommandsAdapter(@NonNull Context context, int destinationId, List<FunctionTemplate> commands) {
         this.context = context;
         this.destinationId = destinationId;
         this.commands = commands;
+        this.broadcastInfoViewModel = new ViewModelProvider((ViewModelStoreOwner)context).get(BroadcastInfoViewModel.class);
     }
+
+    public void setBroadcastMode(boolean isBroadcast) {this.isBroadcast = isBroadcast;}
 
     @NonNull
     @Override
@@ -43,9 +52,46 @@ public class CommandsAdapter extends RecyclerView.Adapter<CommandsVH> {
     public void onBindViewHolder(@NonNull CommandsVH holder, int position) {
 
         FunctionTemplate function = commands.get(position);
+
+        holder.cardView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                if (isBroadcast) {
+                    // Open delete popup
+                    String alertMsg = String.format("Remove %s function from broadcast list?", function.getName());
+                    new AlertDialog.Builder(context)
+                            .setTitle("Remove broadcast function")
+                            .setMessage(alertMsg)
+                            .setPositiveButton("Yes", (dialog, whichButton) -> {
+                                if (broadcastInfoViewModel != null) {
+                                    broadcastInfoViewModel.removeFunction(function);
+                                }
+                            }).setNegativeButton("No", (dialog, whichButton) -> {
+                        // Do nothing.
+                    }).show();
+                } else {
+                    // Open add function popup
+                    String alertMsg = String.format("Add %s function to broadcast list?", function.getName());
+                    new AlertDialog.Builder(context)
+                            .setTitle("Add broadcast function")
+                            .setMessage(alertMsg)
+                            .setPositiveButton("Yes", (dialog, whichButton) -> {
+                                if (broadcastInfoViewModel != null) {
+                                    broadcastInfoViewModel.addFunction(function);
+                                }
+                            }).setNegativeButton("No", (dialog, whichButton) -> {
+                        // Do nothing.
+                    }).show();
+                }
+                return true;
+            }
+        });
+
         holder.commandNameTV.setText(function.getName());
         if (function.isBuzzFunction()) {
             holder.commandNameTV.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_buzz, 0);
+        } else {
+            holder.commandNameTV.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
         }
 
         holder.commandSendButton.setOnClickListener(view -> {

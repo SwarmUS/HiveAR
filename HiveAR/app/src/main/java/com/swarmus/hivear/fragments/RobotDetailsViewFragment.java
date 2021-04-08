@@ -50,9 +50,8 @@ public class RobotDetailsViewFragment extends Fragment {
 
             FloatingActionButton updateCommands = view.findViewById(R.id.updateCommands);
             updateCommands.setOnClickListener(v -> {
-                // TODO test before merge
-                //((MainActivity)requireActivity()).sendCommand(fetchRobotCommands);
-                //((MainActivity)requireActivity()).sendCommand(fetchRobotBuzzCommands);
+                ((MainActivity)requireActivity()).sendCommand(fetchRobotCommands);
+                ((MainActivity)requireActivity()).sendCommand(fetchRobotBuzzCommands);
             });
 
             tabLayout = view.findViewById(R.id.tabLayout);
@@ -67,11 +66,11 @@ public class RobotDetailsViewFragment extends Fragment {
             RobotBuzzCommandsVM robotBuzzCommandsVM = new ViewModelProvider(requireActivity()).get(RobotBuzzCommandsVM.class);
 
             // Bind current robot's function to view functions
-            robotCommandsVM.getCommandList().setValue(robot.getCommands());
-            robot.addObserver((observable, o) -> robotCommandsVM.getCommandList().setValue(robot.getCommands()));
+            robotCommandsVM.setList(robot.getCommands());
+            robot.addObserver((observable, o) -> robotCommandsVM.setList(robot.getCommands()));
 
-            robotBuzzCommandsVM.getCommandList().setValue(robot.getBuzzCommands());
-            robot.addObserver(((observable, o) -> robotBuzzCommandsVM.getCommandList().setValue(robot.getBuzzCommands())));
+            robotBuzzCommandsVM.setList(robot.getBuzzCommands());
+            robot.addObserver(((observable, o) -> robotBuzzCommandsVM.setList(robot.getBuzzCommands())));
 
             commandViewPagerAdapter.addFragment(new CommandList(robotCommandsVM,
                             robot.getUid()),
