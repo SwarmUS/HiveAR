@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
     private RobotListViewModel robotListViewModel;
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private static final int DEFAULT_PORT = 12345;
+    private static final int DEFAULT_PORT = 7003;
 
     private boolean userRequestedInstall = true;
     private boolean arEnabled = false;
@@ -103,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
+        super.onResume();
         if (!arEnabled) {
             Exception exception = null;
             String message = null;
@@ -110,8 +111,6 @@ public class MainActivity extends AppCompatActivity {
                 switch (ArCoreApk.getInstance().requestInstall(this, !userRequestedInstall)) {
                     case INSTALL_REQUESTED:
                         userRequestedInstall = false;
-                        // Required to be able to connect debugger to emulator
-                        super.onResume();
                         return;
                     case INSTALLED:
                         break;
@@ -364,7 +363,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onConnect() {
             Log.d(TAG, "New Connection");
-            currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.connected);
+
 
             InputStream inputStream = currentCommunicationDevice.getDataStream();
             Intent msgReceivedIntent = new Intent();
@@ -384,7 +383,17 @@ public class MainActivity extends AppCompatActivity {
             thread.start();
 
             // Send greet to get a swarm agent ID
-            sendGreet();
+            while (!swarmAgentInfoViewModel.isAgentInitialized()) {
+                try {
+                    sendGreet();
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+            }
+            currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.connected);
+
         }
 
         @Override
