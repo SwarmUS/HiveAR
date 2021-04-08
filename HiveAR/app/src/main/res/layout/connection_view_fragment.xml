@@ -99,8 +99,8 @@
                 android:layout_marginBottom="10dp"
                 android:src="@drawable/delete"
                 app:layout_constraintBottom_toBottomOf="@+id/dataReceived"
-                app:layout_constraintEnd_toEndOf="@+id/dataReceived"
-                android:contentDescription="Clear Text" />
+                app:layout_constraintEnd_toEndOf="parent"
+                android:contentDescription="Hide UI" />
 
             <TextView
                 android:id="@+id/incomingData"
@@ -182,6 +182,16 @@
                 app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent" />
         </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/hide_ui"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="10dp"
+            android:contentDescription="Clear Text"
+            android:src="@drawable/open_full"
+            android:layout_gravity="bottom|end"/>
 
     </LinearLayout>
 

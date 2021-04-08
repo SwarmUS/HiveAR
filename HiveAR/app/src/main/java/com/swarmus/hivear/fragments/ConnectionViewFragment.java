@@ -6,6 +6,7 @@ import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
@@ -60,31 +61,8 @@ public class ConnectionViewFragment extends Fragment {
             dataReceived.scrollTo(0, scrollY);
         });
 
-        dataReceived.setOnLongClickListener(v -> {
-            if (isInfoVisible) {
-                // Open delete popup
-                String alertMsg = "Make UI lighter?";
-                new AlertDialog.Builder(requireContext())
-                        .setTitle("Hide UI")
-                        .setMessage(alertMsg)
-                        .setPositiveButton("Yes", (dialog, whichButton) -> {
-                            setInfoVisible(false);
-                        }).setNegativeButton("No", (dialog, whichButton) -> {
-                    // Do nothing.
-                }).show();
-            } else {
-                // Open add function popup
-                String alertMsg = "Show more UI?";
-                new AlertDialog.Builder(requireContext())
-                        .setTitle("Show UI")
-                        .setMessage(alertMsg)
-                        .setPositiveButton("Yes", (dialog, whichButton) -> {
-                            setInfoVisible(true);
-                        }).setNegativeButton("No", (dialog, whichButton) -> {
-                    // Do nothing.
-                }).show();
-            }
-            return true;
+        view.findViewById(R.id.hide_ui).setOnClickListener(v -> {
+            setInfoVisible(!isInfoVisible);
         });
 
         view.findViewById(R.id.clean_text).setOnClickListener(v -> {
@@ -158,7 +136,12 @@ public class ConnectionViewFragment extends Fragment {
 
     private void setInfoVisible(boolean isVisible) {
         this.isInfoVisible = isVisible;
+
         View v = getView();
+
+        FloatingActionButton hideUI = v.findViewById(R.id.hide_ui);
+        hideUI.setImageDrawable(ContextCompat.getDrawable(getContext(), isVisible ? R.drawable.open_full : R.drawable.close_full));
+
         ConstraintLayout moveByLayout = v.findViewById(R.id.moveByArrows);
         moveByLayout.setVisibility(isVisible ? View.VISIBLE : View.GONE);
 
