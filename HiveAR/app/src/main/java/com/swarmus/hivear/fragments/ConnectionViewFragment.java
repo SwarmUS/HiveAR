@@ -33,6 +33,7 @@ public class ConnectionViewFragment extends Fragment {
     private MoveByCommand stopCommand;
 
     private FragmentManager fragmentManager;
+    private static final int MSG_LOGGING_LENGTH = 10;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -43,9 +44,9 @@ public class ConnectionViewFragment extends Fragment {
         TextView dataReceived = view.findViewById(R.id.dataReceived);
         dataReceived.setMovementMethod(new ScrollingMovementMethod());
         ProtoMsgViewModel protoMsgViewModel = new ViewModelProvider(requireActivity()).get(ProtoMsgViewModel.class);
-        dataReceived.setText(protoMsgViewModel.getProtoMessages().getValue());
-        protoMsgViewModel.getProtoMessages().observe(getViewLifecycleOwner(), s -> {
-            dataReceived.setText(protoMsgViewModel.getProtoMessages().getValue());
+        dataReceived.setText(protoMsgViewModel.getLastMsgs(MSG_LOGGING_LENGTH));
+        protoMsgViewModel.getMsgQueue().observe(getViewLifecycleOwner(), s -> {
+            dataReceived.setText(protoMsgViewModel.getLastMsgs(MSG_LOGGING_LENGTH));
             final Layout layout = dataReceived.getLayout();
             if(layout != null){
                 int scrollDelta = layout.getLineBottom(dataReceived.getLineCount() - 1)
@@ -53,6 +54,10 @@ public class ConnectionViewFragment extends Fragment {
                 if(scrollDelta > 0)
                     dataReceived.scrollBy(0, scrollDelta);
             }
+        });
+
+        view.findViewById(R.id.clean_text).setOnClickListener(v -> {
+            dataReceived.setText("");
         });
 
 
