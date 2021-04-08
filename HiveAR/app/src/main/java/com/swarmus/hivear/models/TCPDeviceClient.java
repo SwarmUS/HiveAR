@@ -1,5 +1,6 @@
 package com.swarmus.hivear.models;
 
+import android.content.Context;
 import android.util.Log;
 
 import com.swarmus.hivear.MessageOuterClass;
@@ -10,6 +11,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 public class TCPDeviceClient extends CommunicationDevice {
     private String serverIP;
@@ -18,7 +20,8 @@ public class TCPDeviceClient extends CommunicationDevice {
 
     private static final String TCP_INFO_LOG_TAG = "TCP-Client";
 
-    public TCPDeviceClient(String ip, int port) {
+    public TCPDeviceClient(Context context, ConnectionCallback connectionCallback, String ip, int port) {
+        super(context, connectionCallback);
         this.serverIP = ip;
         this.serverPort = port;
     }
@@ -41,6 +44,7 @@ public class TCPDeviceClient extends CommunicationDevice {
                 Log.d(TCP_INFO_LOG_TAG, "Connecting...");
 
                 socket = new Socket(serverAddr, serverPort);
+                socket.setSoTimeout(10000); // Max time to connect = 10 seconds
 
                 if (socket != null && socket.isConnected()) {
                     currentStatus = ConnectionStatus.connected;
@@ -52,7 +56,12 @@ public class TCPDeviceClient extends CommunicationDevice {
                     if (socket!=null) { socket.close(); }
                 }
 
-            } catch (Exception e) {
+            } catch (SocketTimeoutException e) {
+                Log.w(TCP_INFO_LOG_TAG, "Connection timeout.");
+                currentStatus = ConnectionStatus.notConnected;
+                connectionCallback.onConnectError();
+            }
+            catch (Exception e) {
                 Log.e("TCP", "C: Error", e);
                 currentStatus = ConnectionStatus.notConnected;
                 connectionCallback.onConnectError();
@@ -75,8 +84,14 @@ public class TCPDeviceClient extends CommunicationDevice {
 
     @Override
     public void performConnectionCheck() {
-        if (socket == null && currentStatus == ConnectionStatus.connected) {
-            endConnection();
+        if (currentStatus == ConnectionStatus.connected) {
+            if (socket == null ||
+                socket.isClosed() ||
+                !socket.isConnected() ||
+                socket.isInputShutdown() ||
+                socket.isOutputShutdown()) {
+                endConnection();
+            }
         }
     }
 

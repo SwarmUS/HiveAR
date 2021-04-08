@@ -43,10 +43,8 @@ public class SerialDevice extends CommunicationDevice {
     public static final String ACTION_SERIAL_DEVICE_CHANGED = "com.swarmus.hivear.SERIAL_DEVICE_CHANGED";
     public static final String EXTRA_SERIAL_DEVICE_CHANGED = "deviceName";
 
-    @Override
-    public void init(Context context, ConnectionCallback connectionCallback) {
-        this.context = context;
-        this.connectionCallback = connectionCallback;
+    public SerialDevice(Context context, ConnectionCallback connectionCallback) {
+        super(context, connectionCallback);
         if (context != null)
         {
             uartOutputStream = new ByteArrayOutputStream();

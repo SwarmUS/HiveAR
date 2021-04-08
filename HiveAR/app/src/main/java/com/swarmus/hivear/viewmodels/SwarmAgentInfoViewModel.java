@@ -1,5 +1,6 @@
 package com.swarmus.hivear.viewmodels;
 
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 public class SwarmAgentInfoViewModel extends CommandListVM {
@@ -10,9 +11,14 @@ public class SwarmAgentInfoViewModel extends CommandListVM {
 
     public SwarmAgentInfoViewModel(){this.listTitle = "Local Buzz";}
 
-    public MutableLiveData<Integer> getSwarmAgentID() {
-        if (swarmAgentID == null) {swarmAgentID = new MutableLiveData<>(DEFAULT_SWARM_AGENT_ID);}
+    public LiveData<Integer> getSwarmAgentID() {
+        if (swarmAgentID == null) {swarmAgentID = new MutableLiveData<>(42);} // TODO TEMP FOR TESTING
         return swarmAgentID;
+    }
+
+    public void setSwarmAgentID(int id) {
+        id = 42; // TODO TEMP FOR TESTING
+        swarmAgentID = new MutableLiveData<>(id);
     }
 
     public boolean isAgentInitialized() {return getSwarmAgentID().getValue() != DEFAULT_SWARM_AGENT_ID;}

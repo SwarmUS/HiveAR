@@ -18,11 +18,11 @@ abstract public class CommunicationDevice {
     protected ConnectionCallback connectionCallback;
     protected ConnectionStatus currentStatus;
 
-    public void init(Context context, ConnectionCallback connectionCallback)
-    {
+    public CommunicationDevice(Context context, ConnectionCallback connectionCallback) {
         this.context = context;
         this.connectionCallback = connectionCallback;
     }
+
     public void setActive(boolean active) {this.isActive = active;}
     abstract public void establishConnection();
     abstract public void endConnection();
