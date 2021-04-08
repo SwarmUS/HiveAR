@@ -21,8 +21,7 @@ public class ProtoMsgViewModel extends ViewModel {
     public void addMsg(MessageOuterClass.Message msg) {
         LinkedList<String> msgs = new LinkedList<>(msgQueue.getValue());
         if (msgs.size() == maxCapacity) { msgs.removeLast(); }
-        // TODO color text
-        String msgString = sdf.format(Calendar.getInstance().getTime());
+        String msgString = "Received at: " + sdf.format(Calendar.getInstance().getTime()) + "\n";
         msgString += msg.toString();
         msgs.addFirst(msgString);
         msgQueue.setValue(new LinkedList<>(msgs));

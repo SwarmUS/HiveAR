@@ -6,10 +6,13 @@ import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -34,6 +37,7 @@ public class ConnectionViewFragment extends Fragment {
 
     private FragmentManager fragmentManager;
     private static final int MSG_LOGGING_LENGTH = 10;
+    private boolean isInfoVisible = true;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -46,14 +50,41 @@ public class ConnectionViewFragment extends Fragment {
         ProtoMsgViewModel protoMsgViewModel = new ViewModelProvider(requireActivity()).get(ProtoMsgViewModel.class);
         dataReceived.setText(protoMsgViewModel.getLastMsgs(MSG_LOGGING_LENGTH));
         protoMsgViewModel.getMsgQueue().observe(getViewLifecycleOwner(), s -> {
+            int scrollY = dataReceived.getScrollY();
             dataReceived.setText(protoMsgViewModel.getLastMsgs(MSG_LOGGING_LENGTH));
+            scrollY = Math.max(scrollY, 0);
             final Layout layout = dataReceived.getLayout();
             if(layout != null){
-                int scrollDelta = layout.getLineBottom(dataReceived.getLineCount() - 1)
-                        - dataReceived.getScrollY() - dataReceived.getHeight();
-                if(scrollDelta > 0)
-                    dataReceived.scrollBy(0, scrollDelta);
+                scrollY = Math.min(layout.getLineBottom(dataReceived.getLineCount() - 1), scrollY);
             }
+            dataReceived.scrollTo(0, scrollY);
+        });
+
+        dataReceived.setOnLongClickListener(v -> {
+            if (isInfoVisible) {
+                // Open delete popup
+                String alertMsg = "Make UI lighter?";
+                new AlertDialog.Builder(requireContext())
+                        .setTitle("Hide UI")
+                        .setMessage(alertMsg)
+                        .setPositiveButton("Yes", (dialog, whichButton) -> {
+                            setInfoVisible(false);
+                        }).setNegativeButton("No", (dialog, whichButton) -> {
+                    // Do nothing.
+                }).show();
+            } else {
+                // Open add function popup
+                String alertMsg = "Show more UI?";
+                new AlertDialog.Builder(requireContext())
+                        .setTitle("Show UI")
+                        .setMessage(alertMsg)
+                        .setPositiveButton("Yes", (dialog, whichButton) -> {
+                            setInfoVisible(true);
+                        }).setNegativeButton("No", (dialog, whichButton) -> {
+                    // Do nothing.
+                }).show();
+            }
+            return true;
         });
 
         view.findViewById(R.id.clean_text).setOnClickListener(v -> {
@@ -104,6 +135,7 @@ public class ConnectionViewFragment extends Fragment {
         // Update fragment
         FloatingActionButton switchCommunicationButton = view.findViewById(R.id.switchCommunication);
         updateCommunicationUI(switchCommunicationButton);
+        setInfoVisible(isInfoVisible); // Update UI
     }
 
     private void updateCommunicationUI(FloatingActionButton button) {
@@ -120,8 +152,18 @@ public class ConnectionViewFragment extends Fragment {
         ft.replace(R.id.communicationContainer, currentFragment);
         ft.commit();
         // Invalidate view to update UI
+        setInfoVisible(true);
         getView().invalidate();
-        TextView dataReceived = getView().findViewById(R.id.dataReceived);
-        if (dataReceived != null) {dataReceived.setText("");}
+    }
+
+    private void setInfoVisible(boolean isVisible) {
+        this.isInfoVisible = isVisible;
+        View v = getView();
+        ConstraintLayout moveByLayout = v.findViewById(R.id.moveByArrows);
+        moveByLayout.setVisibility(isVisible ? View.VISIBLE : View.GONE);
+
+        FrameLayout fl = v.findViewById(R.id.communicationContainer);
+        fl.setVisibility(isVisible ? View.VISIBLE : View.GONE);
+        v.invalidate();
     }
 }
