@@ -40,6 +40,7 @@ import com.swarmus.hivear.models.FunctionTemplate;
 import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.models.SerialDevice;
 import com.swarmus.hivear.models.TCPDeviceClient;
+import com.swarmus.hivear.models.TCPDeviceServer;
 import com.swarmus.hivear.utils.ProtoMsgStorer;
 import com.swarmus.hivear.viewmodels.ProtoMsgViewModel;
 import com.swarmus.hivear.viewmodels.RobotListViewModel;
@@ -308,13 +309,13 @@ public class MainActivity extends AppCompatActivity {
             Log.e("Network", "C: Cannot find host address", ex);
         }
 
-        tcpDevice = new TCPDeviceClient(this, connectionCallback, ip, DEFAULT_PORT);
+        tcpDevice = new TCPDeviceServer(this, connectionCallback, ip, DEFAULT_PORT);
 
         TcpSettingsViewModel tcpSettingsViewModel = new ViewModelProvider(this).get(TcpSettingsViewModel.class);
-        final Observer<String> ipAddressObserver = s -> ((TCPDeviceClient)tcpDevice).setServerIP(s);
+        final Observer<String> ipAddressObserver = s -> ((TCPDeviceServer)tcpDevice).setServerAddress(s);
         tcpSettingsViewModel.getIpAddress().observe(this, ipAddressObserver);
 
-        final Observer<Integer> portObserver = p -> ((TCPDeviceClient)tcpDevice).setServerPort(p);
+        final Observer<Integer> portObserver = p -> ((TCPDeviceServer)tcpDevice).setServerPort(p);
         tcpSettingsViewModel.getPort().observe(this, portObserver);
     }
 
@@ -379,17 +380,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             thread.start();
-
-            // Send greet to get a swarm agent ID
-            while (!swarmAgentInfoViewModel.isAgentInitialized()) {
-                try {
-                    sendGreet();
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-            }
+            sendGreet();
             currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.connected);
 
         }
@@ -531,7 +522,7 @@ public class MainActivity extends AppCompatActivity {
         currentCommunicationDevice.setActive(false);
         if (currentCommunicationDevice instanceof SerialDevice) {
             currentCommunicationDevice = tcpDevice;
-        } else if (currentCommunicationDevice instanceof TCPDeviceClient) {
+        } else if (currentCommunicationDevice instanceof TCPDeviceServer) {
             currentCommunicationDevice = serialDevice;
         }
         currentCommunicationDevice.setActive(true);

@@ -17,7 +17,6 @@ public class SwarmAgentInfoViewModel extends CommandListVM {
     }
 
     public void setSwarmAgentID(int id) {
-        id = 42; // TODO TEMP FOR TESTING
         swarmAgentID = new MutableLiveData<>(id);
     }
 
