@@ -18,6 +18,8 @@ abstract public class CommunicationDevice {
     protected ConnectionCallback connectionCallback;
     protected ConnectionStatus currentStatus;
 
+    protected Object mutex = new Object();
+
     public CommunicationDevice(Context context, ConnectionCallback connectionCallback) {
         this.context = context;
         this.connectionCallback = connectionCallback;

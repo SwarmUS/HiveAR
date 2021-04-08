@@ -29,6 +29,7 @@ import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.arcore.CameraPermissionHelper;
@@ -371,9 +372,14 @@ public class MainActivity extends AppCompatActivity {
                 while (inputStream != null) {
                     try {
                         MessageOuterClass.Message msg = MessageOuterClass.Message.parseDelimitedFrom(inputStream);
-                        receivedMessages.add(msg);
-                        sendBroadcast(msgReceivedIntent);
-                    } catch (IOException e) {
+                        if (msg != null) {
+                            receivedMessages.add(msg);
+                            sendBroadcast(msgReceivedIntent);
+                        }
+                    } catch(InvalidProtocolBufferException e) {
+                        Log.w(TAG, "Unfinished message " + e.getUnfinishedMessage());
+                    }
+                    catch (IOException e) {
                         e.printStackTrace();
                         return;
                     }
