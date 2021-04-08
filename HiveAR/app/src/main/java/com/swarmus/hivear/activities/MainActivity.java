@@ -309,7 +309,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         tcpDevice = new TCPDeviceClient(this, connectionCallback, ip, DEFAULT_PORT);
-        tcpDevice.init(this, connectionCallback);
 
         TcpSettingsViewModel tcpSettingsViewModel = new ViewModelProvider(this).get(TcpSettingsViewModel.class);
         final Observer<String> ipAddressObserver = s -> ((TCPDeviceClient)tcpDevice).setServerIP(s);
