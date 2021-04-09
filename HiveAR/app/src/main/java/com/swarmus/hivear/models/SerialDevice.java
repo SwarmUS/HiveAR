@@ -132,6 +132,11 @@ public class SerialDevice extends CommunicationDevice {
     public void setSelectedUsbDeviceName(String deviceName) {
         if (!deviceName.equals(selectedDeviceName)) { endConnection(); }
         selectedDeviceName = deviceName;
+        HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
+        device = deviceList.get(selectedDeviceName);
+        if (!manager.hasPermission(device)) {
+            manager.requestPermission(device, permissionIntent);
+        }
     }
 
     private class UsbReceiver extends BroadcastReceiver {
@@ -160,11 +165,11 @@ public class SerialDevice extends CommunicationDevice {
                 devicesName.put(device.getProductName(), device.getDeviceName());
             }
 
+            logConnectedDevices();
             Intent connectedDevicesIntent = new Intent();
             connectedDevicesIntent.setAction(ACTION_SERIAL_DEVICE_CHANGED);
             connectedDevicesIntent.putExtra(EXTRA_SERIAL_DEVICE_CHANGED, devicesName);
             context.sendBroadcast(connectedDevicesIntent);
-            logConnectedDevices();
         }
     }
 
