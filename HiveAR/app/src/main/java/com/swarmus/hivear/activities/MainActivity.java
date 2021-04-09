@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
     private RobotListViewModel robotListViewModel;
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private static final int DEFAULT_PORT = 7003;
+    private static final int DEFAULT_PORT = 700; // Agents in simulation in range 7001+
 
     private boolean userRequestedInstall = true;
     private boolean arEnabled = false;
