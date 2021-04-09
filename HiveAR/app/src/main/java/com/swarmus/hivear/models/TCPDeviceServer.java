@@ -75,6 +75,12 @@ public class TCPDeviceServer extends CommunicationDevice {
                 Log.w(TCP_INFO_LOG_TAG, "Connection timeout on server. Closing server...");
                 Log.w("TCP", "C: Timeout", e);
                 connectionCallback.onConnectError();
+                currentStatus = ConnectionStatus.notConnected;
+                try {
+                    if (server != null) {server.close();}
+                } catch (IOException exception) {
+                    exception.printStackTrace();
+                }
             }
             catch (Exception e) {
                 Log.e("TCP", "C: Error", e);

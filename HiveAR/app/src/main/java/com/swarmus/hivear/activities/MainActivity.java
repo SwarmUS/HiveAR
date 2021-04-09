@@ -387,8 +387,6 @@ public class MainActivity extends AppCompatActivity {
             });
             thread.start();
             sendGreet();
-            currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.connected);
-
         }
 
         @Override
@@ -473,6 +471,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     } else if(msg.hasGreeting()) {
                         int agentID = msg.getGreeting().getId();
+                        currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.connected);
                         swarmAgentInfoViewModel.setSwarmAgentID(agentID);
                         // Ask what buzz functions are exposed to device
                         FetchRobotCommands fetchLocalBuzzCommands = new FetchRobotCommands(agentID, true);
