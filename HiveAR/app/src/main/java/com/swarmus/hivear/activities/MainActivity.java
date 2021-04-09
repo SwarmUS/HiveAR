@@ -247,7 +247,9 @@ public class MainActivity extends AppCompatActivity {
             badgeDrawable.setVisible(true);
             switch (status) {
                 case connected:
-                    badgeDrawable.setBackgroundColor(getColor(R.color.connection_established));
+                    badgeDrawable.setBackgroundColor(getColor(swarmAgentInfoViewModel.isAgentInitialized() ?
+                            R.color.connection_established :
+                            R.color.connection_established_no_swarm));
                     break;
                 case notConnected:
                     badgeDrawable.setBackgroundColor(getColor(R.color.connection_none));
@@ -261,6 +263,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void setUpCommmunication() {
         swarmAgentInfoViewModel = new ViewModelProvider(this).get(SwarmAgentInfoViewModel.class);
+        swarmAgentInfoViewModel.getSwarmAgentID().observe(this, id -> setConnectionBadge(currentCommunicationDevice.getCurrentStatus()));
+
         protoMsgViewModel = new ViewModelProvider(this).get(ProtoMsgViewModel.class);
 
         receivedMessages = new LinkedList<>();
