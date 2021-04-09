@@ -24,7 +24,7 @@ import com.swarmus.hivear.activities.MainActivity;
 import com.swarmus.hivear.commands.MoveByCommand;
 import com.swarmus.hivear.models.CommunicationDevice;
 import com.swarmus.hivear.models.SerialDevice;
-import com.swarmus.hivear.models.TCPDevice;
+import com.swarmus.hivear.models.TCPDeviceServer;
 import com.swarmus.hivear.viewmodels.ProtoMsgViewModel;
 
 public class ConnectionViewFragment extends Fragment {
@@ -121,7 +121,7 @@ public class ConnectionViewFragment extends Fragment {
             currentFragment = new UartSettingsFragment();
             button.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.usb_icon));
         } else {
-            currentFragment = new TcpSettingsFragment(((TCPDevice)communicationDevice).getServerIP(), ((TCPDevice)communicationDevice).getServerPort());
+            currentFragment = new TcpSettingsFragment(((TCPDeviceServer)communicationDevice).getServerAddress(), ((TCPDeviceServer)communicationDevice).getServerPort());
             button.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.wifi_icon));
         }
         FragmentTransaction ft = fragmentManager.beginTransaction();

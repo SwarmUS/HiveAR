@@ -10,56 +10,77 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.concurrent.TimeoutException;
 
-public class TCPDevice extends CommunicationDevice {
-    private String serverIP;
+// To use the server, you need to provide the ip address and the port on which to create it.
+// On the cellphone, the address is simply the ip address of the cellphone and on the emulator,
+// use address 10.0.2.15m which corresponds to the emulated network interface in the emulator.
+// See https://developer.android.com/studio/run/emulator-networking for details
+public class TCPDeviceServer extends CommunicationDevice {
     private int serverPort;
-    private Socket socket;
+    private String serverBindingAddress;
+    private ServerSocket server;
+    private Socket clientFd;
 
-    private static final String TCP_INFO_LOG_TAG = "TCP";
+    private static final String TCP_INFO_LOG_TAG = "TCP-Server";
 
-    public TCPDevice(Context context, ConnectionCallback connectionCallback, String ip, int port) {
+    public TCPDeviceServer(Context context, ConnectionCallback connectionCallback, String serverBindingAddress, int port) {
         super(context, connectionCallback);
-        this.serverIP = ip;
+        this.serverBindingAddress = serverBindingAddress;
         this.serverPort = port;
     }
 
+
     @Override
     public void establishConnection() {
-        // Close previous connection before creating a new one
         endConnection();
         currentStatus = ConnectionStatus.connecting;
         broadCastConnectionStatus(ConnectionStatus.connecting);
         Thread connectionThread = new Thread(new ConnectionRunnable());
         connectionThread.start();
+
     }
 
     private class ConnectionRunnable implements Runnable {
         public void run() {
             try {
-                InetAddress serverAddr = InetAddress.getByName(serverIP);
 
-                Log.d(TCP_INFO_LOG_TAG, "Connecting...");
+                Log.d(TCP_INFO_LOG_TAG, "Starting server...");
 
-                socket = new Socket(serverAddr, serverPort);
-                socket.setSoTimeout(10000); // Max time to connect = 10 seconds
+                // Forcing the binding address to be able to set the emulated network interface
+                server = new ServerSocket(serverPort, 1, InetAddress.getByName(serverBindingAddress));
+                server.setSoTimeout(10000); // Set a connection timeout
 
-                if (socket != null && socket.isConnected()) {
+
+                if (server != null) {
+                    Log.d(TCP_INFO_LOG_TAG, "Server, awaiting connection");
+                    // Accept is blocking and should only return once client connection has been established
+                    clientFd = server.accept();
+                    Log.d(TCP_INFO_LOG_TAG, "Server obtained client!");
                     currentStatus = ConnectionStatus.connected;
                     connectionCallback.onConnect();
                 }
                 else {
+                    Log.d(TCP_INFO_LOG_TAG, "Failed to start server...");
                     connectionCallback.onConnectError();
                     currentStatus = ConnectionStatus.notConnected;
-                    if (socket!=null) { socket.close(); }
+                    if (server!=null) { server.close(); }
                 }
 
-            } catch (SocketTimeoutException e) {
-                Log.w(TCP_INFO_LOG_TAG, "Connection timeout.");
-                currentStatus = ConnectionStatus.notConnected;
+            }
+            catch (SocketTimeoutException e) {
+                Log.w(TCP_INFO_LOG_TAG, "Connection timeout on server. Closing server...");
+                Log.w("TCP", "C: Timeout", e);
                 connectionCallback.onConnectError();
+                currentStatus = ConnectionStatus.notConnected;
+                try {
+                    if (server != null) {server.close();}
+                } catch (IOException exception) {
+                    exception.printStackTrace();
+                }
             }
             catch (Exception e) {
                 Log.e("TCP", "C: Error", e);
@@ -71,12 +92,12 @@ public class TCPDevice extends CommunicationDevice {
 
     @Override
     public void endConnection() {
-        if (socket != null) {
-            try {
-                socket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        // End client connect if connected and server if running
+        try {
+            if (clientFd != null){ clientFd.close();}
+            if (server != null){ server.close();}
+        } catch (IOException e) {
+            Log.e("TCP", "C: Error", e);
         }
         currentStatus = ConnectionStatus.notConnected;
         connectionCallback.onDisconnect();
@@ -84,15 +105,10 @@ public class TCPDevice extends CommunicationDevice {
 
     @Override
     public void performConnectionCheck() {
-        if (currentStatus == ConnectionStatus.connected) {
-            if (socket == null ||
-                socket.isClosed() ||
-                !socket.isConnected() ||
-                socket.isInputShutdown() ||
-                socket.isOutputShutdown()) {
-                endConnection();
-            }
+        if (server == null && clientFd == null && currentStatus == ConnectionStatus.connected) {
+            endConnection();
         }
+
     }
 
     @Override
@@ -111,6 +127,7 @@ public class TCPDevice extends CommunicationDevice {
                 thread.start();
             }
         }
+
     }
 
     @Override
@@ -138,12 +155,10 @@ public class TCPDevice extends CommunicationDevice {
     }
 
     @Override
-    public InputStream getDataStream()
-    {
-        if (socket != null && socket.isConnected())
-        {
+    public InputStream getDataStream() {
+        if (clientFd != null && clientFd.isConnected()) {
             try {
-                return socket.getInputStream();
+                return clientFd.getInputStream();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -152,18 +167,11 @@ public class TCPDevice extends CommunicationDevice {
         connectionCallback.onConnectError();
         return null;
     }
-    public void setServerIP(String ip) {this.serverIP=ip;}
-    public void setServerPort(int port) {this.serverPort=port;}
 
-    public String getServerIP() {return serverIP;}
-    public int getServerPort() {return serverPort;}
-
-    public OutputStream getSocketOutputStream()
-    {
-        if (socket != null && socket.isConnected())
-        {
+    public OutputStream getSocketOutputStream() {
+        if (clientFd != null && clientFd.isConnected()) {
             try {
-                return socket.getOutputStream();
+                return clientFd.getOutputStream();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -172,4 +180,14 @@ public class TCPDevice extends CommunicationDevice {
         connectionCallback.onConnectError();
         return null;
     }
+
+    public void setServerPort(int port) {
+        this.serverPort=port;}
+    public int getServerPort() { return this.serverPort;}
+
+    public void setServerAddress(String address) {
+        this.serverBindingAddress=address;}
+    public String getServerAddress() { return this.serverBindingAddress;}
 }
+
+

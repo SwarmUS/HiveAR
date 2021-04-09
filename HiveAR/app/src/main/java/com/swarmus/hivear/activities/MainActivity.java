@@ -5,8 +5,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Rect;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.format.Formatter;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -38,7 +40,7 @@ import com.swarmus.hivear.models.CommunicationDevice;
 import com.swarmus.hivear.models.FunctionTemplate;
 import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.models.SerialDevice;
-import com.swarmus.hivear.models.TCPDevice;
+import com.swarmus.hivear.models.TCPDeviceServer;
 import com.swarmus.hivear.viewmodels.ProtoMsgViewModel;
 import com.swarmus.hivear.viewmodels.RobotListViewModel;
 import com.swarmus.hivear.viewmodels.SerialSettingsViewModel;
@@ -48,7 +50,13 @@ import com.swarmus.hivear.viewmodels.TcpSettingsViewModel;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -72,8 +80,7 @@ public class MainActivity extends AppCompatActivity {
     private RobotListViewModel robotListViewModel;
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    private static final String DEFAULT_IP_ADDRESS = "192.168.0.";
-    private static final int DEFAULT_PORT = 12345;
+    private static final int DEFAULT_PORT = 7003;
 
     private boolean userRequestedInstall = true;
     private boolean arEnabled = false;
@@ -289,13 +296,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setUpTCPCommunication() {
-        tcpDevice = new TCPDevice(this, connectionCallback, DEFAULT_IP_ADDRESS, DEFAULT_PORT);
+        String ip = "0.0.0.0";
+        try {
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+                NetworkInterface intf = en.nextElement();
+                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+                    InetAddress inetAddress = enumIpAddr.nextElement();
+                    if (!inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
+                        ip = inetAddress.getHostAddress();
+                    }
+                }
+            }
+        } catch (SocketException ex) {
+            Log.e("Network", "C: Cannot find host address", ex);
+        }
+
+        tcpDevice = new TCPDeviceServer(this, connectionCallback, ip, DEFAULT_PORT);
 
         TcpSettingsViewModel tcpSettingsViewModel = new ViewModelProvider(this).get(TcpSettingsViewModel.class);
-        final Observer<String> ipAddressObserver = s -> ((TCPDevice)tcpDevice).setServerIP(s);
+        final Observer<String> ipAddressObserver = s -> ((TCPDeviceServer)tcpDevice).setServerAddress(s);
         tcpSettingsViewModel.getIpAddress().observe(this, ipAddressObserver);
 
-        final Observer<Integer> portObserver = p -> ((TCPDevice)tcpDevice).setServerPort(p);
+        final Observer<Integer> portObserver = p -> ((TCPDeviceServer)tcpDevice).setServerPort(p);
         tcpSettingsViewModel.getPort().observe(this, portObserver);
     }
 
@@ -501,7 +523,7 @@ public class MainActivity extends AppCompatActivity {
         currentCommunicationDevice.setActive(false);
         if (currentCommunicationDevice instanceof SerialDevice) {
             currentCommunicationDevice = tcpDevice;
-        } else if (currentCommunicationDevice instanceof TCPDevice) {
+        } else if (currentCommunicationDevice instanceof TCPDeviceServer) {
             currentCommunicationDevice = serialDevice;
         }
         currentCommunicationDevice.setActive(true);
