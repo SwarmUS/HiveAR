@@ -107,18 +107,19 @@ public class TCPDeviceServer extends CommunicationDevice {
 
     @Override
     public void sendData(byte[] data) {
-        // TODO Verify concurrency
         OutputStream outputStream = getSocketOutputStream();
         if (outputStream != null) {
-            Thread thread = new Thread(() -> {
-                try  {
-                    outputStream.write(data);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
+            synchronized (mutex) {
+                Thread thread = new Thread(() -> {
+                    try  {
+                        outputStream.write(data);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
 
-            thread.start();
+                thread.start();
+            }
         }
 
     }
@@ -130,19 +131,20 @@ public class TCPDeviceServer extends CommunicationDevice {
 
     @Override
     public void sendData(MessageOuterClass.Message protoMessage) {
-        // TODO: isRunning variable to not write at the same time
         OutputStream outputStream = getSocketOutputStream();
         if (outputStream != null && protoMessage.isInitialized())
         {
-            Thread thread = new Thread(() -> {
-                try  {
-                    protoMessage.writeDelimitedTo(outputStream);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
+            synchronized (mutex) {
+                Thread thread = new Thread(() -> {
+                    try  {
+                        protoMessage.writeDelimitedTo(outputStream);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
 
-            thread.start();
+                thread.start();
+            }
         }
     }
 
