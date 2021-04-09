@@ -40,7 +40,8 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp">
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -97,7 +98,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="10dp"
-                android:layout_marginBottom="10dp"
                 android:contentDescription="Hide UI"
                 android:src="@drawable/delete"
                 app:layout_constraintBottom_toBottomOf="@+id/dataReceived"
@@ -190,11 +190,11 @@
         android:id="@+id/hide_ui"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="10dp"
+        android:layout_marginStart="10dp"
         android:layout_marginBottom="10dp"
         android:contentDescription="Clear Text"
         android:src="@drawable/open_full"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
