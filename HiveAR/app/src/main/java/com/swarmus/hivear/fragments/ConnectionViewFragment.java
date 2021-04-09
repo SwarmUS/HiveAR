@@ -36,7 +36,7 @@ public class ConnectionViewFragment extends Fragment {
 
     private FragmentManager fragmentManager;
     private static final int MSG_LOGGING_LENGTH = 10;
-    private boolean isInfoVisible = true;
+    private boolean isInfoVisible = false;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -111,7 +111,7 @@ public class ConnectionViewFragment extends Fragment {
         // Update fragment
         FloatingActionButton switchCommunicationButton = view.findViewById(R.id.switchCommunication);
         updateCommunicationUI(switchCommunicationButton);
-        setInfoVisible(isInfoVisible); // Update UI
+        setInfoVisible(false); // Disable UI at start
     }
 
     private void updateCommunicationUI(FloatingActionButton button) {
