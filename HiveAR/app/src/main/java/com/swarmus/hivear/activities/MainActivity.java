@@ -5,10 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Rect;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.text.format.Formatter;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -40,9 +38,7 @@ import com.swarmus.hivear.models.CommunicationDevice;
 import com.swarmus.hivear.models.FunctionTemplate;
 import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.models.SerialDevice;
-import com.swarmus.hivear.models.TCPDeviceClient;
 import com.swarmus.hivear.models.TCPDeviceServer;
-import com.swarmus.hivear.utils.ProtoMsgStorer;
 import com.swarmus.hivear.viewmodels.ProtoMsgViewModel;
 import com.swarmus.hivear.viewmodels.RobotListViewModel;
 import com.swarmus.hivear.viewmodels.SerialSettingsViewModel;
@@ -57,7 +53,6 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -75,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
     private SwarmAgentInfoViewModel swarmAgentInfoViewModel;
     private static final String BROADCAST_PROTO_MSG_RECEIVED = "Proto Message Received";
     private static final String BROADCAST_PROTO_MSG_TO_SEND = "Proto Message To Send";
-    private ProtoMsgStorer protoMsgStorer;
+    private ProtoMsgViewModel protoMsgViewModel;
     private Queue<MessageOuterClass.Message> receivedMessages;
     private Queue<MessageOuterClass.Message> toSendMessages;
 
@@ -100,7 +95,6 @@ public class MainActivity extends AppCompatActivity {
         maybeEnableAr(); // Hide AR tab if not possible to do AR
         setUpNavigation();
         setUpCommmunication();
-        robotListViewModel = new ViewModelProvider(this).get(RobotListViewModel.class);
         updateRobots();
     }
 
@@ -257,7 +251,9 @@ public class MainActivity extends AppCompatActivity {
             badgeDrawable.setVisible(true);
             switch (status) {
                 case connected:
-                    badgeDrawable.setBackgroundColor(getColor(R.color.connection_established));
+                    badgeDrawable.setBackgroundColor(getColor(swarmAgentInfoViewModel.isAgentInitialized() ?
+                            R.color.connection_established :
+                            R.color.connection_established_no_swarm));
                     break;
                 case notConnected:
                     badgeDrawable.setBackgroundColor(getColor(R.color.connection_none));
@@ -271,12 +267,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void setUpCommmunication() {
         swarmAgentInfoViewModel = new ViewModelProvider(this).get(SwarmAgentInfoViewModel.class);
+        swarmAgentInfoViewModel.getSwarmAgentID().observe(this, id -> setConnectionBadge(currentCommunicationDevice.getCurrentStatus()));
+
+        protoMsgViewModel = new ViewModelProvider(this).get(ProtoMsgViewModel.class);
 
         receivedMessages = new LinkedList<>();
         toSendMessages = new LinkedList<>();
-        protoMsgStorer = new ProtoMsgStorer(6);
         ProtoMsgViewModel protoMsgViewModel = new ViewModelProvider(this).get(ProtoMsgViewModel.class);
-        protoMsgViewModel.getProtoMessages().observe(this, s -> Log.i(TAG, protoMsgViewModel.getProtoMessages().getValue()));
+        protoMsgViewModel.getMsgQueue().observe(this, s -> Log.i(TAG, protoMsgViewModel.getLastMsgs(1)));
 
         IntentFilter filterProtoMsgReceived = new IntentFilter(BROADCAST_PROTO_MSG_RECEIVED);
         registerReceiver(protoMsgReadReceiver, filterProtoMsgReceived);
@@ -412,7 +410,8 @@ public class MainActivity extends AppCompatActivity {
                 MessageOuterClass.Message msg;
                 while ((msg = receivedMessages.poll()) != null) {
                     // For logging purposes
-                    storeProtoMessage(msg);
+
+                    protoMsgViewModel.addMsg(msg);
 
                     if (msg.hasResponse() && swarmAgentInfoViewModel.isAgentInitialized()) {
                         if (msg.getResponse().hasUserCall()) {
@@ -499,18 +498,11 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private void storeProtoMessage(@NonNull MessageOuterClass.Message msg)
-    {
-        protoMsgStorer.addMsg(msg);
-        if (!protoMsgStorer.isEmpty()) {
-            ProtoMsgViewModel protoMsgViewModel = new ViewModelProvider(this).get(ProtoMsgViewModel.class);
-            protoMsgViewModel.getProtoMessages().setValue(protoMsgStorer.toString());
-        }
-    }
-
     // TODO update when new details will be available
     private void updateRobots()
     {
+        robotListViewModel = new ViewModelProvider(this).get(RobotListViewModel.class);
+
         // TODO Retrieve all robots in the swarm
         List<Robot> robotList = new ArrayList<>();
         robotList.add(new Robot("pioneer_0", 1));

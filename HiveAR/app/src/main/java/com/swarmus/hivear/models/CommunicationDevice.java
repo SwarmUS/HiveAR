@@ -16,7 +16,7 @@ abstract public class CommunicationDevice {
     protected Context context;
     protected boolean isActive;
     protected ConnectionCallback connectionCallback;
-    protected ConnectionStatus currentStatus;
+    protected ConnectionStatus currentStatus = ConnectionStatus.notConnected;
 
     protected Object mutex = new Object();
 
@@ -41,6 +41,7 @@ abstract public class CommunicationDevice {
             context.sendBroadcast(intent);
         }
     }
+    public ConnectionStatus getCurrentStatus() { return this.currentStatus; }
 
     public interface ConnectionCallback {
         void onConnect();
