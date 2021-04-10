@@ -253,6 +253,7 @@ public class SerialDevice extends CommunicationDevice {
         try {
             if (pipedOutputStream == null) {
                 endConnection();
+                return;
             }
             pipedOutputStream.write(data);
         } catch (IOException e) {
