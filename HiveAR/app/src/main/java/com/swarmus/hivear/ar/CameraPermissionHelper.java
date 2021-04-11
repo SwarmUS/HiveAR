@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.swarmus.hivear.computervision.common.helpers;
+package com.swarmus.hivear.ar;
 
 import android.Manifest;
 import android.app.Activity;

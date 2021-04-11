@@ -10,15 +10,11 @@
     <string name="connect">Connect</string>
     <string name="connection">Connection</string>
     <string name="ar">AR</string>
-    <string name="swarm_summary">Swarm Summary</string>
     <string name="roboticon">robotIcon</string>
     <string name="robotname">RobotName</string>
     <string name="uid">#UID</string>
     <string name="command">Command</string>
-    <string name="command_argument">Command Argument</string>
     <string name="commands">Commands:</string>
-    <string name="tags_db">tagsDB.imgdb</string>
-    <string name="scan_new_swarm_entity">Scan new swarm entity</string>
     <string name="switch_to_scan_qr_code_page">Switch to scan Qr code page</string>
     <string name="Settings">Settings</string>
     <string name="scan_qr_code">Scan QR Code</string>
@@ -29,7 +25,6 @@
     <string name="current_active_database">Current Active Database:</string>
     <string name="ar_database_settings">Ar Database Settings</string>
     <string name="add_new_folder">Add new folder</string>
-    <string name="select_folder">Select Folder</string>
     <string name="string_select_folder">Select Folder</string>
     <string name="database_content">Database Content:</string>
     <string name="jpeg_extension">.jpg</string>
@@ -40,23 +35,4 @@
     <string name="commands_menu">Commands</string>
     <string name="status">Status</string>
     <string name="last_update">Last Update: </string>
-    <string name="options_title_with_depth" translatable="false">Your device supports depth</string>
-    <string name="depth_use_explanation" translatable="false">When Depth is enabled on supported devices, virtual objects adapt to the environment by blending in with the real world.</string>
-    <string name="button_text_enable_depth" translatable="false">Enable</string>
-    <string name="button_text_disable_depth" translatable="false">Disable</string>
-    <string name="options_title_instant_placement" translatable="false">Instant Placement options</string>
-    <string-array name="instant_placement_options_array">
-        <item>Enable Instant Placement</item>
-    </string-array>
-    <string name="done" translatable="false">Done</string>
-    <string-array name="depth_options_array">
-        <item>Enable depth</item>
-        <item>Show depth map</item>
-    </string-array>
-    <string name="options_title_without_depth" translatable="false">Your device does not support depth</string>
-    <string name="switch_cv_mode">Computer Vision</string>
-    <string name="switch_focus_mode">Auto Focus</string>
-    <string name="label_low_res">Low Resolution</string>
-    <string name="label_medium_res">Medium Resolution</string>
-    <string name="label_high_res">High Resolution</string>
 </resources>

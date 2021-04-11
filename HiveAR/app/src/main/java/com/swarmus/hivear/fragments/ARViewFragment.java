@@ -88,7 +88,7 @@ public class ARViewFragment extends Fragment {
     private final Object frameImageInUseLock = new Object();
 
     private Handler timerHandler;
-    private HashMap<Robot,TextView> timerTextViews = new HashMap();
+    private HashMap<Robot,TextView> timerTextViews = new HashMap<>();
     private ProcessingThread aprilTagProcessingThread;
     private AnchorNode worldNode;
     static Pose defPose = Pose.makeRotation(0.7071068f, 0, 0, 0.7071068f).compose(Pose.makeRotation(0,1,0,0));
@@ -509,7 +509,7 @@ public class ARViewFragment extends Fragment {
                             new Vector3(0.0f, 0.0f, -(float)detection.pose_t[2]));*/
 
                     float[] tr = {-homogeneous_m[12], homogeneous_m[13], homogeneous_m[14]};
-                    Quaternion q = MathUtil.ConvertToRightHanded(MathUtil.getQuaternion(homogeneous_m));
+                    Quaternion q = MathUtil.convertToRightHanded(MathUtil.getQuaternion(homogeneous_m));
                     float[] ro = {q.x, q.y, q.z, q.w};
                     Pose p = new Pose(tr, ro);
 

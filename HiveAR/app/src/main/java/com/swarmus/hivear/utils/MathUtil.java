@@ -73,16 +73,7 @@ public class MathUtil {
         return q;
     }
 
-    public static final Quaternion ConvertToLeftHanded(Quaternion input) {
-        return new Quaternion(
-                input.y,   // -(  right = -left  )
-                -input.z,   // -(     up =  up     )
-                -input.x,   // -(forward =  forward)
-                input.w
-        );
-    }
-
-    public static final Quaternion ConvertToRightHanded(Quaternion input) {
+    public static final Quaternion convertToRightHanded(Quaternion input) {
         return new Quaternion(
                 -input.x,   // -(  right = -left  )
                 input.y,   // -(     up =  up     )
