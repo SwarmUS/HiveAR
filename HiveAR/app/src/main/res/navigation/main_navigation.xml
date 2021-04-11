@@ -16,7 +16,7 @@
         android:id="@+id/ARViewFragment"
         android:name="com.swarmus.hivear.fragments.ARViewFragment"
         android:label="ar_view_fragment"
-        tools:layout="@layout/fragment_ar_view" />
+        tools:layout="@layout/ar_view_fragment" />
     <fragment
         android:id="@+id/connectionViewFragment"
         android:name="com.swarmus.hivear.fragments.ConnectionViewFragment"

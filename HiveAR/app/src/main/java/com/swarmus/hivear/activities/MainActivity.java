@@ -234,7 +234,7 @@ public class MainActivity extends AppCompatActivity {
         if (!availability.isSupported()) {
             bottomNavigationView = findViewById(R.id.bottom_nav_view);
             // Show or not the AR view
-            bottomNavigationView.getMenu().removeItem(R.id.ArRendererFragment);
+            bottomNavigationView.getMenu().removeItem(R.id.ARViewFragment);
         }
     }
 
