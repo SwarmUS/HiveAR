@@ -83,71 +83,6 @@ JNIEXPORT void JNICALL Java_com_swarmus_hivear_apriltag_ApriltagNative_native_1i
 
 /*
  * Class:     com_swarmus_hivear_apriltag_ApriltagNative
- * Method:    yuv_to_rgb
- * Signature: ([BIILandroid/graphics/Bitmap;)V
- */
-JNIEXPORT void JNICALL Java_com_swarmus_hivear_apriltag_ApriltagNative_yuv_1to_1rgb
-    (JNIEnv *env, jclass cls, jbyteArray _src, jint width, jint height, jobject _dst)
-{
-    // NV21 Format
-    // width*height    luma (Y) bytes followed by
-    // width*height/2  chroma (UV) bytes interleaved as V,U
-
-    jbyte *src = (*env)->GetByteArrayElements(env, _src, NULL);
-    jint *dst = NULL;
-    AndroidBitmap_lockPixels(env, _dst, (void **) &dst);
-
-    if (!dst) {
-        __android_log_write(ANDROID_LOG_ERROR, "apriltag_jni",
-                            "couldn't lock bitmap");
-        return;
-    }
-
-    AndroidBitmapInfo bmpinfo;
-    if (AndroidBitmap_getInfo(env, _dst, &bmpinfo) ||
-        bmpinfo.width*bmpinfo.height != width*height ||
-        bmpinfo.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
-        __android_log_print(ANDROID_LOG_ERROR, "apriltag_jni",
-                            "incorrect bitmap format: %d x %d  %d",
-                            bmpinfo.width, bmpinfo.height, bmpinfo.format);
-        return;
-    }
-
-    int uvstart = width * height;
-    for (int j = 0; j < height; j += 1) {
-        for (int i = 0; i < width; i += 1) {
-            int y = (unsigned char)src[j*width + i];
-            int offset = uvstart + (j >> 1)*width + (i & ~1);
-            int u = (unsigned char)src[offset + 1];
-            int v = (unsigned char)src[offset + 0];
-
-            y = y < 16 ? 16 : y;
-
-            int a0 = 1192 * (y - 16);
-            int a1 = 1634 * (v - 128);
-            int a2 = 832 * (v - 128);
-            int a3 = 400 * (u - 128);
-            int a4 = 2066 * (u - 128);
-
-            int r = (a0 + a1) >> 10;
-            int g = (a0 - a2 - a3) >> 10;
-            int b = (a0 + a4) >> 10;
-
-            r = r < 0 ? 0 : (r > 255 ? 255 : r);
-            g = g < 0 ? 0 : (g > 255 ? 255 : g);
-            b = b < 0 ? 0 : (b > 255 ? 255 : b);
-
-            // Output image in portrait orientation
-            dst[(i+1)*height - j-1] = 0xff000000 | (r << 16) | (g << 8) | b;
-        }
-    }
-
-    (*env)->ReleaseByteArrayElements(env, _src, src, 0);
-    AndroidBitmap_unlockPixels(env, _dst);
-}
-
-/*
- * Class:     com_swarmus_hivear_apriltag_ApriltagNative
  * Method:    apriltag_init
  * Signature: (Ljava/lang/String;IDDI)V
  */
@@ -242,21 +177,11 @@ JNIEXPORT jobject JNICALL Java_com_swarmus_hivear_apriltag_ApriltagNative_aprilt
 
         state.info.det = det;
         state.info.tagsize = tagWidth;
-        /*state.info.fx = det->p[0][0];
-        state.info.fy = det->p[0][1];
-        state.info.cx = det->c[0];
-        state.info.cy = det->c[1];*/
         state.info.fx = ((double*)fLength)[0];
         state.info.fy = ((double*)fLength)[1];
         state.info.cx = ((double*)cPoint)[0];
         state.info.cy = ((double*)cPoint)[1];
         apriltag_pose_t pose;
-
-        /*matd_t *M = homography_to_pose(det->H, -fLength[0], fLength[1], cPoint[0], cPoint[1]);
-        double scale = tagWidth / 2.0;
-        MATD_EL(M, 0, 3) *= scale;
-        MATD_EL(M, 1, 3) *= scale;
-        MATD_EL(M, 2, 3) *= scale;*/
 
         estimate_pose_for_tag_homography(&state.info, &pose);
 

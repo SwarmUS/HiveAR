@@ -16,8 +16,6 @@ public class ApriltagNative {
 
     public static native void native_init();
 
-    public static native void yuv_to_rgb(byte[] src, int width, int height, Bitmap dst);
-
     public static native void apriltag_init(String tagFamily, int errorBits, double decimateFactor,
                                             double blurSigma, int nthreads);
 
