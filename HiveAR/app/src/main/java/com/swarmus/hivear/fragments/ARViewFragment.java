@@ -73,7 +73,7 @@ import java.util.concurrent.TimeUnit;
 public class ARViewFragment extends Fragment {
 
     private static final String TAG = ARViewFragment.class.getName();
-    private static final double APRIL_TAG_SCALE_M = 0.169;
+    private static final double APRIL_TAG_SCALE_M = 0.211;
 
     private ArFragment arFragment;
     private HashMap<String, AugmentedImage.TrackingMethod> trackableInfos;
