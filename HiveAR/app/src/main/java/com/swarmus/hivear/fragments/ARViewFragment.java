@@ -80,7 +80,6 @@ public class ARViewFragment extends Fragment {
     private ModelRenderable arrowRenderable;
     private ModelRenderable xyzRenderable;
     private RobotListViewModel robotListViewModel;
-    private TextView debugInfo;
 
     private final static String ARROW_RENDERABLE_NAME = "Arrow Renderable";
     private final static String AR_ROBOT_NAME = "Robot Name";
@@ -162,8 +161,6 @@ public class ARViewFragment extends Fragment {
         CurrentArRobotViewModel currentArRobotViewModel = new ViewModelProvider(requireActivity()).get(CurrentArRobotViewModel.class);
         currentArRobotViewModel.getSelectedRobot().observe(requireActivity(), robot -> setRobotUI(view, robot));
 
-        debugInfo = view.findViewById(R.id.debug_info);
-
         setRobotUI(view, currentArRobotViewModel.getSelectedRobot().getValue());
         trackableInfos = new HashMap<>();
 
@@ -188,7 +185,7 @@ public class ARViewFragment extends Fragment {
             AugmentedImageDatabase augmentedImageDatabase = new AugmentedImageDatabase(session);
             setupArDatabase(augmentedImageDatabase);
             config.setAugmentedImageDatabase(augmentedImageDatabase);
-            config.setFocusMode(Config.FocusMode.FIXED);
+            config.setFocusMode(Config.FocusMode.AUTO);
             config.setPlaneFindingMode(Config.PlaneFindingMode.HORIZONTAL);
             config.setLightEstimationMode(Config.LightEstimationMode.DISABLED);
             session.configure(config);
@@ -515,7 +512,7 @@ public class ARViewFragment extends Fragment {
 
                     p = frame.getCamera().getPose().compose(Pose.makeTranslation(tr)); // ONLY translation
                     Pose p1 = frame.getCamera().getPose().compose(Pose.makeRotation(ro).inverse()).compose(zRot);
-                    parent.debugInfo.setText(Arrays.toString(tr));
+                    Log.i("Translation", Arrays.toString(tr));
                     Log.i("POSE", p.toString());
 
 
