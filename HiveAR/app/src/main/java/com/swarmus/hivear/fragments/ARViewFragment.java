@@ -44,6 +44,7 @@ import com.swarmus.hivear.R;
 import com.swarmus.hivear.apriltag.ApriltagDetection;
 import com.swarmus.hivear.apriltag.ApriltagNative;
 import com.swarmus.hivear.ar.CameraFacingNode;
+import com.swarmus.hivear.ar.AlwaysStraightNode;
 import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.viewmodels.CurrentArRobotViewModel;
 import com.swarmus.hivear.viewmodels.RobotListViewModel;
@@ -63,11 +64,14 @@ public class ARViewFragment extends Fragment {
     private ArFragment arFragment;
     private ModelRenderable arrowRenderable;
     private ModelRenderable xyzRenderable;
+    private final static String AR_INDICATOR_NAME = "ARIndicator";
+    private final static String AR_INDICATOR_UI = "AR Robot Info";
+
+    private final static double UPDATE_DETECTION_DISTANCE_THRESHOLD = 0.1;
+
     private RobotListViewModel robotListViewModel;
     private CurrentArRobotViewModel currentArRobotViewModel;
 
-    private final static String AR_INDICATOR_NAME = "ARIndicator";
-    private final static String AR_INDICATOR_UI = "AR Robot Info";
     private final Object frameImageInUseLock = new Object();
 
     private Handler timerHandler;
@@ -232,6 +236,144 @@ public class ARViewFragment extends Fragment {
         }
     }
 
+    private synchronized void aprilTagDetectAndProcess(Frame frame, byte[] img, int width, int height, double[] centralPoint, double[]focalLength) {
+        if (frame != null) {
+            // UNCOMMENT FOR DEBUG
+            // Place an anchor at the center of the world
+            //addWorldAnchor(frame);
+
+            // Do april tag recognition here
+            ArrayList<ApriltagDetection> detections =
+                    ApriltagNative.apriltag_detect_yuv(img, width, height, APRIL_TAG_SCALE_M, centralPoint, focalLength);
+
+            if (detections.size() > 0) {
+                Log.i(TAG, "April tag detections count: " + detections.size());
+                for (ApriltagDetection detection : detections) {
+                    float[] homogeneous_m = MathUtil.getHomogeneous(ConvertUtil.convertToFloatArray(detection.pose_r), ConvertUtil.convertToFloatArray(detection.pose_t));
+
+                    // Change detection left handed CS to right handed CS
+                    float[] tr = {-homogeneous_m[12], homogeneous_m[13], homogeneous_m[14]};
+                    Quaternion q = MathUtil.convertToRightHanded(MathUtil.getQuaternion(homogeneous_m));
+                    float[] ro = {q.x, q.y, q.z, q.w};
+
+                    // ONLY TESTED FOR SAMSUNG S10
+                    // needs a 180 degrees z correction to get the correct desired orientation
+                    Quaternion correction = Quaternion.eulerAngles(new Vector3(0, 0, 180));  // 180 degrees rotation around z
+
+                    Pose tagPose = frame.getCamera().getPose() // Get camera in world
+                            .compose(Pose.makeTranslation(tr)) // Apply tag detection position offset
+                            .compose(Pose.makeRotation(ro).inverse()) // Remove rotation of tag detection orientation
+                            .compose(Pose.makeRotation(correction.x, correction.y, correction.z, correction.w)); // apply rotation correction
+
+                    Log.d("From camera Translation", Arrays.toString(tr));
+                    Log.d("From camera Orientation", Arrays.toString(ro));
+
+                    // Add AR visualization
+                    // Uncomment to see 3 axis for debugging
+                    //addOrUpdateIdARVisualDebug(frame, detection.id, tagPose);
+                    addOrUpdateRobotARVisual(frame, detection.id, tagPose);
+                }
+            }
+        }
+    }
+
+    private void addWorldAnchor(@NonNull Frame frame) {
+        if (arFragment.getArSceneView().getScene().findByName("World") == null &&
+                frame.getCamera().getTrackingState() == TrackingState.TRACKING) {
+
+            AnchorNode worldNode = new AnchorNode();
+            worldNode.setAnchor(arFragment.getArSceneView().getSession().createAnchor(Pose.IDENTITY));
+            worldNode.setName("World");
+            worldNode.setRenderable(xyzRenderable);
+            worldNode.setParent(arFragment.getArSceneView().getScene());
+
+            Log.i("ARScene", "World anchor added.");
+        }
+    }
+
+    private void addOrUpdateIdARVisualDebug(@NonNull Frame frame, int id, Pose tagPose) {
+        if (frame.getCamera().getTrackingState() == TrackingState.TRACKING) {
+            final String debugIdName = "Debug_" + id;
+            Node n = arFragment.getArSceneView().getScene().findByName(debugIdName);
+            AnchorNode node;
+
+            // Create node or change if already existent
+            if (n == null) {
+                Anchor anchor = arFragment.getArSceneView().getSession().createAnchor(tagPose);
+                node = new AnchorNode(anchor);
+                node.setName(debugIdName);
+                node.setRenderable(xyzRenderable);
+            } else {
+                node = (AnchorNode) n;
+            }
+
+            // Don't update if too close from current one
+            if (isSamePose(tagPose, node.getAnchor().getPose())) { return; }
+
+            // Need to detch anchor and than add a new one to udpate position
+            node.getAnchor().detach();
+            node.setAnchor(arFragment.getArSceneView().getSession().createAnchor(tagPose));
+            node.setParent(arFragment.getArSceneView().getScene()); // Force sceneform node update
+        }
+    }
+
+    private void addOrUpdateRobotARVisual(@NonNull Frame frame, int id, Pose tagPose) {
+        Robot robot = robotListViewModel.getRobotFromList(id);
+        if (robot == null) {
+            Toast.makeText(requireContext(),
+                    "Robot with id " + id + " not registered in current swarm",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (frame.getCamera().getTrackingState() == TrackingState.TRACKING) {
+            final String robotNodeName = "Robot_" + id;
+            Node n = arFragment.getArSceneView().getScene().findByName(robotNodeName);
+            AnchorNode node;
+
+            // Create node or change if already existent
+            if (n == null) {
+                Anchor anchor = arFragment.getArSceneView().getSession().createAnchor(tagPose);
+                node = new AnchorNode(anchor);
+                node.setName(robotNodeName);
+                node.setParent(arFragment.getArSceneView().getScene()); // Force sceneform node update
+                initARIndicator(node, robot);
+            } else {
+                node = (AnchorNode) n;
+            }
+
+            // Don't update if too close from current one
+            if (isSamePose(tagPose, node.getAnchor().getPose())) { return; }
+
+            // Need to detach anchor and than add a new one to udpate position
+            node.getAnchor().detach();
+            node.setAnchor(arFragment.getArSceneView().getSession().createAnchor(tagPose));
+            node.setParent(arFragment.getArSceneView().getScene()); // Force sceneform node update
+        }
+    }
+
+    private void initARIndicator(AnchorNode parent, Robot robot) {
+        AlwaysStraightNode indicatorNode = new AlwaysStraightNode(arFragment.getTransformationSystem());
+        indicatorNode.setRenderable(arrowRenderable);
+        indicatorNode.setName(AR_INDICATOR_NAME);
+        indicatorNode.setLocalPosition(new Vector3(0f, (float)(APRIL_TAG_SCALE_M / 2), 0f));
+        indicatorNode.setParent(parent);
+        indicatorNode.setOnTouchListener((hitTestResult, motionEvent) -> {
+            selectRobotFromAR(indicatorNode, robot.getUid());
+            return false;
+        });
+
+        TransformableNode uiNode = new CameraFacingNode(arFragment.getTransformationSystem(),
+                arFragment.getArSceneView().getScene().getCamera());
+        setRobotARInfoRenderable(uiNode, robot, indicatorNode.getLocalPosition(), indicatorNode.getLocalRotation());
+        uiNode.setParent(parent);
+
+        // At creation, make node selected if none are currently selected
+        if (currentArRobotViewModel.getSelectedRobot().getValue() == null) {
+            selectRobotFromAR(indicatorNode, robot.getUid());
+        }
+    }
+
     private Robot selectRobotFromAR(TransformableNode node, int robotUid) {
         selectVisualNode(node);
         return selectRobotFromUID(robotUid);
@@ -283,7 +425,6 @@ public class ARViewFragment extends Fragment {
                                     arFragment.getArSceneView().getScene().removeChild(arRobotNode);
                                     arRobotNode.getAnchor().detach();
                                     arRobotNode.setParent(null);
-                                    arRobotNode = null;
                                     if (currentArRobotViewModel.getSelectedRobot().getValue().equals(robot)) {
                                         currentArRobotViewModel.getSelectedRobot().setValue(null);
                                     }
@@ -309,164 +450,10 @@ public class ARViewFragment extends Fragment {
                         });
     }
 
-    private synchronized void aprilTagDetectAndProcess(Frame frame, byte[] img, int width, int height, double[] centralPoint, double[]focalLength) {
-        if (frame != null) {
-            // UNCOMMENT FOR DEBUG
-            // Place an anchor at the center of the world
-            //addWorldAnchor(frame);
+    private boolean isSamePose(Pose p1, Pose p2) {
+        // verify if node should be updated based on its pose
 
-            // Do april tag recognition here
-            ArrayList<ApriltagDetection> detections =
-                    ApriltagNative.apriltag_detect_yuv(img, width, height, APRIL_TAG_SCALE_M, centralPoint, focalLength);
-
-            if (detections.size() > 0) {
-                Log.i(TAG, "April tag detections count: " + detections.size());
-                for (ApriltagDetection detection : detections) {
-                    float[] homogeneous_m = MathUtil.getHomogeneous(ConvertUtil.convertToFloatArray(detection.pose_r), ConvertUtil.convertToFloatArray(detection.pose_t));
-
-                    // Change detection left handed CS to right handed CS
-                    float[] tr = {-homogeneous_m[12], homogeneous_m[13], homogeneous_m[14]};
-                    Quaternion q = MathUtil.convertToRightHanded(MathUtil.getQuaternion(homogeneous_m));
-                    float[] ro = {q.x, q.y, q.z, q.w};
-
-                    // ONLY TESTED FOR SAMSUNG S10
-                    // needs a 180 degrees z correction to get the correct desired orientation
-                    Quaternion correction = Quaternion.eulerAngles(new Vector3(0, 0, 180));  // 180 degrees rotation around z
-
-                    Pose tagPose = frame.getCamera().getPose() // Get camera in world
-                            .compose(Pose.makeTranslation(tr)) // Apply tag detection position offset
-                            .compose(Pose.makeRotation(ro).inverse()) // Remove rotation of tag detection orientation
-                            .compose(Pose.makeRotation(correction.x, correction.y, correction.z, correction.w)); // apply rotation correction
-
-                    Log.d("From camera Translation", Arrays.toString(tr));
-                    Log.d("From camera Orientation", Arrays.toString(ro));
-
-                    // Add AR visualization
-                    //addOrUpdateIdARVisualDebug(frame, detection.id, tagPose);
-                    addOrUpdateRobotARVisual(frame, detection.id, tagPose);
-                }
-            }
-        }
-    }
-
-    private void addWorldAnchor(@NonNull Frame frame) {
-        if (arFragment.getArSceneView().getScene().findByName("World") == null &&
-            frame.getCamera().getTrackingState() == TrackingState.TRACKING) {
-
-            AnchorNode worldNode = new AnchorNode();
-            worldNode.setAnchor(arFragment.getArSceneView().getSession().createAnchor(Pose.IDENTITY));
-            worldNode.setName("World");
-            worldNode.setRenderable(xyzRenderable);
-            worldNode.setParent(arFragment.getArSceneView().getScene());
-
-            Log.i("ARScene", "World anchor added.");
-        }
-    }
-
-    private void addOrUpdateIdARVisualDebug(@NonNull Frame frame, int id, Pose tagPose) {
-        if (frame.getCamera().getTrackingState() == TrackingState.TRACKING) {
-            final String debugIdName = "Debug_" + id;
-            Node n = arFragment.getArSceneView().getScene().findByName(debugIdName);
-            TransformableNode node;
-
-            Vector3 worldPosition = new Vector3(tagPose.getTranslation()[0], tagPose.getTranslation()[1], tagPose.getTranslation()[2]);
-            Quaternion worldRotation = new Quaternion(tagPose.qx(), tagPose.qy(), tagPose.qz(), tagPose.qw());
-
-            // Create node or change if already existent
-            if (n == null) {
-                node = new TransformableNode(arFragment.getTransformationSystem());
-                node.setRenderable(xyzRenderable);
-                node.setName(debugIdName);
-            } else {
-                node = (TransformableNode)n;
-                // TODO Compare pose to verify if it should be udpated
-            }
-
-            if (!isSamePosition(worldPosition, node.getWorldPosition())) {
-                node.setWorldPosition(worldPosition);
-            }
-            if (!isSameOrientation(worldRotation, node.getWorldRotation())) {
-                node.setWorldRotation(worldRotation);
-            }
-
-            node.setParent(arFragment.getArSceneView().getScene()); // Force sceneform node update
-        }
-    }
-
-    private void addOrUpdateRobotARVisual(@NonNull Frame frame, int id, Pose tagPose) {
-        Robot robot = robotListViewModel.getRobotFromList(id);
-        if (robot == null) {
-            Toast.makeText(requireContext(),
-                    "Robot with id " + id + " not registered in current swarm",
-                    Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        if (frame.getCamera().getTrackingState() == TrackingState.TRACKING) {
-            final String robotNodeName = "Robot_" + id;
-            Node n = arFragment.getArSceneView().getScene().findByName(robotNodeName);
-            AnchorNode node;
-
-            Vector3 worldPosition = new Vector3(tagPose.getTranslation()[0], tagPose.getTranslation()[1], tagPose.getTranslation()[2]);
-            Quaternion worldRotation = new Quaternion(tagPose.qx(), tagPose.qy(), tagPose.qz(), tagPose.qw());
-
-            // Create node or change if already existent
-            if (n == null) {
-                Anchor anchor = arFragment.getArSceneView().getSession().createAnchor(tagPose);
-                node = new AnchorNode(anchor);
-                node.setName(robotNodeName);
-            } else {
-                node = (AnchorNode) n;
-            }
-
-            boolean needPositionUpdate = !isSamePosition(worldPosition, node.getWorldPosition());
-            boolean needOrientationUpdate = !isSameOrientation(worldRotation, node.getWorldRotation());
-
-            // If not update, don't create/update node child
-            if (!needOrientationUpdate && !needPositionUpdate) { return; }
-
-            // Need to detch anchor and than add a new one to udpate position
-            node.getAnchor().detach();
-            node.setAnchor(arFragment.getArSceneView().getSession().createAnchor(tagPose));
-
-            node.setParent(arFragment.getArSceneView().getScene()); // Force sceneform node update
-
-            Node nodeIndicatorChild = node.findByName(AR_INDICATOR_NAME);
-            TransformableNode indicatorNode;
-
-            if (nodeIndicatorChild == null) {
-                indicatorNode = new TransformableNode(arFragment.getTransformationSystem());
-                indicatorNode.setRenderable(arrowRenderable);
-                indicatorNode.setName(AR_INDICATOR_NAME);
-                indicatorNode.setLocalPosition(new Vector3(0f, (float)(APRIL_TAG_SCALE_M / 2), 0f));
-                indicatorNode.setParent(node);
-                indicatorNode.setOnTouchListener((hitTestResult, motionEvent) -> {
-                    selectRobotFromAR(indicatorNode, id);
-                    return false;
-                });
-
-                TransformableNode uiNode = new CameraFacingNode(arFragment.getTransformationSystem(),
-                        arFragment.getArSceneView().getScene().getCamera());
-                setRobotARInfoRenderable(uiNode, robot, indicatorNode.getLocalPosition(), indicatorNode.getLocalRotation());
-                uiNode.setParent(node);
-
-                // At creation, make node selected if none are currently selected
-                if (currentArRobotViewModel.getSelectedRobot().getValue() == null) {
-                    selectRobotFromAR(indicatorNode, id);
-                }
-            }
-        }
-    }
-
-    private boolean isSamePosition(Vector3 wPos1, Vector3 wPos2) {
-        // verify if node should be updated based on position
-        // TODO implement comparaison
-        return false;
-    }
-
-    private boolean isSameOrientation(Quaternion wRot1, Quaternion wRot2) {
-        // verify if node should be updated based on orientation
-        // TODO implement comparaison
-        return false;
+        // For now, only update from position, not orientation difference
+        return MathUtil.getDistance(p1.getTranslation(), p2.getTranslation()) <= UPDATE_DETECTION_DISTANCE_THRESHOLD;
     }
 }

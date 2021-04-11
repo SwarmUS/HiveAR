@@ -15,6 +15,20 @@ public class MathUtil {
         return -1;
     }
 
+    public static double getNorm(float[] vector)
+    {
+        return getNorm(ConvertUtil.convertToDoubleArray(vector));
+    }
+
+    public static double getDistance(double[] v1, double[] v2) {
+        double[] v3 = {v1[0] - v2[0], v1[1] - v2[1], v1[2] - v2[2]};
+        return getNorm(v3);
+    }
+
+    public static double getDistance(float[] v1, float[] v2) {
+        return getDistance(ConvertUtil.convertToDoubleArray(v1), ConvertUtil.convertToDoubleArray(v2));
+    }
+
     public static float[] getHomogeneous(float[] rot, float[] pos) {
         if (rot.length != 9 || pos.length != 3) {return null;}
         float[] h = new float[16];
