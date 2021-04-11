@@ -53,3 +53,7 @@ auth <TOKEN>
 redir tcp:<SYSTEM_PORT>:<EMULATOR_PORT>
 ```
 This will route any packet sent to the host's TCP port SYSTEM_PORT to TCP port EMULATOR_PORT of the emulated android device.
+
+## Related repositories:
+- The original AprilTag project repository: https://github.com/AprilRobotics/apriltag
+- Pre-generated tag images: https://github.com/AprilRobotics/apriltag-imgs
