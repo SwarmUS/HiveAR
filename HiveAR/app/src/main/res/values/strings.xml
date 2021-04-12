@@ -35,4 +35,9 @@
     <string name="commands_menu">Commands</string>
     <string name="status">Status</string>
     <string name="last_update">Last Update: </string>
+    <string name="add_configuration">Add configuration</string>
+    <string name="apriltag_id">Apriltag ID</string>
+    <string name="hiveboard_id">Hiveboard ID</string>
+    <string name="delete_config">Delete Config</string>
+    <string name="robot_board_id">Robot/Board ID</string>
 </resources>

@@ -91,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.app_layout);
 
-        setupSettings();
         maybeEnableAr(); // Hide AR tab if not possible to do AR
         setUpNavigation();
         setUpCommmunication();
@@ -213,16 +212,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.dispatchTouchEvent(ev);
-    }
-
-    private void setupSettings() {
-        SettingsViewModel settingsViewModel = new ViewModelProvider(this).get(SettingsViewModel.class);
-        settingsViewModel.updateDatabaseDirs(this);
-        List<String> allDatabases = settingsViewModel.getAllDatabases().getValue();
-        if (allDatabases != null && !allDatabases.isEmpty()) {
-            // Set first element as default folder
-            settingsViewModel.getActiveDatabaseFolder().setValue(allDatabases.get(0));
-        }
     }
 
     private void maybeEnableAr() {

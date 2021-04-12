@@ -78,6 +78,8 @@ public class ARViewFragment extends Fragment {
     private Runnable timerRunnable;
     private HashMap<Robot,TextView> timerTextViews = new HashMap<>();
 
+    private static Toast currentToast;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -127,6 +129,7 @@ public class ARViewFragment extends Fragment {
     @Override
     public void onDestroyView() {
         timerHandler.removeCallbacks(timerRunnable);
+        currentArRobotViewModel.getSelectedRobot().setValue(null);
         super.onDestroyView();
     }
 
@@ -318,16 +321,26 @@ public class ARViewFragment extends Fragment {
     }
 
     private void addOrUpdateRobotARVisual(@NonNull Frame frame, int id, Pose tagPose) {
-        Robot robot = robotListViewModel.getRobotFromList(id);
+        Robot robot = robotListViewModel.getRobotFromApriltag(id);
         if (robot == null) {
-            Toast.makeText(requireContext(),
-                    "Robot with id " + id + " not registered in current swarm",
-                    Toast.LENGTH_LONG).show();
+
+            // If initialized and not showing, show new one
+            if (currentToast != null && !currentToast.getView().isShown()) {
+                currentToast.setText("Robot with id " + id + " not registered in current swarm");
+                currentToast.show();
+            }
+            // Initialize if was never created
+            else {
+                currentToast = Toast.makeText(requireContext(),
+                        "Robot with id " + id + " not registered in current swarm",
+                        Toast.LENGTH_LONG);
+                currentToast.show();
+            }
             return;
         }
 
         if (frame.getCamera().getTrackingState() == TrackingState.TRACKING) {
-            final String robotNodeName = "Robot_" + id;
+            final String robotNodeName = "Robot_" + robot.getUid();
             Node n = arFragment.getArSceneView().getScene().findByName(robotNodeName);
             AnchorNode node;
 
@@ -399,7 +412,7 @@ public class ARViewFragment extends Fragment {
     }
 
     private Robot selectRobotFromUID(int uid) {
-        Robot robot = robotListViewModel.getRobotFromList(uid);
+        Robot robot = robotListViewModel.getRobotFromApriltag(uid);
 
         currentArRobotViewModel.getSelectedRobot().setValue(robot);
         return robot;
