@@ -10,15 +10,11 @@
     <string name="connect">Connect</string>
     <string name="connection">Connection</string>
     <string name="ar">AR</string>
-    <string name="swarm_summary">Swarm Summary</string>
     <string name="roboticon">robotIcon</string>
     <string name="robotname">RobotName</string>
     <string name="uid">#UID</string>
     <string name="command">Command</string>
-    <string name="command_argument">Command Argument</string>
     <string name="commands">Commands:</string>
-    <string name="tags_db">tagsDB.imgdb</string>
-    <string name="scan_new_swarm_entity">Scan new swarm entity</string>
     <string name="switch_to_scan_qr_code_page">Switch to scan Qr code page</string>
     <string name="Settings">Settings</string>
     <string name="scan_qr_code">Scan QR Code</string>
@@ -29,7 +25,6 @@
     <string name="current_active_database">Current Active Database:</string>
     <string name="ar_database_settings">Ar Database Settings</string>
     <string name="add_new_folder">Add new folder</string>
-    <string name="select_folder">Select Folder</string>
     <string name="string_select_folder">Select Folder</string>
     <string name="database_content">Database Content:</string>
     <string name="jpeg_extension">.jpg</string>

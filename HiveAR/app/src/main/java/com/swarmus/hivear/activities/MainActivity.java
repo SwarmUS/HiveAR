@@ -30,7 +30,7 @@ import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.R;
-import com.swarmus.hivear.arcore.CameraPermissionHelper;
+import com.swarmus.hivear.ar.CameraPermissionHelper;
 import com.swarmus.hivear.commands.FetchRobotCommands;
 import com.swarmus.hivear.commands.GenericCommand;
 import com.swarmus.hivear.enums.ConnectionStatus;

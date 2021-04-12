@@ -1,7 +1,6 @@
 package com.swarmus.hivear.fragments;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -12,24 +11,26 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.google.ar.core.AugmentedImage;
-import com.google.ar.core.AugmentedImageDatabase;
+import com.google.ar.core.Anchor;
+import com.google.ar.core.CameraIntrinsics;
 import com.google.ar.core.Config;
 import com.google.ar.core.Frame;
+import com.google.ar.core.Pose;
 import com.google.ar.core.Session;
+import com.google.ar.core.TrackingState;
+import com.google.ar.core.exceptions.NotYetAvailableException;
 import com.google.ar.core.exceptions.UnavailableApkTooOldException;
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.sceneform.AnchorNode;
-import com.google.ar.sceneform.FrameTime;
 import com.google.ar.sceneform.Node;
-import com.google.ar.sceneform.NodeParent;
 import com.google.ar.sceneform.math.Quaternion;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.Color;
@@ -40,43 +41,51 @@ import com.google.ar.sceneform.ux.BaseTransformableNode;
 import com.google.ar.sceneform.ux.SelectionVisualizer;
 import com.google.ar.sceneform.ux.TransformableNode;
 import com.swarmus.hivear.R;
+import com.swarmus.hivear.apriltag.ApriltagDetection;
+import com.swarmus.hivear.apriltag.ApriltagNative;
 import com.swarmus.hivear.ar.CameraFacingNode;
+import com.swarmus.hivear.ar.AlwaysStraightNode;
 import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.viewmodels.CurrentArRobotViewModel;
 import com.swarmus.hivear.viewmodels.RobotListViewModel;
-import com.swarmus.hivear.viewmodels.SettingsViewModel;
+import com.swarmus.hivear.utils.ConvertUtil;
+import com.swarmus.hivear.utils.MathUtil;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 public class ARViewFragment extends Fragment {
 
-    private ArFragment arFragment;
-    private HashMap<String, AugmentedImage.TrackingMethod> trackableInfos;
-    private ModelRenderable arrowRenderable;
-    private RobotListViewModel robotListViewModel;
+    private static final String TAG = ARViewFragment.class.getName();
+    private static final double APRIL_TAG_SCALE_M = 0.211;
 
-    private final static String ARROW_RENDERABLE_NAME = "Arrow Renderable";
-    private final static String AR_ROBOT_NAME = "Robot Name";
-    private final static float QRCodeWidth = 0.1f; // m
+    private ArFragment arFragment;
+    private ModelRenderable arrowRenderable;
+    private ModelRenderable xyzRenderable;
+    private final static String AR_INDICATOR_NAME = "ARIndicator";
+    private final static String AR_INDICATOR_UI = "AR Robot Info";
+
+    private final static double UPDATE_DETECTION_DISTANCE_THRESHOLD = 0.1;
+
+    private RobotListViewModel robotListViewModel;
+    private CurrentArRobotViewModel currentArRobotViewModel;
+
+    private final Object frameImageInUseLock = new Object();
 
     private Handler timerHandler;
-    private HashMap<Robot,TextView> timerTextViews = new HashMap();
+    private Runnable timerRunnable;
+    private HashMap<Robot,TextView> timerTextViews = new HashMap<>();
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         robotListViewModel = new ViewModelProvider(requireActivity()).get(RobotListViewModel.class);
+        currentArRobotViewModel = new ViewModelProvider(requireActivity()).get(CurrentArRobotViewModel.class);
 
         timerHandler = new Handler();
-        Runnable timerRunnable =  new Runnable() {
+        timerRunnable =  new Runnable() {
             @Override
             public void run() {
                 // Update all timer text
@@ -93,8 +102,36 @@ public class ARViewFragment extends Fragment {
                 timerHandler.postDelayed(this, 1000);
             }
         };
-        timerHandler.postDelayed(timerRunnable, 1000); // pick every second by evaluating at each 0.5s
+        timerHandler.postDelayed(timerRunnable, 1000); // evaluate each second
 
+        // Initialize the apriltag detector for family 36h11
+        ApriltagNative.apriltag_init("tag36h11", 1, 2, 0, 16);
+
+        initializeRenderables();
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.ar_view_fragment, container, false);
+
+        CurrentArRobotViewModel currentArRobotViewModel = new ViewModelProvider(requireActivity()).get(CurrentArRobotViewModel.class);
+        currentArRobotViewModel.getSelectedRobot().observe(requireActivity(), robot -> setRobotUI(view, robot));
+
+        setRobotUI(view, currentArRobotViewModel.getSelectedRobot().getValue());
+
+        configureARSession();
+
+        return view;
+    }
+
+    @Override
+    public void onDestroyView() {
+        timerHandler.removeCallbacks(timerRunnable);
+        super.onDestroyView();
+    }
+
+    private void initializeRenderables() {
+        // Robot identificator
         ModelRenderable.builder()
                 .setSource(getContext(), R.raw.arrow)
                 .build()
@@ -108,18 +145,24 @@ public class ARViewFragment extends Fragment {
                             Log.e(ARViewFragment.class.getName(), "Unable to load Renderable.", throwable);
                             return null;
                         });
+
+        // Used mostly for debug, can help to visualize position and orientation in space
+        ModelRenderable.builder()
+                .setSource(getContext(), R.raw.xyz_arrow)
+                .build()
+                .thenAccept(renderable -> {
+                    xyzRenderable = renderable;
+                    xyzRenderable.setShadowCaster(false);
+                    xyzRenderable.setShadowReceiver(false);
+                })
+                .exceptionally(
+                        throwable -> {
+                            Log.e(ARViewFragment.class.getName(), "Unable to load Renderable.", throwable);
+                            return null;
+                        });
     }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.ar_view_fragment, container, false);
-
-        CurrentArRobotViewModel currentArRobotViewModel = new ViewModelProvider(requireActivity()).get(CurrentArRobotViewModel.class);
-        currentArRobotViewModel.getSelectedRobot().observe(requireActivity(), robot -> setRobotUI(view, robot));
-
-        setRobotUI(view, currentArRobotViewModel.getSelectedRobot().getValue());
-        trackableInfos = new HashMap<>();
-
+    private void configureARSession() {
         arFragment = (ArFragment)getChildFragmentManager().findFragmentById(R.id.ux_fragment);
         if (arFragment!=null) {
             Session session = arFragment.getArSceneView().getSession();
@@ -138,15 +181,12 @@ public class ARViewFragment extends Fragment {
             }
             Config config = new Config(session);
             config.setUpdateMode(Config.UpdateMode.LATEST_CAMERA_IMAGE);
-            AugmentedImageDatabase augmentedImageDatabase = new AugmentedImageDatabase(session);
-            setupArDatabase(augmentedImageDatabase);
-            config.setAugmentedImageDatabase(augmentedImageDatabase);
             config.setFocusMode(Config.FocusMode.AUTO);
             config.setPlaneFindingMode(Config.PlaneFindingMode.HORIZONTAL);
             config.setLightEstimationMode(Config.LightEstimationMode.DISABLED);
             session.configure(config);
             arFragment.getArSceneView().setupSession(session);
-            arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> updateFrame(frameTime));
+            arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> getAprilTags());
 
             // Override to show nothing instead of default grey circle underneath selected anchor node
             arFragment.getTransformationSystem().setSelectionVisualizer(new SelectionVisualizer() {
@@ -157,8 +197,6 @@ public class ARViewFragment extends Fragment {
                 public void removeSelectionVisual(BaseTransformableNode node) { }
             });
         }
-
-        return view;
     }
 
     private void setRobotUI(View v, Robot robot) {
@@ -171,80 +209,172 @@ public class ARViewFragment extends Fragment {
         robotUid.setText(isRobotSelected ? Integer.toString(robot.getUid()) : "");
     }
 
-    // More details here: https://medium.com/free-code-camp/how-to-build-an-augmented-images-application-with-arcore-93e417b8579d
-    private void updateFrame(FrameTime frameTime) {
-        Frame frame = arFragment.getArSceneView().getArFrame();
+    private void getAprilTags() {
+        synchronized (frameImageInUseLock) { // Process only one frame at a time (help a lot framedrop)
+            try {
+                Frame frame = arFragment.getArSceneView().getArFrame();
+                if (frame != null) {
+                    Image frameImage = frame.acquireCameraImage();
+                    byte[] img = ConvertUtil.YUV_420_888_to_nv1(frameImage);
+                    int imgWidth = frameImage.getWidth();
+                    int imageHeight = frameImage.getHeight();
+                    frameImage.close(); // Very important to release resource
 
-        // Set trackable
-        Collection<AugmentedImage> augmentedImages = frame.getUpdatedTrackables(AugmentedImage.class);
-        for (AugmentedImage augmentedImage : augmentedImages) {
-            AugmentedImage.TrackingMethod currentMethod = augmentedImage.getTrackingMethod();
-            if (!trackableInfos.containsKey(augmentedImage.getName())) {
-                trackableInfos.put(augmentedImage.getName(), augmentedImage.getTrackingMethod());
-            }
-            if (currentMethod != trackableInfos.get(augmentedImage.getName())) {
-                trackableInfos.replace(augmentedImage.getName(), currentMethod);
-                String msg = augmentedImage.getName() + " : " +currentMethod.toString();
-                // Show to user if currently tracking
-                if (currentMethod.equals(AugmentedImage.TrackingMethod.FULL_TRACKING)) {
+                    CameraIntrinsics intrinsics = frame.getCamera().getImageIntrinsics();
 
-                    // Set anchor node
-                    String robotName = augmentedImage.getName().split("-")[0];
-                    int robotUid = Integer.parseInt(augmentedImage.getName().split("-")[1]);
-                    // Don't add AR stuff if robot not registered in swarm
-                    if (robotListViewModel.getRobotFromList(robotUid) == null) {
-                        Toast.makeText(requireContext(),
-                                "Robot " + robotName + "-" + robotUid + " not in current swarm",
-                                Toast.LENGTH_LONG).show();
-                        continue;
-                    }
-
-                    NodeParent nodeParent = arFragment.getArSceneView().getScene().findInHierarchy(sceneNode -> sceneNode.getName().equals(augmentedImage.getName()));
-
-                    AnchorNode anchorNode = nodeParent == null ? new AnchorNode() : (AnchorNode)nodeParent;
-                    anchorNode.setAnchor(augmentedImage.createAnchor(augmentedImage.getCenterPose()));
-                    anchorNode.setName(augmentedImage.getName());
-                    anchorNode.setParent(arFragment.getArSceneView().getScene());
-
-                    if (anchorNode.getChildren().size() == 0) {
-                        // Clean previous renderables before adding new ones
-                        for (Node child : anchorNode.getChildren()) {
-                            if (child instanceof TransformableNode) { anchorNode.removeChild(child); }
-                        }
-
-                        // Set renderables
-                        TransformableNode node = new TransformableNode(arFragment.getTransformationSystem());
-                        node.setRenderable(arrowRenderable);
-                        node.setName(ARROW_RENDERABLE_NAME);
-                        Quaternion arrowRot = Quaternion.axisAngle(new Vector3(1.0f, 0.0f, 0.0f), -90.0f).normalized(); // Align arrow to up vector
-                        node.setLocalRotation(arrowRot);
-                        node.setLocalPosition(new Vector3(0f, 0f, -augmentedImage.getExtentZ()/2));
-                        node.setParent(anchorNode);
-                        Robot selectedRobot = selectRobotFromAR(node, robotName, robotUid);
-
-                        node.setOnTouchListener((hitTestResult, motionEvent) -> {
-                            selectRobotFromAR(node, robotName, robotUid);
-                            return false;
-                        });
-
-                        TransformableNode uiNode = new CameraFacingNode(arFragment.getTransformationSystem(), arFragment.getArSceneView().getScene().getCamera());
-                        setRobotARInfoRenderable(uiNode, selectedRobot, node.getLocalPosition(), node.getLocalRotation());
-                        uiNode.setParent(anchorNode);
-                    }
-
-                    Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show();
+                    aprilTagDetectAndProcess(
+                            frame,
+                            img,
+                            imgWidth,
+                            imageHeight,
+                            ConvertUtil.convertToDoubleArray(intrinsics.getPrincipalPoint()),
+                            ConvertUtil.convertToDoubleArray(intrinsics.getFocalLength()));
                 }
-                else if (currentMethod.equals(AugmentedImage.TrackingMethod.NOT_TRACKING)) {
-                    // Remove anchor node if tracking is lost
-                    NodeParent nodeParent = arFragment.getArSceneView().getScene().findInHierarchy(sceneNode -> sceneNode.getName().equals(augmentedImage.getName()));
-                    if (nodeParent != null) { arFragment.getArSceneView().getScene().removeChild((Node)nodeParent); }
-                }
-                Log.i("ARCore", msg);
+            } catch (NotYetAvailableException e) {
+                e.printStackTrace();
             }
         }
     }
 
-    private Robot selectRobotFromAR(TransformableNode node, String robotName, int robotUid) {
+    private synchronized void aprilTagDetectAndProcess(Frame frame, byte[] img, int width, int height, double[] centralPoint, double[]focalLength) {
+        if (frame != null) {
+            // UNCOMMENT FOR DEBUG
+            // Place an anchor at the center of the world
+            //addWorldAnchor(frame);
+
+            // Do april tag recognition here
+            ArrayList<ApriltagDetection> detections =
+                    ApriltagNative.apriltag_detect_yuv(img, width, height, APRIL_TAG_SCALE_M, centralPoint, focalLength);
+
+            if (detections.size() > 0) {
+                Log.i(TAG, "April tag detections count: " + detections.size());
+                for (ApriltagDetection detection : detections) {
+                    float[] homogeneous_m = MathUtil.getHomogeneous(ConvertUtil.convertToFloatArray(detection.pose_r), ConvertUtil.convertToFloatArray(detection.pose_t));
+
+                    // Change detection left handed CS to right handed CS
+                    float[] tr = {-homogeneous_m[12], homogeneous_m[13], homogeneous_m[14]};
+                    Quaternion q = MathUtil.convertToRightHanded(MathUtil.getQuaternion(homogeneous_m));
+                    float[] ro = {q.x, q.y, q.z, q.w};
+
+                    // ONLY TESTED FOR SAMSUNG S10
+                    // needs a 180 degrees z correction to get the correct desired orientation
+                    Quaternion correction = Quaternion.eulerAngles(new Vector3(0, 0, 180));  // 180 degrees rotation around z
+
+                    Pose tagPose = frame.getCamera().getPose() // Get camera in world
+                            .compose(Pose.makeTranslation(tr)) // Apply tag detection position offset
+                            .compose(Pose.makeRotation(ro).inverse()) // Remove rotation of tag detection orientation
+                            .compose(Pose.makeRotation(correction.x, correction.y, correction.z, correction.w)); // apply rotation correction
+
+                    Log.d("From camera Translation", Arrays.toString(tr));
+                    Log.d("From camera Orientation", Arrays.toString(ro));
+
+                    // Add AR visualization
+                    // Uncomment to see 3 axis for debugging
+                    //addOrUpdateIdARVisualDebug(frame, detection.id, tagPose);
+                    addOrUpdateRobotARVisual(frame, detection.id, tagPose);
+                }
+            }
+        }
+    }
+
+    private void addWorldAnchor(@NonNull Frame frame) {
+        if (arFragment.getArSceneView().getScene().findByName("World") == null &&
+                frame.getCamera().getTrackingState() == TrackingState.TRACKING) {
+
+            AnchorNode worldNode = new AnchorNode();
+            worldNode.setAnchor(arFragment.getArSceneView().getSession().createAnchor(Pose.IDENTITY));
+            worldNode.setName("World");
+            worldNode.setRenderable(xyzRenderable);
+            worldNode.setParent(arFragment.getArSceneView().getScene());
+
+            Log.i("ARScene", "World anchor added.");
+        }
+    }
+
+    private void addOrUpdateIdARVisualDebug(@NonNull Frame frame, int id, Pose tagPose) {
+        if (frame.getCamera().getTrackingState() == TrackingState.TRACKING) {
+            final String debugIdName = "Debug_" + id;
+            Node n = arFragment.getArSceneView().getScene().findByName(debugIdName);
+            AnchorNode node;
+
+            // Create node or change if already existent
+            if (n == null) {
+                Anchor anchor = arFragment.getArSceneView().getSession().createAnchor(tagPose);
+                node = new AnchorNode(anchor);
+                node.setName(debugIdName);
+                node.setRenderable(xyzRenderable);
+            } else {
+                node = (AnchorNode) n;
+            }
+
+            // Don't update if too close from current one
+            if (isSamePose(tagPose, node.getAnchor().getPose())) { return; }
+
+            // Need to detch anchor and than add a new one to udpate position
+            node.getAnchor().detach();
+            node.setAnchor(arFragment.getArSceneView().getSession().createAnchor(tagPose));
+            node.setParent(arFragment.getArSceneView().getScene()); // Force sceneform node update
+        }
+    }
+
+    private void addOrUpdateRobotARVisual(@NonNull Frame frame, int id, Pose tagPose) {
+        Robot robot = robotListViewModel.getRobotFromList(id);
+        if (robot == null) {
+            Toast.makeText(requireContext(),
+                    "Robot with id " + id + " not registered in current swarm",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (frame.getCamera().getTrackingState() == TrackingState.TRACKING) {
+            final String robotNodeName = "Robot_" + id;
+            Node n = arFragment.getArSceneView().getScene().findByName(robotNodeName);
+            AnchorNode node;
+
+            // Create node or change if already existent
+            if (n == null) {
+                Anchor anchor = arFragment.getArSceneView().getSession().createAnchor(tagPose);
+                node = new AnchorNode(anchor);
+                node.setName(robotNodeName);
+                node.setParent(arFragment.getArSceneView().getScene()); // Force sceneform node update
+                initARIndicator(node, robot);
+            } else {
+                node = (AnchorNode) n;
+            }
+
+            // Don't update if too close from current one
+            if (isSamePose(tagPose, node.getAnchor().getPose())) { return; }
+
+            // Need to detach anchor and than add a new one to udpate position
+            node.getAnchor().detach();
+            node.setAnchor(arFragment.getArSceneView().getSession().createAnchor(tagPose));
+            node.setParent(arFragment.getArSceneView().getScene()); // Force sceneform node update
+        }
+    }
+
+    private void initARIndicator(AnchorNode parent, Robot robot) {
+        AlwaysStraightNode indicatorNode = new AlwaysStraightNode(arFragment.getTransformationSystem());
+        indicatorNode.setRenderable(arrowRenderable);
+        indicatorNode.setName(AR_INDICATOR_NAME);
+        indicatorNode.setLocalPosition(new Vector3(0f, (float)(APRIL_TAG_SCALE_M / 2), 0f));
+        indicatorNode.setParent(parent);
+        indicatorNode.setOnTouchListener((hitTestResult, motionEvent) -> {
+            selectRobotFromAR(indicatorNode, robot.getUid());
+            return false;
+        });
+
+        TransformableNode uiNode = new CameraFacingNode(arFragment.getTransformationSystem(),
+                arFragment.getArSceneView().getScene().getCamera());
+        setRobotARInfoRenderable(uiNode, robot, indicatorNode.getLocalPosition(), indicatorNode.getLocalRotation());
+        uiNode.setParent(parent);
+
+        // At creation, make node selected if none are currently selected
+        if (currentArRobotViewModel.getSelectedRobot().getValue() == null) {
+            selectRobotFromAR(indicatorNode, robot.getUid());
+        }
+    }
+
+    private Robot selectRobotFromAR(TransformableNode node, int robotUid) {
         selectVisualNode(node);
         return selectRobotFromUID(robotUid);
     }
@@ -252,7 +382,7 @@ public class ARViewFragment extends Fragment {
     private void selectVisualNode(TransformableNode node) {
         for (Node child : arFragment.getArSceneView().getScene().getChildren()) {
             if (child instanceof AnchorNode) {
-                TransformableNode n = (TransformableNode)child.findByName(ARROW_RENDERABLE_NAME);
+                TransformableNode n = (TransformableNode)child.findByName(AR_INDICATOR_NAME);
                 if (n != null) {
                     Boolean isSelected = n == node;
                     ModelRenderable renderableCopy = (ModelRenderable) n.getRenderable().makeCopy();
@@ -269,10 +399,8 @@ public class ARViewFragment extends Fragment {
     }
 
     private Robot selectRobotFromUID(int uid) {
-        // For now, there are no link between uid and images
-        Robot robot = robotListViewModel.getRobotFromList(uid); // For now, uid starts at 1
+        Robot robot = robotListViewModel.getRobotFromList(uid);
 
-        CurrentArRobotViewModel currentArRobotViewModel = new ViewModelProvider(requireActivity()).get(CurrentArRobotViewModel.class);
         currentArRobotViewModel.getSelectedRobot().setValue(robot);
         return robot;
     }
@@ -297,7 +425,9 @@ public class ARViewFragment extends Fragment {
                                     arFragment.getArSceneView().getScene().removeChild(arRobotNode);
                                     arRobotNode.getAnchor().detach();
                                     arRobotNode.setParent(null);
-                                    arRobotNode = null;
+                                    if (currentArRobotViewModel.getSelectedRobot().getValue().equals(robot)) {
+                                        currentArRobotViewModel.getSelectedRobot().setValue(null);
+                                    }
                                 }).setNegativeButton("No", (dialog, whichButton) -> {
                                     // Do nothing.
                                 }).show();
@@ -308,10 +438,8 @@ public class ARViewFragment extends Fragment {
                     timerTextViews.computeIfPresent(robot, (k,v) -> robotTimer);
                     timerTextViews.computeIfAbsent(robot, v -> robotTimer);
                     // Set in AR
-                    tNode.setName(AR_ROBOT_NAME);
-                    Quaternion oriChange = Quaternion.axisAngle(new Vector3(0.0f, 0.0f, 1.0f), 180.0f).normalized(); // Align arrow to up vector
-                    tNode.setLocalRotation(Quaternion.multiply(oriChange, rot));
-                    Vector3 offset = new Vector3(0f, 0f, -0.2f);
+                    tNode.setName(AR_INDICATOR_UI);
+                    Vector3 offset = new Vector3(0f, 0.4f, 0f);
                     tNode.setLocalPosition(Vector3.add(pos, offset));
                     tNode.setRenderable(viewRenderable);
                 })
@@ -322,24 +450,10 @@ public class ARViewFragment extends Fragment {
                         });
     }
 
-    private void setupArDatabase(AugmentedImageDatabase augmentedImageDatabase) {
-        SettingsViewModel settingsViewModel = new ViewModelProvider(requireActivity()).get(SettingsViewModel.class);
-        String activeDatabasePath = settingsViewModel.getActiveFolderAbsolutePath();
-        if (activeDatabasePath != null && !activeDatabasePath.isEmpty()) {
-            File folder = new File(activeDatabasePath);
-            FilenameFilter filter = (f, name) -> name.endsWith(".jpg");
-            String[] filesInFolder = folder.list(filter);
-            for (String filename : filesInFolder) {
-                Bitmap bitmap;
-                File f = new File(folder, filename);
-                try (InputStream inputStream = new FileInputStream(f)) {
-                    bitmap = BitmapFactory.decodeStream(inputStream);
-                    filename = filename.replace(".jpg", "");
-                    augmentedImageDatabase.addImage(filename, bitmap, QRCodeWidth);
-                } catch (IOException e) {
-                    Log.e(this.getClass().toString(), "I/O exception loading augmented image bitmap.", e);
-                }
-            }
-        }
+    private boolean isSamePose(Pose p1, Pose p2) {
+        // verify if node should be updated based on its pose
+
+        // For now, only update from position, not orientation difference
+        return MathUtil.getDistance(p1.getTranslation(), p2.getTranslation()) <= UPDATE_DETECTION_DISTANCE_THRESHOLD;
     }
 }
