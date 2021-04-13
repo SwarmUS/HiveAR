@@ -265,8 +265,8 @@ public class ARViewFragment extends Fragment {
                             .compose(Pose.makeRotation(ro).inverse()) // Remove rotation of tag detection orientation
                             .compose(Pose.makeRotation(correction.x, correction.y, correction.z, correction.w)); // apply rotation correction
 
-                    Log.d("From camera Translation", Arrays.toString(tr));
-                    Log.d("From camera Orientation", Arrays.toString(ro));
+                    Log.d("From camera Translation, id #" + detection.id, Arrays.toString(tr));
+                    Log.d("From camera Orientation, id #" + detection.id, Arrays.toString(ro));
 
                     // Add AR visualization
                     // Uncomment to see 3 axis for debugging

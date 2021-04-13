@@ -9,16 +9,14 @@ public class SwarmAgentInfoViewModel extends CommandListVM {
     public static final int DEFAULT_SWARM_AGENT_ID = -1;
     public static final int BROADCAST_AGENT_ID = 0;
 
-    public SwarmAgentInfoViewModel(){this.listTitle = "Local Buzz";}
-
-    public LiveData<Integer> getSwarmAgentID() {
-        if (swarmAgentID == null) {swarmAgentID = new MutableLiveData<>(42);} // TODO TEMP FOR TESTING
-        return swarmAgentID;
+    public SwarmAgentInfoViewModel(){
+        this.listTitle = "Local Buzz";
+        swarmAgentID = new MutableLiveData<>(DEFAULT_SWARM_AGENT_ID);
     }
 
-    public void setSwarmAgentID(int id) {
-        swarmAgentID = new MutableLiveData<>(id);
-    }
+    public LiveData<Integer> getSwarmAgentID() { return swarmAgentID; }
+
+    public void setSwarmAgentID(int id) { swarmAgentID.setValue(id); }
 
     public boolean isAgentInitialized() {return getSwarmAgentID().getValue() != DEFAULT_SWARM_AGENT_ID;}
 }
