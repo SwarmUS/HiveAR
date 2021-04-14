@@ -7,7 +7,7 @@ import com.swarmus.hivear.models.ProtoMsgStorer;
 
 public class SwarmAgentInfoViewModel extends CommandListVM {
     private MutableLiveData<Integer> swarmAgentID;
-    private ProtoMsgStorer protoMsgStorer = new ProtoMsgStorer(5);
+    private ProtoMsgStorer protoMsgStorer = new ProtoMsgStorer(5, "Local");
 
     public static final int DEFAULT_SWARM_AGENT_ID = -1;
     public static final int BROADCAST_AGENT_ID = 0;

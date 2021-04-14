@@ -11,12 +11,14 @@ public class ProtoMsgStorer extends Observable {
 
     private final LinkedList<MessageOuterClass.Message> msgQueue;
     private final int maxCapacity;
+    private final String uniqueName; // Used to identify the current ProtoMsgStorer to show
 
     private static final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 
-    public ProtoMsgStorer(int maxCapacity) {
+    public ProtoMsgStorer(int maxCapacity, String uniqueName) {
         this.maxCapacity = maxCapacity;
         msgQueue = new LinkedList<>();
+        this.uniqueName = uniqueName;
     }
 
     // We add element as first of queue to be the first to show. (More useful for logging to see latest received)
@@ -47,4 +49,5 @@ public class ProtoMsgStorer extends Observable {
         notifyObservers();
     }
 
+    public String getUniqueName() {return uniqueName;}
 }

@@ -10,7 +10,7 @@ public class Robot extends Observable {
     private int uid;
     private List<FunctionTemplate> commands;
     private List<FunctionTemplate> buzzCommands;
-    private ProtoMsgStorer msgLogging = new ProtoMsgStorer(5);
+    private ProtoMsgStorer msgLogging;
 
     private long lastUpdateTimeMillis;
 
@@ -24,6 +24,7 @@ public class Robot extends Observable {
         this.uid = uid;
         this.commands = new ArrayList<>();
         this.buzzCommands = new ArrayList<>();
+        msgLogging = new ProtoMsgStorer(5, getUniqueName());
         setCommands(commands);
         this.addObserver((observable, o) -> {lastUpdateTimeMillis = System.currentTimeMillis();});
     }
@@ -50,6 +51,11 @@ public class Robot extends Observable {
 
     public String getName() {
         return name;
+    }
+
+    public String getUniqueName() {
+        String uniqueName = name.isEmpty() ? "Agent" : name;
+        return uniqueName + " #" + uid;
     }
 
     public void setName(String name) {

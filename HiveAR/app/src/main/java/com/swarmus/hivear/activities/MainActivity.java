@@ -42,7 +42,6 @@ import com.swarmus.hivear.models.TCPDeviceServer;
 import com.swarmus.hivear.viewmodels.ProtoMsgViewModel;
 import com.swarmus.hivear.viewmodels.RobotListViewModel;
 import com.swarmus.hivear.viewmodels.SerialSettingsViewModel;
-import com.swarmus.hivear.viewmodels.SettingsViewModel;
 import com.swarmus.hivear.viewmodels.SwarmAgentInfoViewModel;
 import com.swarmus.hivear.viewmodels.TcpSettingsViewModel;
 
@@ -52,7 +51,6 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -218,9 +216,15 @@ public class MainActivity extends AppCompatActivity {
 
     private void initViewModels() {
         swarmAgentInfoViewModel = new ViewModelProvider(this).get(SwarmAgentInfoViewModel.class);
+
         robotListViewModel = new ViewModelProvider(this).get(RobotListViewModel.class);
         robotListViewModel.setSwarmAgentInfoViewModel(swarmAgentInfoViewModel);
+
         protoMsgViewModel = new ViewModelProvider(this).get(ProtoMsgViewModel.class);
+        // Register all robots logging filter first
+        protoMsgViewModel.registerNewProtoMsgStorer(robotListViewModel.getProtoMsgStorer().getValue());
+        // Register local logging second
+        protoMsgViewModel.registerNewProtoMsgStorer(swarmAgentInfoViewModel.getProtoMsgStorer());
     }
 
     private void maybeEnableAr() {
@@ -369,7 +373,7 @@ public class MainActivity extends AppCompatActivity {
                             sendBroadcast(msgReceivedIntent);
                         }
                     } catch(InvalidProtocolBufferException e) {
-                        Log.w(TAG, "Unfinished message " + e.getUnfinishedMessage());
+                        // Only catch, don't log anything as this throws very often
                     }
                     catch (IOException e) {
                         e.printStackTrace();
@@ -496,11 +500,13 @@ public class MainActivity extends AppCompatActivity {
     private void updateRobots()
     {
         // TODO Retrieve all robots in the swarm
-        List<Robot> robotList = new ArrayList<>();
-        robotList.add(new Robot("pioneer_0", 1));
-        robotList.add(new Robot("pioneer_1", 2));
-        robotList.add(new Robot("pioneer_2", 3));
-        robotListViewModel.getRobotList().setValue(robotList);
+        Robot robot1 = new Robot("pioneer_0", 1);
+        robotListViewModel.addRobot(robot1);
+        protoMsgViewModel.registerNewProtoMsgStorer(robot1.getProtoMsgStorer());
+
+        Robot robot2 = new Robot("pioneer_1", 2);
+        robotListViewModel.addRobot(robot2);
+        protoMsgViewModel.registerNewProtoMsgStorer(robot2.getProtoMsgStorer());
     }
 
     public CommunicationDevice getCurrentCommunicationDevice() {return currentCommunicationDevice;}

@@ -9,6 +9,7 @@ import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.models.ProtoMsgStorer;
 import com.swarmus.hivear.models.Robot;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -20,7 +21,8 @@ public class RobotListViewModel extends ViewModel {
     SwarmAgentInfoViewModel swarmAgentInfoViewModel;
 
     public RobotListViewModel() {
-        protoMsgStorer = new ProtoMsgStorer(15);
+        robotList = new MutableLiveData<>(new ArrayList<>());
+        protoMsgStorer = new ProtoMsgStorer(15, "All");
         allRobotsMsgStorerMutableData = new MutableLiveData<>(protoMsgStorer);
     }
 
@@ -28,9 +30,15 @@ public class RobotListViewModel extends ViewModel {
         this.swarmAgentInfoViewModel = swarmAgentInfoViewModel;
     }
 
-    public MutableLiveData<List<Robot>> getRobotList() {
+    public LiveData<List<Robot>> getRobotList() {
         if (robotList == null) {robotList = new MutableLiveData<>();}
         return robotList;
+    }
+
+    public void addRobot(Robot robot) {
+        ArrayList<Robot> robots = new ArrayList<>(robotList.getValue());
+        robots.add(robot);
+        robotList.setValue(robots);
     }
 
     // Get robot from apriltag. If conversion was set for this apriltag, get the corresponding robot,
@@ -74,7 +82,6 @@ public class RobotListViewModel extends ViewModel {
         int sourceID = msg.getSourceId();
         int destinationID = msg.getDestinationId();
 
-        // TODO verify we have access to viewmodel here
         if (swarmAgentInfoViewModel != null) {
             int agentID = swarmAgentInfoViewModel.getSwarmAgentID().getValue();
             if (agentID == (sourceID | destinationID) ) {
