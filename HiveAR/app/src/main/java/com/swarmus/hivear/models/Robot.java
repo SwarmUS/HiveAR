@@ -10,6 +10,7 @@ public class Robot extends Observable {
     private int uid;
     private List<FunctionTemplate> commands;
     private List<FunctionTemplate> buzzCommands;
+    private ProtoMsgStorer msgLogging = new ProtoMsgStorer(5);
 
     private long lastUpdateTimeMillis;
 
@@ -90,4 +91,6 @@ public class Robot extends Observable {
         setChanged();
         notifyObservers();
     }
+
+    public ProtoMsgStorer getProtoMsgStorer() { return msgLogging; }
 }

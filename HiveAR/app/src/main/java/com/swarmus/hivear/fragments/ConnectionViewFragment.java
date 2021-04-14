@@ -26,6 +26,7 @@ import com.swarmus.hivear.models.CommunicationDevice;
 import com.swarmus.hivear.models.SerialDevice;
 import com.swarmus.hivear.models.TCPDeviceServer;
 import com.swarmus.hivear.viewmodels.ProtoMsgViewModel;
+import com.swarmus.hivear.viewmodels.RobotListViewModel;
 
 public class ConnectionViewFragment extends Fragment {
     private MoveByCommand upCommand;
@@ -47,8 +48,13 @@ public class ConnectionViewFragment extends Fragment {
         TextView dataReceived = view.findViewById(R.id.dataReceived);
         dataReceived.setMovementMethod(new ScrollingMovementMethod());
         ProtoMsgViewModel protoMsgViewModel = new ViewModelProvider(requireActivity()).get(ProtoMsgViewModel.class);
+        RobotListViewModel robotListViewModel = new ViewModelProvider(requireActivity()).get(RobotListViewModel.class);
+
+        // By default, log all msgs
+        protoMsgViewModel.setCurrentProtoMsgStorer(getViewLifecycleOwner(), robotListViewModel.getProtoMsgStorer().getValue());
+
         dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(MSG_LOGGING_LENGTH));
-        protoMsgViewModel.getMsgQueue().observe(getViewLifecycleOwner(), s -> {
+        protoMsgViewModel.getCurrentProtoMsgStorer().observe(getViewLifecycleOwner(), s -> {
             int scrollY = dataReceived.getScrollY();
             dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(MSG_LOGGING_LENGTH));
             scrollY = Math.max(scrollY, 0);
@@ -64,6 +70,7 @@ public class ConnectionViewFragment extends Fragment {
         });
 
         view.findViewById(R.id.clean_text).setOnClickListener(v -> {
+            protoMsgViewModel.clearLogs();
             dataReceived.setText("");
         });
 

@@ -1,9 +1,12 @@
 package com.swarmus.hivear.viewmodels;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.swarmus.hivear.MessageOuterClass;
+import com.swarmus.hivear.models.ProtoMsgStorer;
 import com.swarmus.hivear.models.Robot;
 
 import java.util.HashMap;
@@ -12,6 +15,18 @@ import java.util.List;
 public class RobotListViewModel extends ViewModel {
     MutableLiveData<List<Robot>> robotList;
     HashMap<Integer, Integer> apriltagIdConversionMap = new HashMap<>(); // Apriltag id, Robot/board id
+    MutableLiveData<ProtoMsgStorer> allRobotsMsgStorerMutableData;
+    ProtoMsgStorer protoMsgStorer;
+    SwarmAgentInfoViewModel swarmAgentInfoViewModel;
+
+    public RobotListViewModel() {
+        protoMsgStorer = new ProtoMsgStorer(15);
+        allRobotsMsgStorerMutableData = new MutableLiveData<>(protoMsgStorer);
+    }
+
+    public void setSwarmAgentInfoViewModel(SwarmAgentInfoViewModel swarmAgentInfoViewModel) {
+        this.swarmAgentInfoViewModel = swarmAgentInfoViewModel;
+    }
 
     public MutableLiveData<List<Robot>> getRobotList() {
         if (robotList == null) {robotList = new MutableLiveData<>();}
@@ -48,5 +63,33 @@ public class RobotListViewModel extends ViewModel {
 
     public HashMap<Integer, Integer> getIDConversions() {
         return apriltagIdConversionMap;
+    }
+    public void storeNewMsg(MessageOuterClass.Message msg) {
+        if (msg == null) { return; }
+
+        // Add to all msgs
+        protoMsgStorer.addMsg(msg);
+
+        // Add to specific robots logging
+        int sourceID = msg.getSourceId();
+        int destinationID = msg.getDestinationId();
+
+        // TODO verify we have access to viewmodel here
+        if (swarmAgentInfoViewModel != null) {
+            int agentID = swarmAgentInfoViewModel.getSwarmAgentID().getValue();
+            if (agentID == (sourceID | destinationID) ) {
+                swarmAgentInfoViewModel.getProtoMsgStorer().addMsg(msg);
+            }
+        }
+
+        Robot sourceRobot = getRobotFromList(sourceID);
+        if (sourceRobot != null) { sourceRobot.getProtoMsgStorer().addMsg(msg); }
+
+        Robot destinationRobot = getRobotFromList(destinationID);
+        if (destinationRobot != null) { destinationRobot.getProtoMsgStorer().addMsg(msg); }
+    }
+
+    public LiveData<ProtoMsgStorer> getProtoMsgStorer() {
+        return allRobotsMsgStorerMutableData;
     }
 }

@@ -5,21 +5,16 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.swarmus.hivear.MessageOuterClass;
-
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.LinkedList;
+import com.swarmus.hivear.models.ProtoMsgStorer;
 
 public class ProtoMsgViewModel extends ViewModel {
-    // First element = most recent
-    private final MutableLiveData<LinkedList<String>> msgQueue = new MutableLiveData<>(new LinkedList<>());
-    private final int maxCapacity = 10; // We keep last 10 messages
-    private final static SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+
+    private final MutableLiveData<ProtoMsgStorer> currentProtoMsgStorer = new MutableLiveData<>();
 
     private static String requestPattern = "request";
     private static String responsePattern = "response";
@@ -31,36 +26,29 @@ public class ProtoMsgViewModel extends ViewModel {
     private static int greetingColor = Color.YELLOW;
     private static int invalidColor = Color.RED;
 
-    public LiveData<LinkedList<String>> getMsgQueue() { return msgQueue; }
-
-    public void addMsg(MessageOuterClass.Message msg) {
-        LinkedList<String> msgs = new LinkedList<>(msgQueue.getValue());
-        if (msgs.size() == maxCapacity) { msgs.removeLast(); }
-        String msgString = "Received at: " + sdf.format(Calendar.getInstance().getTime()) + "\n";
-        msgString += msg.toString();
-        msgs.addFirst(msgString);
-        msgQueue.setValue(new LinkedList<>(msgs));
+    public LiveData<ProtoMsgStorer> getCurrentProtoMsgStorer() {
+        return currentProtoMsgStorer;
     }
 
-    public void clearMsgs() {
-        msgQueue.setValue(new LinkedList<>());
+    public void setCurrentProtoMsgStorer(LifecycleOwner owner, ProtoMsgStorer protoMsgStorer) {
+        // Remove observer before changing ProtoMsgStorer
+        currentProtoMsgStorer.removeObservers(owner);
+        currentProtoMsgStorer.setValue(protoMsgStorer);
     }
 
-    public String getLastMsgs(int nbToRetrieve) {
-        LinkedList<String> msgs = msgQueue.getValue();
-        nbToRetrieve = Math.min(nbToRetrieve, msgs.size());
-        nbToRetrieve = Math.max(nbToRetrieve, 0);
-        String logMsg = "";
-        for (int i = 0; i < nbToRetrieve; i++) {
-            logMsg += "\n==================================\n";
-            logMsg += msgs.get(i) + "\n";
+    public void clearLogs() {
+        if (currentProtoMsgStorer != null) {
+            currentProtoMsgStorer.getValue().clear();
         }
-        return logMsg;
     }
 
     public SpannableString getLastMsgsSpannable(int nbToRetrieve) {
 
-        String lastMsgs = getLastMsgs(nbToRetrieve);
+        if (currentProtoMsgStorer == null) {
+            return new SpannableString("");
+        }
+
+        String lastMsgs = currentProtoMsgStorer.getValue().getLoggingString(nbToRetrieve);
 
         SpannableString s = new SpannableString(lastMsgs);
         String[] parts = lastMsgs.split("\n");
@@ -69,32 +57,22 @@ public class ProtoMsgViewModel extends ViewModel {
         int lastGreeting = 0;
         int lastNull = 0;
         for(final String word : parts) {
-            if(word.contains(responsePattern)) {
-                s.setSpan(new ForegroundColorSpan(responseColor),
-                        lastMsgs.indexOf(responsePattern, lastResponse),
-                        lastMsgs.indexOf(responsePattern, lastResponse) + responsePattern.length(),
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                lastResponse = lastMsgs.indexOf(responsePattern, lastResponse)+1;
-            } else if(word.contains(requestPattern)) {
-                s.setSpan(new ForegroundColorSpan(requestColor),
-                        lastMsgs.indexOf(requestPattern, lastRequest),
-                        lastMsgs.indexOf(requestPattern, lastRequest) + requestPattern.length(),
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                lastRequest = lastMsgs.indexOf(requestPattern, lastRequest)+1;
-            } else if(word.contains(greetingPattern)) {
-                s.setSpan(new ForegroundColorSpan(greetingColor),
-                        lastMsgs.indexOf(greetingPattern, lastGreeting),
-                        lastMsgs.indexOf(greetingPattern, lastGreeting) + greetingPattern.length(),
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                lastGreeting = lastMsgs.indexOf(greetingPattern, lastGreeting)+1;
-            } else if(word.contains(nullPattern)) {
-                s.setSpan(new ForegroundColorSpan(invalidColor),
-                        lastMsgs.indexOf(nullPattern, lastNull),
-                        lastMsgs.indexOf(nullPattern, lastNull) + nullPattern.length(),
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                lastNull = lastMsgs.indexOf(nullPattern, lastNull)+1;
-            }
+            lastResponse = colorizeString(responsePattern, lastResponse, responseColor, word, lastMsgs, s);
+            lastRequest =  colorizeString(requestPattern,  lastRequest,  requestColor,  word, lastMsgs, s);
+            lastGreeting = colorizeString(greetingPattern, lastGreeting, greetingColor, word, lastMsgs, s);
+            lastNull =     colorizeString(nullPattern,     lastNull,     invalidColor,  word, lastMsgs, s);
         }
         return s;
+    }
+
+    private int colorizeString(String pattern, int lastDetectionIndex, int color, String part, String text, SpannableString s) {
+        if(part.contains(pattern)) {
+            s.setSpan(new ForegroundColorSpan(color),
+                    text.indexOf(pattern, lastDetectionIndex),
+                    text.indexOf(pattern, lastDetectionIndex) + pattern.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            lastDetectionIndex = text.indexOf(pattern, lastDetectionIndex)+1;
+        }
+        return lastDetectionIndex;
     }
 }

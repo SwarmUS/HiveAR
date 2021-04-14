@@ -91,6 +91,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.app_layout);
 
+
+        initViewModels();
         maybeEnableAr(); // Hide AR tab if not possible to do AR
         setUpNavigation();
         setUpCommmunication();
@@ -214,6 +216,13 @@ public class MainActivity extends AppCompatActivity {
         return super.dispatchTouchEvent(ev);
     }
 
+    private void initViewModels() {
+        swarmAgentInfoViewModel = new ViewModelProvider(this).get(SwarmAgentInfoViewModel.class);
+        robotListViewModel = new ViewModelProvider(this).get(RobotListViewModel.class);
+        robotListViewModel.setSwarmAgentInfoViewModel(swarmAgentInfoViewModel);
+        protoMsgViewModel = new ViewModelProvider(this).get(ProtoMsgViewModel.class);
+    }
+
     private void maybeEnableAr() {
         ArCoreApk.Availability availability = ArCoreApk.getInstance().checkAvailability(this);
         if (availability.isTransient()) {
@@ -255,15 +264,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setUpCommmunication() {
-        swarmAgentInfoViewModel = new ViewModelProvider(this).get(SwarmAgentInfoViewModel.class);
         swarmAgentInfoViewModel.getSwarmAgentID().observe(this, id -> setConnectionBadge(currentCommunicationDevice.getCurrentStatus()));
-
-        protoMsgViewModel = new ViewModelProvider(this).get(ProtoMsgViewModel.class);
 
         receivedMessages = new LinkedList<>();
         toSendMessages = new LinkedList<>();
-        ProtoMsgViewModel protoMsgViewModel = new ViewModelProvider(this).get(ProtoMsgViewModel.class);
-        protoMsgViewModel.getMsgQueue().observe(this, s -> Log.i(TAG, protoMsgViewModel.getLastMsgs(1)));
+        robotListViewModel.getProtoMsgStorer().observe(this, s -> Log.i(TAG, robotListViewModel.getProtoMsgStorer().getValue().getLoggingString(1)));
 
         IntentFilter filterProtoMsgReceived = new IntentFilter(BROADCAST_PROTO_MSG_RECEIVED);
         registerReceiver(protoMsgReadReceiver, filterProtoMsgReceived);
@@ -400,7 +405,7 @@ public class MainActivity extends AppCompatActivity {
                 while ((msg = receivedMessages.poll()) != null) {
                     // For logging purposes
 
-                    protoMsgViewModel.addMsg(msg);
+                    robotListViewModel.storeNewMsg(msg);
 
                     if (msg.hasResponse() && swarmAgentInfoViewModel.isAgentInitialized()) {
                         if (msg.getResponse().hasUserCall()) {
@@ -490,15 +495,11 @@ public class MainActivity extends AppCompatActivity {
     // TODO update when new details will be available
     private void updateRobots()
     {
-        robotListViewModel = new ViewModelProvider(this).get(RobotListViewModel.class);
-
         // TODO Retrieve all robots in the swarm
         List<Robot> robotList = new ArrayList<>();
         robotList.add(new Robot("pioneer_0", 1));
         robotList.add(new Robot("pioneer_1", 2));
         robotList.add(new Robot("pioneer_2", 3));
-
-        RobotListViewModel robotListViewModel = new ViewModelProvider(this).get(RobotListViewModel.class);
         robotListViewModel.getRobotList().setValue(robotList);
     }
 
