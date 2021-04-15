@@ -9,58 +9,68 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.swarmus.hivear.MessageOuterClass;
+import com.swarmus.hivear.models.ProtoMsgStorer;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ProtoMsgViewModel extends ViewModel {
-    // First element = most recent
-    private final MutableLiveData<LinkedList<String>> msgQueue = new MutableLiveData<>(new LinkedList<>());
-    private final int maxCapacity = 10; // We keep last 10 messages
-    private final static SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+
+    private final MutableLiveData<ProtoMsgStorer> currentProtoMsgStorer;
+    private final MutableLiveData<List<ProtoMsgStorer>> allProtoMsgStorer;
 
     private static String requestPattern = "request";
     private static String responsePattern = "response";
     private static String greetingPattern = "greeting";
     private static String nullPattern = "null";
+    private static String destinationPattern = "destination";
+    private static String sourcePattern = "source";
 
     private static int requestColor = Color.BLUE;
     private static int responseColor = Color.GREEN;
     private static int greetingColor = Color.YELLOW;
     private static int invalidColor = Color.RED;
+    private static int destinationColor = Color.MAGENTA;
+    private static int sourceColor = Color.CYAN;
 
-    public LiveData<LinkedList<String>> getMsgQueue() { return msgQueue; }
-
-    public void addMsg(MessageOuterClass.Message msg) {
-        LinkedList<String> msgs = new LinkedList<>(msgQueue.getValue());
-        if (msgs.size() == maxCapacity) { msgs.removeLast(); }
-        String msgString = "Received at: " + sdf.format(Calendar.getInstance().getTime()) + "\n";
-        msgString += msg.toString();
-        msgs.addFirst(msgString);
-        msgQueue.setValue(new LinkedList<>(msgs));
+    public ProtoMsgViewModel() {
+        allProtoMsgStorer = new MutableLiveData<>(new ArrayList<>());
+        currentProtoMsgStorer = new MutableLiveData<>();
     }
 
-    public void clearMsgs() {
-        msgQueue.setValue(new LinkedList<>());
+    public void registerNewProtoMsgStorer(ProtoMsgStorer protoMsgStorer) {
+        ArrayList<ProtoMsgStorer> protoMsgStorers = new ArrayList<>(allProtoMsgStorer.getValue());
+        protoMsgStorers.add(protoMsgStorer);
+        allProtoMsgStorer.setValue(protoMsgStorers);
     }
 
-    public String getLastMsgs(int nbToRetrieve) {
-        LinkedList<String> msgs = msgQueue.getValue();
-        nbToRetrieve = Math.min(nbToRetrieve, msgs.size());
-        nbToRetrieve = Math.max(nbToRetrieve, 0);
-        String logMsg = "";
-        for (int i = 0; i < nbToRetrieve; i++) {
-            logMsg += "\n==================================\n";
-            logMsg += msgs.get(i) + "\n";
+    public LiveData<List<ProtoMsgStorer>> getProtoMsgStorerList() {return allProtoMsgStorer;}
+
+    public LiveData<ProtoMsgStorer> getCurrentProtoMsgStorer() {
+        return currentProtoMsgStorer;
+    }
+
+    public void setCurrentProtoMsgStorer(ProtoMsgStorer protoMsgStorer) {
+        // Remove observer before changing ProtoMsgStorer
+        if (currentProtoMsgStorer.getValue() != null) {
+            currentProtoMsgStorer.getValue().deleteObservers();
         }
-        return logMsg;
+        currentProtoMsgStorer.setValue(protoMsgStorer);
+    }
+
+    public void clearLogs() {
+        if (currentProtoMsgStorer != null) {
+            currentProtoMsgStorer.getValue().clear();
+        }
     }
 
     public SpannableString getLastMsgsSpannable(int nbToRetrieve) {
 
-        String lastMsgs = getLastMsgs(nbToRetrieve);
+        if (currentProtoMsgStorer == null || currentProtoMsgStorer.getValue() == null) {
+            return new SpannableString("");
+        }
+
+        String lastMsgs = currentProtoMsgStorer.getValue().getLoggingString(nbToRetrieve);
 
         SpannableString s = new SpannableString(lastMsgs);
         String[] parts = lastMsgs.split("\n");
@@ -68,33 +78,27 @@ public class ProtoMsgViewModel extends ViewModel {
         int lastRequest = 0;
         int lastGreeting = 0;
         int lastNull = 0;
+        int lastDestination = 0;
+        int lastSource = 0;
         for(final String word : parts) {
-            if(word.contains(responsePattern)) {
-                s.setSpan(new ForegroundColorSpan(responseColor),
-                        lastMsgs.indexOf(responsePattern, lastResponse),
-                        lastMsgs.indexOf(responsePattern, lastResponse) + responsePattern.length(),
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                lastResponse = lastMsgs.indexOf(responsePattern, lastResponse)+1;
-            } else if(word.contains(requestPattern)) {
-                s.setSpan(new ForegroundColorSpan(requestColor),
-                        lastMsgs.indexOf(requestPattern, lastRequest),
-                        lastMsgs.indexOf(requestPattern, lastRequest) + requestPattern.length(),
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                lastRequest = lastMsgs.indexOf(requestPattern, lastRequest)+1;
-            } else if(word.contains(greetingPattern)) {
-                s.setSpan(new ForegroundColorSpan(greetingColor),
-                        lastMsgs.indexOf(greetingPattern, lastGreeting),
-                        lastMsgs.indexOf(greetingPattern, lastGreeting) + greetingPattern.length(),
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                lastGreeting = lastMsgs.indexOf(greetingPattern, lastGreeting)+1;
-            } else if(word.contains(nullPattern)) {
-                s.setSpan(new ForegroundColorSpan(invalidColor),
-                        lastMsgs.indexOf(nullPattern, lastNull),
-                        lastMsgs.indexOf(nullPattern, lastNull) + nullPattern.length(),
-                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                lastNull = lastMsgs.indexOf(nullPattern, lastNull)+1;
-            }
+            lastResponse =      colorizeString(responsePattern,     lastResponse,       responseColor,      word, lastMsgs, s);
+            lastRequest =       colorizeString(requestPattern,      lastRequest,        requestColor,       word, lastMsgs, s);
+            lastGreeting =      colorizeString(greetingPattern,     lastGreeting,       greetingColor,      word, lastMsgs, s);
+            lastNull =          colorizeString(nullPattern,         lastNull,           invalidColor,       word, lastMsgs, s);
+            lastDestination =   colorizeString(destinationPattern,  lastDestination,    destinationColor,   word, lastMsgs, s);
+            lastSource =        colorizeString(sourcePattern,       lastSource,         sourceColor,        word, lastMsgs, s);
         }
         return s;
+    }
+
+    private int colorizeString(String pattern, int lastDetectionIndex, int color, String part, String text, SpannableString s) {
+        if(part.contains(pattern)) {
+            s.setSpan(new ForegroundColorSpan(color),
+                    text.indexOf(pattern, lastDetectionIndex),
+                    text.indexOf(pattern, lastDetectionIndex) + pattern.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            lastDetectionIndex = text.indexOf(pattern, lastDetectionIndex)+1;
+        }
+        return lastDetectionIndex;
     }
 }

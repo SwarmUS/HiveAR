@@ -1,12 +1,14 @@
 package com.swarmus.hivear.fragments;
 
 import android.os.Bundle;
-import android.text.Layout;
 import android.text.method.ScrollingMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -27,12 +29,17 @@ import com.swarmus.hivear.models.SerialDevice;
 import com.swarmus.hivear.models.TCPDeviceServer;
 import com.swarmus.hivear.viewmodels.ProtoMsgViewModel;
 
+import java.util.ArrayList;
+
 public class ConnectionViewFragment extends Fragment {
     private MoveByCommand upCommand;
     private MoveByCommand downCommand;
     private MoveByCommand leftCommand;
     private MoveByCommand rightCommand;
     private MoveByCommand stopCommand;
+
+    private ProtoMsgViewModel protoMsgViewModel;
+    private TextView dataReceived;
 
     private FragmentManager fragmentManager;
     private static final int MSG_LOGGING_LENGTH = 10;
@@ -44,29 +51,50 @@ public class ConnectionViewFragment extends Fragment {
 
         fragmentManager = getChildFragmentManager();
 
-        TextView dataReceived = view.findViewById(R.id.dataReceived);
-        dataReceived.setMovementMethod(new ScrollingMovementMethod());
-        ProtoMsgViewModel protoMsgViewModel = new ViewModelProvider(requireActivity()).get(ProtoMsgViewModel.class);
-        dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(MSG_LOGGING_LENGTH));
-        protoMsgViewModel.getMsgQueue().observe(getViewLifecycleOwner(), s -> {
-            int scrollY = dataReceived.getScrollY();
-            dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(MSG_LOGGING_LENGTH));
-            scrollY = Math.max(scrollY, 0);
-            final Layout layout = dataReceived.getLayout();
-            if(layout != null){
-                scrollY = Math.min(layout.getLineBottom(dataReceived.getLineCount() - 1), scrollY);
+        protoMsgViewModel = new ViewModelProvider(requireActivity()).get(ProtoMsgViewModel.class);
+
+        Spinner dropdown = view.findViewById(R.id.loggingFilter);
+        protoMsgViewModel.getProtoMsgStorerList().observe(getViewLifecycleOwner(), storers -> {
+            ArrayList<String> storerNames = new ArrayList<>();
+            storers.forEach(protoMsgStorer -> storerNames.add(protoMsgStorer.getUniqueName()));
+            ArrayAdapter<String> adapter =  new ArrayAdapter<>(requireActivity().getBaseContext(), android.R.layout.simple_spinner_dropdown_item, storerNames.toArray(new String[0]));
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            dropdown.setAdapter(adapter);
+            if (protoMsgViewModel.getCurrentProtoMsgStorer().getValue() != null) {
+                String selectedDevice = protoMsgViewModel.getCurrentProtoMsgStorer().getValue().getUniqueName();
+                if (selectedDevice != null) {
+                    dropdown.setSelection(adapter.getPosition(selectedDevice));
+                }
             }
-            dataReceived.scrollTo(0, scrollY);
         });
+        dropdown.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View currentView, int i, long l) {
+                protoMsgViewModel.setCurrentProtoMsgStorer( protoMsgViewModel.getProtoMsgStorerList().getValue().get(i));
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+
+        dataReceived = view.findViewById(R.id.dataReceived);
+        dataReceived.setMovementMethod(new ScrollingMovementMethod());
+
+        dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(MSG_LOGGING_LENGTH));
+        // Align text correctly on change logging filter
+        protoMsgViewModel.getCurrentProtoMsgStorer().observe(getViewLifecycleOwner(), s -> { filterChanged(); });
+
+        // Init filter dropdown
+        filterChanged();
 
         view.findViewById(R.id.hide_ui).setOnClickListener(v -> {
             setInfoVisible(!isInfoVisible);
         });
 
         view.findViewById(R.id.clean_text).setOnClickListener(v -> {
+            protoMsgViewModel.clearLogs();
             dataReceived.setText("");
         });
-
 
         view.findViewById(R.id.connectButton).setOnClickListener(v -> {
             CommunicationDevice communicationDevice = ((MainActivity)getActivity()).getCurrentCommunicationDevice();
@@ -112,6 +140,17 @@ public class ConnectionViewFragment extends Fragment {
         FloatingActionButton switchCommunicationButton = view.findViewById(R.id.switchCommunication);
         updateCommunicationUI(switchCommunicationButton);
         setInfoVisible(false); // Disable UI at start
+    }
+
+    private void filterChanged() {
+        if (protoMsgViewModel.getCurrentProtoMsgStorer().getValue() != null) {
+            dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(MSG_LOGGING_LENGTH));
+
+            // Align text on new message
+            protoMsgViewModel.getCurrentProtoMsgStorer().getValue().addObserver((observable, object) -> {
+                dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(MSG_LOGGING_LENGTH));
+            });
+        }
     }
 
     private void updateCommunicationUI(FloatingActionButton button) {

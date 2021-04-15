@@ -87,6 +87,16 @@
                 app:srcCompat="@drawable/usb_icon" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
+        <Spinner
+            android:id="@+id/loggingFilter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:background="@android:drawable/btn_dropdown"
+            android:backgroundTint="@color/honeycomb"
+            android:spinnerMode="dropdown"
+            app:layout_constraintHorizontal_bias="0.5"/>
+
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
