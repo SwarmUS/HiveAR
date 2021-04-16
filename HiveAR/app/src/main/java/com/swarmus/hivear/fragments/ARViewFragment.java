@@ -78,6 +78,7 @@ public class ARViewFragment extends Fragment {
     private Handler timerHandler;
     private Runnable timerRunnable;
     private HashMap<Robot,TextView> timerTextViews = new HashMap<>();
+    private static final int AR_SHOW_LAST_COMMANDS_COUNT = 5;
 
     private static Toast currentToast;
 
@@ -454,9 +455,9 @@ public class ARViewFragment extends Fragment {
 
                     TextView lastCommands = viewRenderable.getView().findViewById(R.id.lastCommands);
                     ProtoMsgStorer lastCommandsStorer = robot.getSentCommandsStorer();
-                    lastCommands.setText(lastCommandsStorer.getSimplifiedLoggingString(5));
+                    lastCommands.setText(lastCommandsStorer.getSimplifiedLoggingString(AR_SHOW_LAST_COMMANDS_COUNT));
                     lastCommandsStorer.addObserver((observable, object) -> {
-                        lastCommands.setText(lastCommandsStorer.getSimplifiedLoggingString(5));
+                        lastCommands.setText(lastCommandsStorer.getSimplifiedLoggingString(AR_SHOW_LAST_COMMANDS_COUNT));
                     });
 
                     // Set in AR
