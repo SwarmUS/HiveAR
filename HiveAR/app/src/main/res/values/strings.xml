@@ -40,4 +40,5 @@
     <string name="hiveboard_id">Hiveboard ID</string>
     <string name="delete_config">Delete Config</string>
     <string name="robot_board_id">Robot/Board ID</string>
+    <string name="last_commands_sent">Last commands sent:</string>
 </resources>
