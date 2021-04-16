@@ -45,6 +45,7 @@ import com.swarmus.hivear.apriltag.ApriltagDetection;
 import com.swarmus.hivear.apriltag.ApriltagNative;
 import com.swarmus.hivear.ar.CameraFacingNode;
 import com.swarmus.hivear.ar.AlwaysStraightNode;
+import com.swarmus.hivear.models.ProtoMsgStorer;
 import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.viewmodels.CurrentArRobotViewModel;
 import com.swarmus.hivear.viewmodels.RobotListViewModel;
@@ -450,6 +451,14 @@ public class ARViewFragment extends Fragment {
                     TextView robotTimer = viewRenderable.getView().findViewById(R.id.last_update_timer);
                     timerTextViews.computeIfPresent(robot, (k,v) -> robotTimer);
                     timerTextViews.computeIfAbsent(robot, v -> robotTimer);
+
+                    TextView lastCommands = viewRenderable.getView().findViewById(R.id.lastCommands);
+                    ProtoMsgStorer lastCommandsStorer = robot.getSentCommandsStorer();
+                    lastCommands.setText(lastCommandsStorer.getSimplifiedLoggingString(5));
+                    lastCommandsStorer.addObserver((observable, object) -> {
+                        lastCommands.setText(lastCommandsStorer.getSimplifiedLoggingString(5));
+                    });
+
                     // Set in AR
                     tNode.setName(AR_INDICATOR_UI);
                     Vector3 offset = new Vector3(0f, 0.4f, 0f);

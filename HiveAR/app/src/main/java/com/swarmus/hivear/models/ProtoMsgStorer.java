@@ -43,6 +43,46 @@ public class ProtoMsgStorer extends Observable {
         return loggingString;
     }
 
+    public String getSimplifiedLoggingString(int nbToRetrieve) {
+        String loggingString = "";
+        nbToRetrieve = Math.min(nbToRetrieve, msgQueue.size());
+        nbToRetrieve = Math.max(nbToRetrieve, 0);
+
+        // Create a string with functioncall with syntax:
+        // <Function1Name>(<arg1>, <arg2>, ..., <argN>)
+        // <Function2Name>(<arg1>, <arg2>, ..., <argN>)
+        // <Function3Name>(<arg1>, <arg2>, ..., <argN>)
+        for (int i = 0; i < nbToRetrieve; i++) {
+            MessageOuterClass.Message msg = msgQueue.get(i);
+            if (msg.hasRequest() && msg.getRequest().hasUserCall() && msg.getRequest().getUserCall().hasFunctionCall()) {
+                MessageOuterClass.FunctionCallRequest functionCallRequest = msg.getRequest().getUserCall().getFunctionCall();
+                loggingString += functionCallRequest.getFunctionName();
+                loggingString += "(";
+                for (MessageOuterClass.FunctionArgument argument : functionCallRequest.getArgumentsList()) {
+                    switch (argument.getArgumentCase()) {
+                        case INT_ARG:
+                            loggingString += Long.toString(argument.getIntArg());
+                            break;
+                        case FLOAT_ARG:
+                            loggingString += Float.toString(argument.getFloatArg());
+                            break;
+                        case ARGUMENT_NOT_SET:
+                            continue;
+                    }
+                    if (functionCallRequest.getArgumentsList().indexOf(argument) != functionCallRequest.getArgumentsList().size() - 1) {
+                        loggingString += ", ";
+                    }
+                }
+                loggingString += ")";
+            }
+            if (i != nbToRetrieve - 1) {
+                loggingString += "\n";
+            }
+        }
+
+        return loggingString;
+    }
+
     public void clear() {
         msgQueue.clear();
         setChanged();
