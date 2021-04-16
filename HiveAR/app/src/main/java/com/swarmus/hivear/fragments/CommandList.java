@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.adapters.CommandsAdapter;
-import com.swarmus.hivear.models.FunctionTemplate;
+import com.swarmus.hivear.models.FunctionTemplateList;
 import com.swarmus.hivear.viewmodels.CommandListVM;
 
 import java.util.List;
@@ -50,7 +50,7 @@ public class CommandList extends Fragment {
         updateCommands(commandListVM.getCommandList().getValue());
     }
 
-    private void updateCommands(List<FunctionTemplate> commandList) {
+    private void updateCommands(FunctionTemplateList commandList) {
         View view = getView();
         RecyclerView recyclerView = view.findViewById(R.id.commandsContainer);
         if (recyclerView != null)
@@ -58,7 +58,6 @@ public class CommandList extends Fragment {
             if (commandList != null) {
                 CommandsAdapter commandsAdapter =
                         new CommandsAdapter(requireContext(), destinationID, commandList);
-                commandsAdapter.setBroadcastMode(isBroadcast);
                 recyclerView.setAdapter(commandsAdapter);
                 recyclerView.setHasFixedSize(true);
             }

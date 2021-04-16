@@ -19,26 +19,26 @@ import com.swarmus.hivear.activities.MainActivity;
 import com.swarmus.hivear.databinding.CommandArgumentBinding;
 import com.swarmus.hivear.models.FunctionTemplate;
 import com.swarmus.hivear.models.FunctionTemplateArgument;
+import com.swarmus.hivear.models.FunctionTemplateList;
 import com.swarmus.hivear.viewmodels.BroadcastInfoViewModel;
 
 import java.util.List;
 
 public class CommandsAdapter extends RecyclerView.Adapter<CommandsVH> {
-    private final List<FunctionTemplate> commands;
+    private final FunctionTemplateList functionTemplateList;
     private Context context;
     private int destinationId;
     private ViewGroup parentGroup;
-    private BroadcastInfoViewModel broadcastInfoViewModel;
-    private boolean isBroadcast; // OnLongClickListenner differs for broadcast
+    private final BroadcastInfoViewModel broadcastInfoViewModel;
 
-    public CommandsAdapter(@NonNull Context context, int destinationId, List<FunctionTemplate> commands) {
+    public CommandsAdapter(@NonNull Context context,
+                           int destinationId,
+                           FunctionTemplateList functionTemplateList) {
         this.context = context;
         this.destinationId = destinationId;
-        this.commands = commands;
+        this.functionTemplateList = functionTemplateList;
         this.broadcastInfoViewModel = new ViewModelProvider((ViewModelStoreOwner)context).get(BroadcastInfoViewModel.class);
     }
-
-    public void setBroadcastMode(boolean isBroadcast) {this.isBroadcast = isBroadcast;}
 
     @NonNull
     @Override
@@ -50,41 +50,24 @@ public class CommandsAdapter extends RecyclerView.Adapter<CommandsVH> {
 
     @Override
     public void onBindViewHolder(@NonNull CommandsVH holder, int position) {
+        if (functionTemplateList == null) {return;}
 
-        FunctionTemplate function = commands.get(position);
+        FunctionTemplate function = functionTemplateList.at(position);
 
-        holder.cardView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                if (isBroadcast) {
-                    // Open delete popup
-                    String alertMsg = String.format("Remove %s function from broadcast list?", function.getName());
-                    new AlertDialog.Builder(context)
-                            .setTitle("Remove broadcast function")
-                            .setMessage(alertMsg)
-                            .setPositiveButton("Yes", (dialog, whichButton) -> {
-                                if (broadcastInfoViewModel != null) {
-                                    broadcastInfoViewModel.removeFunction(function);
-                                }
-                            }).setNegativeButton("No", (dialog, whichButton) -> {
-                        // Do nothing.
-                    }).show();
-                } else {
-                    // Open add function popup
-                    String alertMsg = String.format("Add %s function to broadcast list?", function.getName());
-                    new AlertDialog.Builder(context)
-                            .setTitle("Add broadcast function")
-                            .setMessage(alertMsg)
-                            .setPositiveButton("Yes", (dialog, whichButton) -> {
-                                if (broadcastInfoViewModel != null) {
-                                    broadcastInfoViewModel.addFunction(function);
-                                }
-                            }).setNegativeButton("No", (dialog, whichButton) -> {
-                        // Do nothing.
-                    }).show();
-                }
-                return true;
-            }
+        holder.cardView.setOnLongClickListener(view -> {
+            // Open add function popup
+            String alertMsg = String.format("Add \"%s\" function to broadcast list?", function.getName());
+            new AlertDialog.Builder(context)
+                    .setTitle("Add broadcast function")
+                    .setMessage(alertMsg)
+                    .setPositiveButton("Yes", (dialog, whichButton) -> {
+                        if (broadcastInfoViewModel != null) {
+                            broadcastInfoViewModel.addFunction(function);
+                        }
+                    }).setNegativeButton("No", (dialog, whichButton) -> {
+                // Do nothing.
+            }).show();
+            return true;
         });
 
         holder.commandNameTV.setText(function.getName());
@@ -96,6 +79,36 @@ public class CommandsAdapter extends RecyclerView.Adapter<CommandsVH> {
 
         holder.commandSendButton.setOnClickListener(view -> {
             ((MainActivity)context).sendCommand(function, destinationId);
+        });
+
+        holder.copyCommand.setOnClickListener(view -> {
+            // Open copy function popup
+            String alertMsg = String.format("Duplicate function \"%s\"?", function.getName());
+            new AlertDialog.Builder(context)
+                    .setTitle("Duplicate function")
+                    .setMessage(alertMsg)
+                    .setPositiveButton("Yes", (dialog, whichButton) -> {
+                        if (functionTemplateList != null) {
+                            functionTemplateList.addDuplicate(function);
+                        }
+                    }).setNegativeButton("No", (dialog, whichButton) -> {
+                // Do nothing.
+            }).show();
+        });
+
+        holder.deleteCommand.setOnClickListener(view -> {
+            // Open delete function popup
+            String alertMsg = String.format("Delete function \"%s\"?", function.getName());
+            new AlertDialog.Builder(context)
+                    .setTitle("Delete function")
+                    .setMessage(alertMsg)
+                    .setPositiveButton("Yes", (dialog, whichButton) -> {
+                        if (functionTemplateList != null) {
+                            functionTemplateList.remove(function);
+                        }
+                    }).setNegativeButton("No", (dialog, whichButton) -> {
+                // Do nothing.
+            }).show();
         });
 
         for (FunctionTemplateArgument arg : function.getArguments()) {
@@ -120,7 +133,9 @@ public class CommandsAdapter extends RecyclerView.Adapter<CommandsVH> {
 
     @Override
     public int getItemCount() {
-        if (commands != null) { return commands.size(); }
+        if (functionTemplateList != null) {
+            return functionTemplateList.size();
+        }
         else { return 0; }
     }
 }

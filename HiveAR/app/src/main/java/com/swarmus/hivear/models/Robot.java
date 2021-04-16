@@ -10,10 +10,12 @@ public class Robot extends Observable {
 
     private String name;
     private int uid;
-    private List<FunctionTemplate> commands;
-    private List<FunctionTemplate> buzzCommands;
+
     private ProtoMsgStorer msgLogging;
     private ProtoMsgStorer sentCommands;
+
+    private FunctionTemplateList commands;
+    private FunctionTemplateList buzzCommands;
 
     private long lastUpdateTimeMillis;
 
@@ -25,10 +27,21 @@ public class Robot extends Observable {
         lastUpdateTimeMillis = System.currentTimeMillis();
         this.name = name;
         this.uid = uid;
-        this.commands = new ArrayList<>();
-        this.buzzCommands = new ArrayList<>();
+
         msgLogging = new ProtoMsgStorer(5, getUniqueName());
         sentCommands = new ProtoMsgStorer(5, getUniqueName() + " Sent commands");
+
+        this.commands = new FunctionTemplateList();
+        this.commands.addObserver((observable, o) -> {
+            setChanged();
+            notifyObservers();
+        });
+
+        this.buzzCommands = new FunctionTemplateList();
+        this.buzzCommands.addObserver(((observable, o) -> {
+            setChanged();
+            notifyObservers();
+        }));
         setCommands(commands);
         this.addObserver((observable, o) -> {lastUpdateTimeMillis = System.currentTimeMillis();});
     }
@@ -68,13 +81,9 @@ public class Robot extends Observable {
         notifyObservers();
     }
 
-    public List<FunctionTemplate> getCommands() {
-        return commands;
-    }
+    public FunctionTemplateList getCommands() { return commands; }
 
-    public List<FunctionTemplate> getBuzzCommands() {
-        return buzzCommands;
-    }
+    public FunctionTemplateList getBuzzCommands() { return buzzCommands; }
 
     public void setCommands(List<FunctionTemplate> commands) {
         // Iterate in list to classify if buzz or not
@@ -85,11 +94,9 @@ public class Robot extends Observable {
 
     public void addCommand(FunctionTemplate command) {
         if (command.isBuzzFunction()) {
-            if (!buzzCommands.contains(command)) {
-                this.buzzCommands.add(command);
-            }
-        } else if (!commands.contains(command)) {
-            this.commands.add(command);
+            buzzCommands.add(command);
+        } else {
+            commands.add(command);
         }
         setChanged();
         notifyObservers();

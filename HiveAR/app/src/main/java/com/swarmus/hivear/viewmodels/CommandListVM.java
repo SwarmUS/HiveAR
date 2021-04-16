@@ -5,37 +5,44 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.swarmus.hivear.models.FunctionTemplate;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.swarmus.hivear.models.FunctionTemplateList;
 
 public abstract class CommandListVM extends ViewModel {
     protected String listTitle;
-    MutableLiveData<List<FunctionTemplate>> commands = new MutableLiveData<>(new ArrayList<>());
+    private FunctionTemplateList functionTemplateList;
+    private final MutableLiveData<FunctionTemplateList> commands;
 
-    public LiveData<List<FunctionTemplate>> getCommandList() {
+    public CommandListVM() {
+         commands = new MutableLiveData<>(functionTemplateList);
+         setList(new FunctionTemplateList());
+    }
+
+    public LiveData<FunctionTemplateList> getCommandList() {
         return commands;
     }
 
-    public void setList(List<FunctionTemplate> list) {
-        commands.setValue(list);
+    public void setList(FunctionTemplateList list) {
+        functionTemplateList = list;
+        functionTemplateList.addObserver(((observable, o) -> {
+            commands.postValue(functionTemplateList);
+        }));
+        commands.postValue(functionTemplateList);
     }
 
     public String getListTitle() {return listTitle;}
 
+    public void addDuplicateFunction(FunctionTemplate functionTemplate) {
+        functionTemplateList.addDuplicate(functionTemplate);
+        commands.postValue(functionTemplateList);
+    }
+
     public void addFunction(FunctionTemplate functionTemplate) {
-        ArrayList<FunctionTemplate> l = new ArrayList<>(getCommandList().getValue());
-        if (!l.contains(functionTemplate)) {
-            l.add(new FunctionTemplate(functionTemplate));
-            commands.setValue(l);
-        }
+        functionTemplateList.add(functionTemplate);
+        commands.postValue(functionTemplateList);
     }
 
     public void removeFunction(FunctionTemplate functionTemplate) {
-        ArrayList<FunctionTemplate> l = new ArrayList<>(getCommandList().getValue());
-        if (l.contains(functionTemplate)) {
-            l.remove(functionTemplate);
-            commands.setValue(l);
-        }
+        functionTemplateList.remove(functionTemplate);
+        commands.postValue(functionTemplateList);
     }
 }
