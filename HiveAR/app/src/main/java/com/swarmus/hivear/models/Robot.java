@@ -1,5 +1,7 @@
 package com.swarmus.hivear.models;
 
+import com.swarmus.hivear.MessageOuterClass;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
@@ -11,6 +13,7 @@ public class Robot extends Observable {
     private List<FunctionTemplate> commands;
     private List<FunctionTemplate> buzzCommands;
     private ProtoMsgStorer msgLogging;
+    private ProtoMsgStorer sentCommands;
 
     private long lastUpdateTimeMillis;
 
@@ -25,6 +28,7 @@ public class Robot extends Observable {
         this.commands = new ArrayList<>();
         this.buzzCommands = new ArrayList<>();
         msgLogging = new ProtoMsgStorer(5, getUniqueName());
+        sentCommands = new ProtoMsgStorer(5, getUniqueName() + " Sent commands");
         setCommands(commands);
         this.addObserver((observable, o) -> {lastUpdateTimeMillis = System.currentTimeMillis();});
     }
@@ -99,4 +103,10 @@ public class Robot extends Observable {
     }
 
     public ProtoMsgStorer getProtoMsgStorer() { return msgLogging; }
+
+    public void registerSendCommand(MessageOuterClass.Message msg) {
+        sentCommands.addMsg(msg);
+    }
+
+    public ProtoMsgStorer getSentCommandsStorer() { return sentCommands; }
 }

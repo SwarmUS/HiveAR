@@ -561,6 +561,7 @@ public class MainActivity extends AppCompatActivity {
     private void sendProtoMsg(MessageOuterClass.Message msg) {
         if (msg != null) {
             currentCommunicationDevice.sendData(msg);
+            robotListViewModel.storeSentCommand(msg);
         } else {
             Toast.makeText(this, "Incorrect Command to send.", Toast.LENGTH_LONG).show();
         }

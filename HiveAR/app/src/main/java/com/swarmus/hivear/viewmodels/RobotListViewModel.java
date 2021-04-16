@@ -96,6 +96,14 @@ public class RobotListViewModel extends ViewModel {
         if (destinationRobot != null) { destinationRobot.getProtoMsgStorer().addMsg(msg); }
     }
 
+    public void storeSentCommand(MessageOuterClass.Message msg) {
+        if (msg == null) { return; }
+
+        // Add to destination robot
+        Robot destinationRobot = getRobotFromList(msg.getDestinationId());
+        if (destinationRobot != null) { destinationRobot.registerSendCommand(msg); }
+    }
+
     public LiveData<ProtoMsgStorer> getProtoMsgStorer() {
         return allRobotsMsgStorerMutableData;
     }
