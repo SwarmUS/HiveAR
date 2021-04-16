@@ -447,6 +447,9 @@ public class MainActivity extends AppCompatActivity {
                                             .getUserCall()
                                             .getFunctionDescription()
                                             .getFunctionDescription();
+
+                                    if (!isFunctionDescriptionValid(msg)) { return; }
+
                                     List<MessageOuterClass.FunctionDescriptionArgument> functionArguments =
                                             functionDescription.getArgumentsDescriptionList();
                                     boolean isBuzz =
@@ -481,6 +484,59 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+    private boolean isFunctionDescriptionValid(MessageOuterClass.Message msg) {
+        // Check if msg is function description
+        if (msg == null ||
+            !msg.hasResponse() ||
+            !msg.getResponse().hasUserCall() ||
+            !msg.getResponse().getUserCall().hasFunctionDescription()) {
+            Toast.makeText(
+                    getApplicationContext(),
+                    "Received a function description with error. " +
+                            "Please look into the logs for more information.",
+                    Toast.LENGTH_LONG).show();
+            Log.e(TAG, "Error function description for message:" + msg);
+            return false;
+        }
+
+        MessageOuterClass.FunctionDescription functionDescription =
+                msg.getResponse().getUserCall().getFunctionDescription().getFunctionDescription();
+
+        // Check if everything is ok to expose to the user
+        // Invalid function name
+        if (functionDescription.getFunctionName().isEmpty()) {
+            Toast.makeText(
+                    getApplicationContext(),
+                    "Received a function description with no name. " +
+                            "Please look into the logs for more information.",
+                    Toast.LENGTH_LONG).show();
+            Log.e(TAG, "Error in name of function description for message:" + msg);
+            return false;
+        }
+
+        // We don't check argument name as the user might understand the function even without those
+        // We check if argument if same as the ones supported inside the application
+        final boolean[] areArgumentsValid = {true}; // Needs to be array inside of lambda
+        functionDescription.getArgumentsDescriptionList().forEach(arg -> {
+            if (arg.getType() != MessageOuterClass.FunctionDescriptionArgumentType.INT &&
+                    arg.getType() != MessageOuterClass.FunctionDescriptionArgumentType.FLOAT) {
+                Toast.makeText(
+                        getApplicationContext(),
+                        "Received a function description with invalid argument type. " +
+                                "Please look into the logs for more information.",
+                        Toast.LENGTH_LONG).show();
+                Log.e(TAG, String.format("Error in type of argument #%d, for function %s for message: %s",
+                        functionDescription.getArgumentsDescriptionList().indexOf(arg),
+                        functionDescription.getFunctionName(),
+                        msg));
+                areArgumentsValid[0] = false;
+            }
+        });
+
+        // All checks passed if arguments are valid
+        return areArgumentsValid[0];
+    }
 
     private final BroadcastReceiver protoMsgWriteReceiver = new BroadcastReceiver() {
         @Override
