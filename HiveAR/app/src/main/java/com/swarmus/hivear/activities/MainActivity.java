@@ -43,7 +43,7 @@ import com.swarmus.hivear.models.TCPDeviceServer;
 import com.swarmus.hivear.viewmodels.ProtoMsgViewModel;
 import com.swarmus.hivear.viewmodels.RobotListViewModel;
 import com.swarmus.hivear.viewmodels.SerialSettingsViewModel;
-import com.swarmus.hivear.viewmodels.SwarmAgentInfoViewModel;
+import com.swarmus.hivear.viewmodels.LocalSwarmAgentViewModel;
 import com.swarmus.hivear.viewmodels.TcpSettingsViewModel;
 
 import java.io.IOException;
@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
     private CommunicationDevice tcpDevice;
     private CommunicationDevice currentCommunicationDevice;
 
-    private SwarmAgentInfoViewModel swarmAgentInfoViewModel;
+    private LocalSwarmAgentViewModel localSwarmAgentViewModel;
     private static final String BROADCAST_PROTO_MSG_RECEIVED = "Proto Message Received";
     private static final String BROADCAST_PROTO_MSG_TO_SEND = "Proto Message To Send";
     private ProtoMsgViewModel protoMsgViewModel;
@@ -216,16 +216,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initViewModels() {
-        swarmAgentInfoViewModel = new ViewModelProvider(this).get(SwarmAgentInfoViewModel.class);
+        localSwarmAgentViewModel = new ViewModelProvider(this).get(LocalSwarmAgentViewModel.class);
 
         robotListViewModel = new ViewModelProvider(this).get(RobotListViewModel.class);
-        robotListViewModel.setSwarmAgentInfoViewModel(swarmAgentInfoViewModel);
+        robotListViewModel.setLocalSwarmAgentViewModel(localSwarmAgentViewModel);
 
         protoMsgViewModel = new ViewModelProvider(this).get(ProtoMsgViewModel.class);
         // Register all robots logging filter first
         protoMsgViewModel.registerNewProtoMsgStorer(robotListViewModel.getProtoMsgStorer().getValue());
         // Register local logging second
-        protoMsgViewModel.registerNewProtoMsgStorer(swarmAgentInfoViewModel.getProtoMsgStorer());
+        protoMsgViewModel.registerNewProtoMsgStorer(localSwarmAgentViewModel.getProtoMsgStorer());
     }
 
     private void maybeEnableAr() {
@@ -254,7 +254,7 @@ public class MainActivity extends AppCompatActivity {
             badgeDrawable.setVisible(true);
             switch (status) {
                 case connected:
-                    badgeDrawable.setBackgroundColor(getColor(swarmAgentInfoViewModel.isAgentInitialized() ?
+                    badgeDrawable.setBackgroundColor(getColor(localSwarmAgentViewModel.isLocalSwarmAgentInitialized() ?
                             R.color.connection_established :
                             R.color.connection_established_no_swarm));
                     break;
@@ -269,7 +269,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setUpCommmunication() {
-        swarmAgentInfoViewModel.getSwarmAgentID().observe(this, id -> setConnectionBadge(currentCommunicationDevice.getCurrentStatus()));
+        localSwarmAgentViewModel.getLocalSwarmAgentID().observe(this, id -> setConnectionBadge(currentCommunicationDevice.getCurrentStatus()));
 
         receivedMessages = new LinkedList<>();
         toSendMessages = new LinkedList<>();
@@ -392,7 +392,7 @@ public class MainActivity extends AppCompatActivity {
         public void onDisconnect() {
             Log.d(TAG, "End of Connection");
             currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.notConnected);
-            swarmAgentInfoViewModel.setSwarmAgentID(SwarmAgentInfoViewModel.DEFAULT_SWARM_AGENT_ID);
+            localSwarmAgentViewModel.setLocalSwarmAgentID(LocalSwarmAgentViewModel.DEFAULT_SWARM_AGENT_ID);
         }
 
         @Override
@@ -412,14 +412,14 @@ public class MainActivity extends AppCompatActivity {
 
                     robotListViewModel.storeNewMsg(msg);
 
-                    if (msg.hasResponse() && swarmAgentInfoViewModel.isAgentInitialized()) {
+                    if (msg.hasResponse() && localSwarmAgentViewModel.isLocalSwarmAgentInitialized()) {
                         if (msg.getResponse().hasUserCall()) {
                             switch (msg.getResponse().getUserCall().getResponseCase()) {
                                 case FUNCTION_LIST_LENGTH:
                                     // Create calls to fetch all robot's function
                                     int functionListLength = msg.getResponse().getUserCall().getFunctionListLength().getFunctionArrayLength();
                                     int robotID = msg.getSourceId();
-                                    int localID = swarmAgentInfoViewModel.getSwarmAgentID().getValue();
+                                    int localID = localSwarmAgentViewModel.getLocalSwarmAgentID().getValue();
                                     MessageOuterClass.UserCallTarget destination = msg.getResponse().getUserCall().getSource();
 
                                     for (int i = 0; i < functionListLength; i++) {
@@ -467,8 +467,8 @@ public class MainActivity extends AppCompatActivity {
 
                                     Robot robot = robotListViewModel.getRobotFromList(msg.getSourceId());
 
-                                    if (msg.getSourceId() == swarmAgentInfoViewModel.getSwarmAgentID().getValue()) {
-                                        swarmAgentInfoViewModel.addFunction(functionTemplate);
+                                    if (msg.getSourceId() == localSwarmAgentViewModel.getLocalSwarmAgentID().getValue()) {
+                                        localSwarmAgentViewModel.addFunction(functionTemplate);
                                     } else if (robot != null) {
                                         robot.addCommand(functionTemplate);
                                     }
@@ -479,11 +479,11 @@ public class MainActivity extends AppCompatActivity {
                         }
                     } else if(msg.hasGreeting()) {
                         int agentID = msg.getGreeting().getId();
-                        swarmAgentInfoViewModel.setSwarmAgentID(agentID);
+                        localSwarmAgentViewModel.setLocalSwarmAgentID(agentID);
                         // Ask what buzz functions are exposed to device
                         FetchRobotCommands fetchLocalBuzzCommands = new FetchRobotCommands(agentID, true);
                         sendCommand(fetchLocalBuzzCommands);
-                    } else if (!swarmAgentInfoViewModel.isAgentInitialized()){ // If receiving data without initialized, send greet again
+                    } else if (!localSwarmAgentViewModel.isLocalSwarmAgentInitialized()){ // If receiving data without initialized, send greet again
                         sendGreet();
                     }
                 }
@@ -596,8 +596,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void sendCommand(@NonNull GenericCommand command) {
-        if (swarmAgentInfoViewModel.isAgentInitialized()) {
-            toSendMessages.add(command.getCommand(swarmAgentInfoViewModel.getSwarmAgentID().getValue()));
+        if (localSwarmAgentViewModel.isLocalSwarmAgentInitialized()) {
+            toSendMessages.add(command.getCommand(localSwarmAgentViewModel.getLocalSwarmAgentID().getValue()));
             Intent msgToSendIntent = new Intent();
             msgToSendIntent.setAction(BROADCAST_PROTO_MSG_TO_SEND);
             sendBroadcast(msgToSendIntent);
@@ -608,8 +608,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void sendCommand(@NonNull FunctionTemplate function, int swarmAgentDestination) {
-        if (swarmAgentInfoViewModel.isAgentInitialized()) {
-            toSendMessages.add(function.getProtoMsg(swarmAgentInfoViewModel.getSwarmAgentID().getValue(), swarmAgentDestination));
+        if (localSwarmAgentViewModel.isLocalSwarmAgentInitialized()) {
+            toSendMessages.add(function.getProtoMsg(localSwarmAgentViewModel.getLocalSwarmAgentID().getValue(), swarmAgentDestination));
             Intent msgToSendIntent = new Intent();
             msgToSendIntent.setAction(BROADCAST_PROTO_MSG_TO_SEND);
             sendBroadcast(msgToSendIntent);
@@ -620,7 +620,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void sendCommand(@NonNull MessageOuterClass.Message msg) {
-        if (swarmAgentInfoViewModel.isAgentInitialized()) {
+        if (localSwarmAgentViewModel.isLocalSwarmAgentInitialized()) {
             toSendMessages.add(msg);
             Intent msgToSendIntent = new Intent();
             msgToSendIntent.setAction(BROADCAST_PROTO_MSG_TO_SEND);

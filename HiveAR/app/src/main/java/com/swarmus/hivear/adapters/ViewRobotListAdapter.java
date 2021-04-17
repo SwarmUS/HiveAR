@@ -20,15 +20,13 @@ public class ViewRobotListAdapter extends RecyclerView.Adapter<ViewRobotListAdap
 
     private final List<Robot> robotList;
 
+    public ViewRobotListAdapter(List<Robot> robotList) { this.robotList = robotList; }
+
     @NonNull
     @Override
     public ViewRobotListVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.robot_list_row, parent, false);
         return new ViewRobotListVH(view);
-    }
-
-    public ViewRobotListAdapter(List<Robot> robotList) {
-        this.robotList = robotList;
     }
 
     @Override
@@ -50,10 +48,7 @@ public class ViewRobotListAdapter extends RecyclerView.Adapter<ViewRobotListAdap
     }
 
     @Override
-    public int getItemCount() {
-        if (robotList != null) { return robotList.size(); }
-        else { return 0; }
-    }
+    public int getItemCount() { return robotList == null ? 0 : robotList.size(); }
 
     public static class ViewRobotListVH extends RecyclerView.ViewHolder {
         final TextView robotNameTV;
@@ -65,7 +60,6 @@ public class ViewRobotListAdapter extends RecyclerView.Adapter<ViewRobotListAdap
 
             robotNameTV = itemView.findViewById(R.id.robot_name);
             robotUIDTV = itemView.findViewById(R.id.robot_uid);
-
             robotInfoLayout = itemView.findViewById(R.id.robot_info_layout);
         }
     }

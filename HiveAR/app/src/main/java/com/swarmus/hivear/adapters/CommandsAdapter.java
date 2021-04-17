@@ -5,10 +5,15 @@ import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.cardview.widget.CardView;
 import androidx.databinding.DataBindingUtil;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelStoreOwner;
@@ -24,7 +29,7 @@ import com.swarmus.hivear.viewmodels.BroadcastInfoViewModel;
 
 import java.util.List;
 
-public class CommandsAdapter extends RecyclerView.Adapter<CommandsVH> {
+public class CommandsAdapter extends RecyclerView.Adapter<CommandsAdapter.CommandsVH> {
     private final FunctionTemplateList functionTemplateList;
     private Context context;
     private int destinationId;
@@ -71,11 +76,11 @@ public class CommandsAdapter extends RecyclerView.Adapter<CommandsVH> {
         });
 
         holder.commandNameTV.setText(function.getName());
-        if (function.isBuzzFunction()) {
-            holder.commandNameTV.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_buzz, 0);
-        } else {
-            holder.commandNameTV.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
-        }
+        holder.commandNameTV.setCompoundDrawablesWithIntrinsicBounds(
+                0,
+                0,
+                function.isBuzzFunction() ? R.drawable.ic_buzz : 0,
+                0);
 
         holder.commandSendButton.setOnClickListener(view -> {
             ((MainActivity)context).sendCommand(function, destinationId);
@@ -137,5 +142,25 @@ public class CommandsAdapter extends RecyclerView.Adapter<CommandsVH> {
             return functionTemplateList.size();
         }
         else { return 0; }
+    }
+
+    public class CommandsVH extends RecyclerView.ViewHolder {
+        final TextView commandNameTV;
+        final Button commandSendButton;
+        final LinearLayout commandArgumentList;
+        final CardView cardView;
+        final ImageView copyCommand;
+        final ImageView deleteCommand;
+
+        public CommandsVH(@NonNull View itemView) {
+            super(itemView);
+
+            cardView = itemView.findViewById(R.id.card_view);
+            commandNameTV = itemView.findViewById(R.id.command_name);
+            commandSendButton = itemView.findViewById(R.id.command_send_button);
+            commandArgumentList = itemView.findViewById(R.id.command_argument_list);
+            copyCommand = itemView.findViewById(R.id.copy_command);
+            deleteCommand = itemView.findViewById(R.id.delete_command);
+        }
     }
 }

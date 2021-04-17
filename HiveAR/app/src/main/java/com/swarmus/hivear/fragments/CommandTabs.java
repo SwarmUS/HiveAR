@@ -13,7 +13,7 @@ import com.google.android.material.tabs.TabLayout;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.adapters.CommandViewPagerAdapter;
 import com.swarmus.hivear.viewmodels.BroadcastInfoViewModel;
-import com.swarmus.hivear.viewmodels.SwarmAgentInfoViewModel;
+import com.swarmus.hivear.viewmodels.LocalSwarmAgentViewModel;
 
 public class CommandTabs extends Fragment {
 
@@ -38,15 +38,15 @@ public class CommandTabs extends Fragment {
         commandViewPagerAdapter.addFragment(new SwarmSummaryViewFragment(), SwarmSummaryViewFragment.TAB_TITLE);
 
         BroadcastInfoViewModel broadcastInfoViewModel = new ViewModelProvider(requireActivity()).get(BroadcastInfoViewModel.class);
-        CommandList broadcastList = new CommandList(broadcastInfoViewModel, SwarmAgentInfoViewModel.BROADCAST_AGENT_ID);
+        CommandList broadcastList = new CommandList(broadcastInfoViewModel, LocalSwarmAgentViewModel.BROADCAST_AGENT_ID);
         broadcastList.setBroadcastMode(true);
         commandViewPagerAdapter.addFragment(broadcastList,
                                             broadcastInfoViewModel.getListTitle());
 
-        SwarmAgentInfoViewModel swarmAgentInfoViewModel = new ViewModelProvider(requireActivity()).get(SwarmAgentInfoViewModel.class);
-        commandViewPagerAdapter.addFragment(new CommandList(swarmAgentInfoViewModel,
-                                                            swarmAgentInfoViewModel.getSwarmAgentID().getValue()),
-                                            swarmAgentInfoViewModel.getListTitle());
+        LocalSwarmAgentViewModel localSwarmAgentViewModel = new ViewModelProvider(requireActivity()).get(LocalSwarmAgentViewModel.class);
+        commandViewPagerAdapter.addFragment(new CommandList(localSwarmAgentViewModel,
+                                                            localSwarmAgentViewModel.getLocalSwarmAgentID().getValue()),
+                                            localSwarmAgentViewModel.getListTitle());
 
         viewPager.setAdapter(commandViewPagerAdapter);
         tabLayout.setupWithViewPager(viewPager);
