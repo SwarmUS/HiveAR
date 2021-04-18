@@ -1,5 +1,6 @@
 package com.swarmus.hivear.viewmodels;
 
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
@@ -7,17 +8,22 @@ import java.util.HashMap;
 
 public class SerialSettingsViewModel extends ViewModel {
     private MutableLiveData<HashMap<String, String>> devices;
-    private MutableLiveData<String> selectedDevices;
+    private MutableLiveData<String> selectedDevice;
 
-    public MutableLiveData<HashMap<String, String>> getDevices()
-    {
-        if (devices==null) {devices = new MutableLiveData<>();}
-        return devices;
+    public SerialSettingsViewModel() {
+        devices = new MutableLiveData<>(new HashMap<>());
+        selectedDevice = new MutableLiveData<>(new String());
     }
 
-    public MutableLiveData<String> getSelectedDevice()
-    {
-        if (selectedDevices==null) {selectedDevices = new MutableLiveData<>();}
-        return selectedDevices;
+    public LiveData<HashMap<String, String>> getDevices() { return devices; }
+
+    public void setDevices(HashMap<String, String> devices) {
+        this.devices.setValue(devices);
+    }
+
+    public LiveData<String> getSelectedDevice() { return selectedDevice; }
+
+    public void setSelectedDevice(String selectedDevice) {
+        this.selectedDevice.setValue(selectedDevice);
     }
 }

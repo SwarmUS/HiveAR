@@ -40,7 +40,7 @@ public class UartSettingsFragment extends Fragment {
             public void onItemSelected(AdapterView<?> adapterView, View currentView, int i, long l) {
                 String selectedItem = adapterView.getItemAtPosition(i).toString();
                 String deviceName = serialSettingsViewModel.getDevices().getValue().get(selectedItem);
-                serialSettingsViewModel.getSelectedDevice().setValue(deviceName);
+                serialSettingsViewModel.setSelectedDevice(deviceName);
             }
 
             @Override
