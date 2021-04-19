@@ -17,13 +17,13 @@ public class RobotListViewModel extends ViewModel {
     MutableLiveData<List<Robot>> robotList;
     HashMap<Integer, Integer> apriltagIdConversionMap = new HashMap<>(); // Apriltag id, Robot/board id
     MutableLiveData<ProtoMsgStorer> allRobotsMsgStorerMutableData;
-    ProtoMsgStorer protoMsgStorer;
+    ProtoMsgStorer allProtoMsgStorer;
     SwarmAgentInfoViewModel swarmAgentInfoViewModel;
 
     public RobotListViewModel() {
         robotList = new MutableLiveData<>(new ArrayList<>());
-        protoMsgStorer = new ProtoMsgStorer(15, "All");
-        allRobotsMsgStorerMutableData = new MutableLiveData<>(protoMsgStorer);
+        allProtoMsgStorer = new ProtoMsgStorer(15, "All", ProtoMsgStorer.NO_AGENT_ID);
+        allRobotsMsgStorerMutableData = new MutableLiveData<>(allProtoMsgStorer);
     }
 
     public void setSwarmAgentInfoViewModel(SwarmAgentInfoViewModel swarmAgentInfoViewModel) {
@@ -76,7 +76,7 @@ public class RobotListViewModel extends ViewModel {
         if (msg == null) { return; }
 
         // Add to all msgs
-        protoMsgStorer.addMsg(msg);
+        allProtoMsgStorer.addMsg(msg);
 
         // Add to specific robots logging
         int sourceID = msg.getSourceId();

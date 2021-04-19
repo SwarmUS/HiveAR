@@ -9,17 +9,22 @@ import java.util.Observable;
 
 public class ProtoMsgStorer extends Observable {
 
+    public static final int NO_AGENT_ID = -1;
     private final LinkedList<MessageOuterClass.Message> msgQueue;
     private final int maxCapacity;
     private final String uniqueName; // Used to identify the current ProtoMsgStorer to show
+    private final int agentID;
 
     private static final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 
-    public ProtoMsgStorer(int maxCapacity, String uniqueName) {
+    public ProtoMsgStorer(int maxCapacity, String uniqueName, int agentID) {
         this.maxCapacity = maxCapacity;
         msgQueue = new LinkedList<>();
         this.uniqueName = uniqueName;
+        this.agentID = agentID;
     }
+
+    public int getAgentID() { return agentID; }
 
     // We add element as first of queue to be the first to show. (More useful for logging to see latest received)
     public void addMsg(MessageOuterClass.Message msg) {

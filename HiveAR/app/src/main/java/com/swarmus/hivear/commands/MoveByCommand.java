@@ -3,17 +3,16 @@ package com.swarmus.hivear.commands;
 import com.swarmus.hivear.MessageOuterClass;
 
 public class MoveByCommand extends GenericCommand{
-
+    private final int destinationID;
     private final static String MOVE_BY_FUNCTION_NAME ="moveBy";
     final float x;
     final float y;
 
-    public MoveByCommand() { this(0, 0);}
-
-    public MoveByCommand(float x, float y)
+    public MoveByCommand(float x, float y, int destinationID)
     {
         this.x = x;
         this.y = y;
+        this.destinationID = destinationID;
     }
 
     @Override
@@ -43,7 +42,7 @@ public class MoveByCommand extends GenericCommand{
                     .build();
             message = MessageOuterClass.Message.newBuilder()
                     .setRequest(moveByRequest)
-                    .setDestinationId(1) // TODO temp for now
+                    .setDestinationId(destinationID)
                     .setSourceId(swarmAgentID)
                     .build();
         }
