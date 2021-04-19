@@ -67,10 +67,10 @@ public class RobotDetailsViewFragment extends Fragment {
 
             // Bind current robot's function to view functions
             robotCommandsVM.setList(robot.getCommands());
-            robot.addObserver((observable, o) -> robotCommandsVM.setList(robot.getCommands()));
+            robot.getCommands().addObserver((observable, o) -> robotCommandsVM.setList(robot.getCommands()));
 
             robotBuzzCommandsVM.setList(robot.getBuzzCommands());
-            robot.addObserver(((observable, o) -> robotBuzzCommandsVM.setList(robot.getBuzzCommands())));
+            robot.getBuzzCommands().addObserver(((observable, o) -> robotBuzzCommandsVM.setList(robot.getBuzzCommands())));
 
             commandViewPagerAdapter.addFragment(new CommandList(robotCommandsVM,
                             robot.getUid()),

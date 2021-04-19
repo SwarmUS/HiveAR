@@ -14,13 +14,13 @@ import androidx.lifecycle.ViewModelProvider;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.viewmodels.SerialSettingsViewModel;
 
-public class UartSettingsFragment extends Fragment {
+public class UsbSettingsFragment extends Fragment {
 
     private SerialSettingsViewModel serialSettingsViewModel;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_uart_settings, container, false);
+        View view = inflater.inflate(R.layout.fragment_usb_settings, container, false);
 
         serialSettingsViewModel = new ViewModelProvider(requireActivity(), new ViewModelProvider.NewInstanceFactory()).get(SerialSettingsViewModel.class);
 
