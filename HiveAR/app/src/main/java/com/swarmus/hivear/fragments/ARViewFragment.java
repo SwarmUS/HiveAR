@@ -60,15 +60,16 @@ import java.util.concurrent.TimeUnit;
 public class ARViewFragment extends Fragment {
 
     private static final String TAG = ARViewFragment.class.getName();
-    private static final double APRIL_TAG_SCALE_M = 0.211;
+    private static final double APRIL_TAG_SCALE_M = 8*0.021; // 8 bits large of 2.1 cm each
 
     private ArFragment arFragment;
     private ModelRenderable arrowRenderable;
     private ModelRenderable xyzRenderable;
     private final static String AR_INDICATOR_NAME = "ARIndicator";
     private final static String AR_INDICATOR_UI = "AR Robot Info";
+    private final static String AR_ROBOT_ROOT = "Robot Root";
 
-    private final static double UPDATE_DETECTION_DISTANCE_THRESHOLD = 0.1;
+    private final static double UPDATE_DETECTION_DISTANCE_THRESHOLD = 0.2;
 
     private RobotListViewModel robotListViewModel;
     private CurrentArRobotViewModel currentArRobotViewModel;
@@ -109,7 +110,7 @@ public class ARViewFragment extends Fragment {
         timerHandler.postDelayed(timerRunnable, 1000); // evaluate each second
 
         // Initialize the apriltag detector for family 36h11
-        ApriltagNative.apriltag_init("tag36h11", 1, 2, 0, 16);
+        ApriltagNative.apriltag_init("tag36h11", 3, 2, 0, 16);
 
         initializeRenderables();
     }
@@ -368,62 +369,64 @@ public class ARViewFragment extends Fragment {
     }
 
     private void initARIndicator(AnchorNode parent, Robot robot) {
-        AlwaysStraightNode indicatorNode = new AlwaysStraightNode(arFragment.getTransformationSystem());
+        TransformableNode arRobotRootNode = new TransformableNode(arFragment.getTransformationSystem());
+        arRobotRootNode.setName(AR_ROBOT_ROOT);
+        arRobotRootNode.getRotationController().setEnabled(false);
+        arRobotRootNode.getTranslationController().setEnabled(false);
+        arRobotRootNode.setParent(parent);
+        AlwaysStraightNode indicatorNode = new AlwaysStraightNode();
         indicatorNode.setRenderable(arrowRenderable);
         indicatorNode.setName(AR_INDICATOR_NAME);
         indicatorNode.setLocalPosition(new Vector3(0f, (float)(APRIL_TAG_SCALE_M / 2), 0f));
-        indicatorNode.setParent(parent);
+        indicatorNode.setParent(arRobotRootNode);
         indicatorNode.setOnTouchListener((hitTestResult, motionEvent) -> {
-            selectRobotFromAR(indicatorNode, robot.getUid());
+            selectRobotFromAR(arRobotRootNode, robot);
             return false;
         });
 
-        TransformableNode uiNode = new CameraFacingNode(arFragment.getTransformationSystem(),
-                arFragment.getArSceneView().getScene().getCamera());
-        setRobotARInfoRenderable(uiNode, robot, indicatorNode.getLocalPosition(), indicatorNode.getLocalRotation());
-        uiNode.setParent(parent);
+        CameraFacingNode uiNode = new CameraFacingNode(arFragment.getArSceneView().getScene().getCamera());
+        setRobotARInfoRenderable(uiNode, arRobotRootNode, robot, indicatorNode.getLocalPosition(), indicatorNode.getLocalRotation());
+        uiNode.setName(AR_INDICATOR_UI);
+        uiNode.setParent(arRobotRootNode);
 
         // At creation, make node selected if none are currently selected
         if (currentArRobotViewModel.getSelectedRobot().getValue() == null) {
-            selectRobotFromAR(indicatorNode, robot.getUid());
+            selectRobotFromAR(arRobotRootNode, robot);
         }
     }
 
-    private Robot selectRobotFromAR(TransformableNode node, int robotUid) {
+    private void selectRobotFromAR(TransformableNode node, Robot robot) {
         selectVisualNode(node);
-        return selectRobotFromUID(robotUid);
+        currentArRobotViewModel.getSelectedRobot().setValue(robot);
     }
 
     private void selectVisualNode(TransformableNode node) {
         for (Node child : arFragment.getArSceneView().getScene().getChildren()) {
             if (child instanceof AnchorNode) {
-                TransformableNode n = (TransformableNode)child.findByName(AR_INDICATOR_NAME);
-                if (n != null) {
-                    Boolean isSelected = n == node;
-                    ModelRenderable renderableCopy = (ModelRenderable) n.getRenderable().makeCopy();
-                    Color selectedColor = new Color(android.graphics.Color.rgb(isSelected ? 0 : 255, isSelected ? 255 : 0, 0));
-                    renderableCopy.getMaterial().setFloat3("baseColorTint", selectedColor);
-                    n.setRenderable(renderableCopy);
-                    n.select();
+                TransformableNode robotRootNode = (TransformableNode)child.findByName(AR_ROBOT_ROOT);
+                if (robotRootNode != null) {
+                    AlwaysStraightNode arrowNode = (AlwaysStraightNode) robotRootNode.findByName(AR_INDICATOR_NAME);
+                    CameraFacingNode uiNode = (CameraFacingNode)robotRootNode.findByName(AR_INDICATOR_UI);
+                    if (arrowNode != null && uiNode != null) {
+                        Boolean isSelected = node == robotRootNode;
+                        ModelRenderable renderableCopy = (ModelRenderable) arrowNode.getRenderable().makeCopy();
+                        Color selectedColor = new Color(android.graphics.Color.rgb(isSelected ? 0 : 255, isSelected ? 255 : 0, 0));
+                        renderableCopy.getMaterial().setFloat3("baseColorTint", selectedColor);
+                        arrowNode.setRenderable(renderableCopy);
+                        if (isSelected) { arFragment.getTransformationSystem().selectNode(robotRootNode); }
 
-                    // Disable selected visualizer
-                    arFragment.getTransformationSystem().getSelectionVisualizer().removeSelectionVisual(n);
+                        // Disable selected visualizer
+                        arFragment.getTransformationSystem().getSelectionVisualizer().removeSelectionVisual(robotRootNode);
+                    }
                 }
             }
         }
     }
 
-    private Robot selectRobotFromUID(int uid) {
-        Robot robot = robotListViewModel.getRobotFromApriltag(uid);
-
-        currentArRobotViewModel.getSelectedRobot().setValue(robot);
-        return robot;
-    }
-
-    private void setRobotARInfoRenderable(TransformableNode tNode, Robot robot, Vector3 pos, Quaternion rot)
+    private void setRobotARInfoRenderable(CameraFacingNode tNode, TransformableNode parent, Robot robot, Vector3 pos, Quaternion rot)
     {
         ViewRenderable.builder()
-                .setView(requireContext(), R.layout.ar_robot_base_info)
+                .setView(getContext(), R.layout.ar_robot_base_info)
                 .build()
                 .thenAccept(viewRenderable -> {
                     viewRenderable.setShadowCaster(false);
@@ -448,6 +451,9 @@ public class ARViewFragment extends Fragment {
                                 }).show();
                         return true;
                     });
+                    viewRenderable.getView().findViewById(R.id.ar_view_layout).setOnClickListener(view -> {
+                        selectRobotFromAR(parent, robot);
+                    });
                     ((TextView)viewRenderable.getView().findViewById(R.id.robot_ar_name)).setText(robot.getName());
                     TextView robotTimer = viewRenderable.getView().findViewById(R.id.last_update_timer);
                     timerTextViews.computeIfPresent(robot, (k,v) -> robotTimer);
@@ -461,8 +467,7 @@ public class ARViewFragment extends Fragment {
                     });
 
                     // Set in AR
-                    tNode.setName(AR_INDICATOR_UI);
-                    Vector3 offset = new Vector3(0f, 0.4f, 0f);
+                    Vector3 offset = new Vector3(0f, (float)(2 * APRIL_TAG_SCALE_M), 0f);
                     tNode.setLocalPosition(Vector3.add(pos, offset));
                     tNode.setRenderable(viewRenderable);
                 })

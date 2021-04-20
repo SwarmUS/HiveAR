@@ -2,16 +2,14 @@ package com.swarmus.hivear.ar;
 
 import com.google.ar.sceneform.Camera;
 import com.google.ar.sceneform.FrameTime;
+import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.math.Quaternion;
 import com.google.ar.sceneform.math.Vector3;
-import com.google.ar.sceneform.ux.TransformableNode;
-import com.google.ar.sceneform.ux.TransformationSystem;
 
-public class CameraFacingNode extends TransformableNode {
+public class CameraFacingNode extends Node {
     private Camera camera;
 
-    public CameraFacingNode(TransformationSystem transformationSystem, Camera camera) {
-        super(transformationSystem);
+    public CameraFacingNode(Camera camera) {
         this.camera = camera;
     }
 
