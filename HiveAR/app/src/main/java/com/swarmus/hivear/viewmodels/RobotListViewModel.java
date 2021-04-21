@@ -18,7 +18,7 @@ public class RobotListViewModel extends ViewModel {
     HashMap<Integer, Integer> apriltagIdConversionMap = new HashMap<>(); // Apriltag id, Robot/board id
     MutableLiveData<ProtoMsgStorer> allRobotsMsgStorerMutableData;
     ProtoMsgStorer protoMsgStorer;
-    SwarmAgentInfoViewModel swarmAgentInfoViewModel;
+    LocalSwarmAgentViewModel localSwarmAgentViewModel;
 
     public RobotListViewModel() {
         robotList = new MutableLiveData<>(new ArrayList<>());
@@ -26,8 +26,8 @@ public class RobotListViewModel extends ViewModel {
         allRobotsMsgStorerMutableData = new MutableLiveData<>(protoMsgStorer);
     }
 
-    public void setSwarmAgentInfoViewModel(SwarmAgentInfoViewModel swarmAgentInfoViewModel) {
-        this.swarmAgentInfoViewModel = swarmAgentInfoViewModel;
+    public void setLocalSwarmAgentViewModel(LocalSwarmAgentViewModel localSwarmAgentViewModel) {
+        this.localSwarmAgentViewModel = localSwarmAgentViewModel;
     }
 
     public LiveData<List<Robot>> getRobotList() {
@@ -82,10 +82,10 @@ public class RobotListViewModel extends ViewModel {
         int sourceID = msg.getSourceId();
         int destinationID = msg.getDestinationId();
 
-        if (swarmAgentInfoViewModel != null) {
-            int agentID = swarmAgentInfoViewModel.getSwarmAgentID().getValue();
+        if (localSwarmAgentViewModel != null) {
+            int agentID = localSwarmAgentViewModel.getLocalSwarmAgentID().getValue();
             if (agentID == (sourceID | destinationID) ) {
-                swarmAgentInfoViewModel.getProtoMsgStorer().addMsg(msg);
+                localSwarmAgentViewModel.getProtoMsgStorer().addMsg(msg);
             }
         }
 
