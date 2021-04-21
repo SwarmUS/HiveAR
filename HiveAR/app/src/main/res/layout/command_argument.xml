@@ -31,6 +31,5 @@
             android:importantForAutofill="no"
             android:textAlignment="textEnd"/>
 
-
     </LinearLayout>
 </layout>

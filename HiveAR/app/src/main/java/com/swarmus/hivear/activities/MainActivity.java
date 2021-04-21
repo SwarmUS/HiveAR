@@ -17,7 +17,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.fragment.NavHostFragment;
@@ -31,19 +30,19 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.ar.CameraPermissionHelper;
-import com.swarmus.hivear.commands.FetchRobotCommands;
+import com.swarmus.hivear.commands.FetchAgentCommands;
 import com.swarmus.hivear.commands.GenericCommand;
 import com.swarmus.hivear.enums.ConnectionStatus;
 import com.swarmus.hivear.enums.FunctionDescriptionState;
+import com.swarmus.hivear.models.Agent;
 import com.swarmus.hivear.models.CommunicationDevice;
 import com.swarmus.hivear.models.FunctionTemplate;
-import com.swarmus.hivear.models.Robot;
 import com.swarmus.hivear.models.SerialDevice;
 import com.swarmus.hivear.models.TCPDeviceServer;
-import com.swarmus.hivear.viewmodels.ProtoMsgViewModel;
-import com.swarmus.hivear.viewmodels.RobotListViewModel;
-import com.swarmus.hivear.viewmodels.SerialSettingsViewModel;
+import com.swarmus.hivear.viewmodels.AgentListViewModel;
 import com.swarmus.hivear.viewmodels.LocalSwarmAgentViewModel;
+import com.swarmus.hivear.viewmodels.ProtoMsgViewModel;
+import com.swarmus.hivear.viewmodels.SerialSettingsViewModel;
 import com.swarmus.hivear.viewmodels.TcpSettingsViewModel;
 
 import java.io.IOException;
@@ -73,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
     private Queue<MessageOuterClass.Message> receivedMessages;
     private Queue<MessageOuterClass.Message> toSendMessages;
 
-    private RobotListViewModel robotListViewModel;
+    private AgentListViewModel agentListViewModel;
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int DEFAULT_PORT = 700; // Agents in simulation in range 7001+
@@ -95,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
         maybeEnableAr(); // Hide AR tab if not possible to do AR
         setUpNavigation();
         setUpCommmunication();
-        updateRobots();
+        updateAgents();
     }
 
     @Override
@@ -218,12 +217,12 @@ public class MainActivity extends AppCompatActivity {
     private void initViewModels() {
         localSwarmAgentViewModel = new ViewModelProvider(this).get(LocalSwarmAgentViewModel.class);
 
-        robotListViewModel = new ViewModelProvider(this).get(RobotListViewModel.class);
-        robotListViewModel.setLocalSwarmAgentViewModel(localSwarmAgentViewModel);
+        agentListViewModel = new ViewModelProvider(this).get(AgentListViewModel.class);
+        agentListViewModel.setLocalSwarmAgentViewModel(localSwarmAgentViewModel);
 
         protoMsgViewModel = new ViewModelProvider(this).get(ProtoMsgViewModel.class);
-        // Register all robots logging filter first
-        protoMsgViewModel.registerNewProtoMsgStorer(robotListViewModel.getProtoMsgStorer().getValue());
+        // Register all agents logging filter first
+        protoMsgViewModel.registerNewProtoMsgStorer(agentListViewModel.getProtoMsgStorer().getValue());
         // Register local logging second
         protoMsgViewModel.registerNewProtoMsgStorer(localSwarmAgentViewModel.getProtoMsgStorer());
     }
@@ -273,7 +272,7 @@ public class MainActivity extends AppCompatActivity {
 
         receivedMessages = new LinkedList<>();
         toSendMessages = new LinkedList<>();
-        robotListViewModel.getProtoMsgStorer().observe(this, s -> Log.i(TAG, robotListViewModel.getProtoMsgStorer().getValue().getLoggingString(1)));
+        agentListViewModel.getProtoMsgStorer().observe(this, s -> Log.i(TAG, agentListViewModel.getProtoMsgStorer().getValue().getLoggingString(1)));
 
         IntentFilter filterProtoMsgReceived = new IntentFilter(BROADCAST_PROTO_MSG_RECEIVED);
         registerReceiver(protoMsgReadReceiver, filterProtoMsgReceived);
@@ -410,15 +409,15 @@ public class MainActivity extends AppCompatActivity {
                 while ((msg = receivedMessages.poll()) != null) {
                     // For logging purposes
 
-                    robotListViewModel.storeNewMsg(msg);
+                    agentListViewModel.storeNewMsg(msg);
 
                     if (msg.hasResponse() && localSwarmAgentViewModel.isLocalSwarmAgentInitialized()) {
                         if (msg.getResponse().hasUserCall()) {
                             switch (msg.getResponse().getUserCall().getResponseCase()) {
                                 case FUNCTION_LIST_LENGTH:
-                                    // Create calls to fetch all robot's function
+                                    // Create calls to fetch all agent's function
                                     int functionListLength = msg.getResponse().getUserCall().getFunctionListLength().getFunctionArrayLength();
-                                    int robotID = msg.getSourceId();
+                                    int agentID = msg.getSourceId();
                                     int localID = localSwarmAgentViewModel.getLocalSwarmAgentID().getValue();
                                     MessageOuterClass.UserCallTarget destination = msg.getResponse().getUserCall().getSource();
 
@@ -435,7 +434,7 @@ public class MainActivity extends AppCompatActivity {
                                         MessageOuterClass.Request request = MessageOuterClass.Request.newBuilder()
                                                 .setUserCall(userCallRequest).build();
                                         MessageOuterClass.Message message = MessageOuterClass.Message.newBuilder()
-                                                .setDestinationId(robotID)
+                                                .setDestinationId(agentID)
                                                 .setSourceId(localID)
                                                 .setRequest(request)
                                                 .build();
@@ -465,12 +464,12 @@ public class MainActivity extends AppCompatActivity {
                                     FunctionTemplate functionTemplate = new FunctionTemplate(functionName, isBuzz);
                                     functionTemplate.setArguments(functionArguments);
 
-                                    Robot robot = robotListViewModel.getRobotFromList(msg.getSourceId());
+                                    Agent agent = agentListViewModel.getAgentFromList(msg.getSourceId());
 
                                     if (msg.getSourceId() == localSwarmAgentViewModel.getLocalSwarmAgentID().getValue()) {
                                         localSwarmAgentViewModel.addFunction(functionTemplate);
-                                    } else if (robot != null) {
-                                        robot.addCommand(functionTemplate);
+                                    } else if (agent != null) {
+                                        agent.addCommand(functionTemplate);
                                     }
                                     break;
                                 default:
@@ -481,7 +480,7 @@ public class MainActivity extends AppCompatActivity {
                         int agentID = msg.getGreeting().getId();
                         localSwarmAgentViewModel.setLocalSwarmAgentID(agentID);
                         // Ask what buzz functions are exposed to device
-                        FetchRobotCommands fetchLocalBuzzCommands = new FetchRobotCommands(agentID, true);
+                        FetchAgentCommands fetchLocalBuzzCommands = new FetchAgentCommands(agentID, true);
                         sendCommand(fetchLocalBuzzCommands);
                     } else if (!localSwarmAgentViewModel.isLocalSwarmAgentInitialized()){ // If receiving data without initialized, send greet again
                         sendGreet();
@@ -570,16 +569,16 @@ public class MainActivity extends AppCompatActivity {
     };
 
     // TODO update when new details will be available
-    private void updateRobots()
+    private void updateAgents()
     {
-        // TODO Retrieve all robots in the swarm
-        Robot robot1 = new Robot("pioneer_0", 1);
-        robotListViewModel.addRobot(robot1);
-        protoMsgViewModel.registerNewProtoMsgStorer(robot1.getProtoMsgStorer());
+        // TODO Retrieve all agents in the swarm
+        Agent agent1 = new Agent("pioneer_0", 1);
+        agentListViewModel.addAgent(agent1);
+        protoMsgViewModel.registerNewProtoMsgStorer(agent1.getProtoMsgStorer());
 
-        Robot robot2 = new Robot("pioneer_1", 2);
-        robotListViewModel.addRobot(robot2);
-        protoMsgViewModel.registerNewProtoMsgStorer(robot2.getProtoMsgStorer());
+        Agent agent2 = new Agent("pioneer_1", 2);
+        agentListViewModel.addAgent(agent2);
+        protoMsgViewModel.registerNewProtoMsgStorer(agent2.getProtoMsgStorer());
     }
 
     public CommunicationDevice getCurrentCommunicationDevice() {return currentCommunicationDevice;}
@@ -634,7 +633,7 @@ public class MainActivity extends AppCompatActivity {
     private void sendProtoMsg(MessageOuterClass.Message msg) {
         if (msg != null) {
             currentCommunicationDevice.sendData(msg);
-            robotListViewModel.storeSentCommand(msg);
+            agentListViewModel.storeSentCommand(msg);
         } else {
             Toast.makeText(this, "Incorrect Command to send.", Toast.LENGTH_LONG).show();
         }

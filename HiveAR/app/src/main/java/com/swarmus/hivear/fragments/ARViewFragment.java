@@ -43,13 +43,13 @@ import com.google.ar.sceneform.ux.TransformableNode;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.apriltag.ApriltagDetection;
 import com.swarmus.hivear.apriltag.ApriltagNative;
-import com.swarmus.hivear.ar.CameraFacingNode;
 import com.swarmus.hivear.ar.AlwaysStraightNode;
+import com.swarmus.hivear.ar.CameraFacingNode;
+import com.swarmus.hivear.models.Agent;
 import com.swarmus.hivear.models.ProtoMsgStorer;
-import com.swarmus.hivear.models.Robot;
-import com.swarmus.hivear.viewmodels.RobotListViewModel;
 import com.swarmus.hivear.utils.ConvertUtil;
 import com.swarmus.hivear.utils.MathUtil;
+import com.swarmus.hivear.viewmodels.AgentListViewModel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,19 +65,19 @@ public class ARViewFragment extends Fragment {
     private ModelRenderable arrowRenderable;
     private ModelRenderable xyzRenderable;
     private final static String AR_INDICATOR_NAME = "ARIndicator";
-    private final static String AR_INDICATOR_UI = "AR Robot Info";
+    private final static String AR_INDICATOR_UI = "AR Agent Info";
 
     private final static double UPDATE_DETECTION_DISTANCE_THRESHOLD = 0.1;
 
-    private RobotListViewModel robotListViewModel;
+    private AgentListViewModel agentListViewModel;
 
-    private Robot currentSelectedRobot;
+    private Agent currentSelectedAgent;
 
     private final Object frameImageInUseLock = new Object();
 
     private Handler timerHandler;
     private Runnable timerRunnable;
-    private HashMap<Robot,TextView> timerTextViews = new HashMap<>();
+    private HashMap<Agent,TextView> timerTextViews = new HashMap<>();
     private static final int AR_SHOW_LAST_COMMANDS_COUNT = 5;
 
     private static Toast currentToast;
@@ -85,7 +85,7 @@ public class ARViewFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        robotListViewModel = new ViewModelProvider(requireActivity()).get(RobotListViewModel.class);
+        agentListViewModel = new ViewModelProvider(requireActivity()).get(AgentListViewModel.class);
 
         timerHandler = new Handler();
         timerRunnable =  new Runnable() {
@@ -123,23 +123,23 @@ public class ARViewFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        setRobotUI(null);
+        setAgentUI(null);
     }
 
     @Override
     public void onDestroyView() {
         timerHandler.removeCallbacks(timerRunnable);
-        setSelectedRobot(null);
+        setSelectedAgent(null);
         super.onDestroyView();
     }
 
-    private void setSelectedRobot(Robot robot) {
-        currentSelectedRobot = robot;
-        setRobotUI(robot);
+    private void setSelectedAgent(Agent agent) {
+        currentSelectedAgent = agent;
+        setAgentUI(agent);
     }
 
     private void initializeRenderables() {
-        // Robot identificator
+        // Agent identificator
         ModelRenderable.builder()
                 .setSource(getContext(), R.raw.arrow)
                 .build()
@@ -207,14 +207,14 @@ public class ARViewFragment extends Fragment {
         }
     }
 
-    private void setRobotUI(Robot robot) {
-        Boolean isRobotSelected = robot != null;
-        LinearLayout robotInfoLayout = getView().findViewById(R.id.robot_ar_selected);
-        robotInfoLayout.setVisibility(isRobotSelected ? LinearLayout.VISIBLE : LinearLayout.GONE);
-        TextView robotName = getView().findViewById(R.id.robot_ar_selected_name);
-        robotName.setText(isRobotSelected ? robot.getName() : "");
-        TextView robotUid = getView().findViewById(R.id.robot_ar_selected_uid);
-        robotUid.setText(isRobotSelected ? Integer.toString(robot.getUid()) : "");
+    private void setAgentUI(Agent agent) {
+        Boolean isAgentSelected = agent != null;
+        LinearLayout agentInfoLayout = getView().findViewById(R.id.agent_ar_selected);
+        agentInfoLayout.setVisibility(isAgentSelected ? LinearLayout.VISIBLE : LinearLayout.GONE);
+        TextView agentName = getView().findViewById(R.id.agent_ar_selected_name);
+        agentName.setText(isAgentSelected ? agent.getName() : "");
+        TextView agentUid = getView().findViewById(R.id.agent_ar_selected_uid);
+        agentUid.setText(isAgentSelected ? Integer.toString(agent.getUid()) : "");
     }
 
     private void getAprilTags() {
@@ -279,7 +279,7 @@ public class ARViewFragment extends Fragment {
                     // Add AR visualization
                     // Uncomment to see 3 axis for debugging
                     //addOrUpdateIdARVisualDebug(frame, detection.id, tagPose);
-                    addOrUpdateRobotARVisual(frame, detection.id, tagPose);
+                    addOrUpdateAgentARVisual(frame, detection.id, tagPose);
                 }
             }
         }
@@ -325,19 +325,19 @@ public class ARViewFragment extends Fragment {
         }
     }
 
-    private void addOrUpdateRobotARVisual(@NonNull Frame frame, int id, Pose tagPose) {
-        Robot robot = robotListViewModel.getRobotFromApriltag(id);
-        if (robot == null) {
+    private void addOrUpdateAgentARVisual(@NonNull Frame frame, int id, Pose tagPose) {
+        Agent agent = agentListViewModel.getAgentFromApriltag(id);
+        if (agent == null) {
 
             // If initialized and not showing, show new one
             if (currentToast != null && !currentToast.getView().isShown()) {
-                currentToast.setText("Robot with id " + id + " not registered in current swarm");
+                currentToast.setText("Agent with id " + id + " not registered in current swarm");
                 currentToast.show();
             }
             // Initialize if was never created
             else {
                 currentToast = Toast.makeText(requireContext(),
-                        "Robot with id " + id + " not registered in current swarm",
+                        "Agent with id " + id + " not registered in current swarm",
                         Toast.LENGTH_LONG);
                 currentToast.show();
             }
@@ -345,17 +345,17 @@ public class ARViewFragment extends Fragment {
         }
 
         if (frame.getCamera().getTrackingState() == TrackingState.TRACKING) {
-            final String robotNodeName = "Robot_" + robot.getUid();
-            Node n = arFragment.getArSceneView().getScene().findByName(robotNodeName);
+            final String agentNodeName = "Agent_" + agent.getUid();
+            Node n = arFragment.getArSceneView().getScene().findByName(agentNodeName);
             AnchorNode node;
 
             // Create node or change if already existent
             if (n == null) {
                 Anchor anchor = arFragment.getArSceneView().getSession().createAnchor(tagPose);
                 node = new AnchorNode(anchor);
-                node.setName(robotNodeName);
+                node.setName(agentNodeName);
                 node.setParent(arFragment.getArSceneView().getScene()); // Force sceneform node update
-                initARIndicator(node, robot);
+                initARIndicator(node, agent);
             } else {
                 node = (AnchorNode) n;
             }
@@ -370,31 +370,31 @@ public class ARViewFragment extends Fragment {
         }
     }
 
-    private void initARIndicator(AnchorNode parent, Robot robot) {
+    private void initARIndicator(AnchorNode parent, Agent agent) {
         AlwaysStraightNode indicatorNode = new AlwaysStraightNode(arFragment.getTransformationSystem());
         indicatorNode.setRenderable(arrowRenderable);
         indicatorNode.setName(AR_INDICATOR_NAME);
         indicatorNode.setLocalPosition(new Vector3(0f, (float)(APRIL_TAG_SCALE_M / 2), 0f));
         indicatorNode.setParent(parent);
         indicatorNode.setOnTouchListener((hitTestResult, motionEvent) -> {
-            selectRobotFromAR(indicatorNode, robot.getUid());
+            selectAgentFromAR(indicatorNode, agent.getUid());
             return false;
         });
 
         TransformableNode uiNode = new CameraFacingNode(arFragment.getTransformationSystem(),
                 arFragment.getArSceneView().getScene().getCamera());
-        setRobotARInfoRenderable(uiNode, robot, indicatorNode.getLocalPosition(), indicatorNode.getLocalRotation());
+        setAgentARInfoRenderable(uiNode, agent, indicatorNode.getLocalPosition(), indicatorNode.getLocalRotation());
         uiNode.setParent(parent);
 
         // At creation, make node selected if none are currently selected
-        if (currentSelectedRobot == null) {
-            selectRobotFromAR(indicatorNode, robot.getUid());
+        if (currentSelectedAgent == null) {
+            selectAgentFromAR(indicatorNode, agent.getUid());
         }
     }
 
-    private Robot selectRobotFromAR(TransformableNode node, int robotUid) {
+    private Agent selectAgentFromAR(TransformableNode node, int agentUid) {
         selectVisualNode(node);
-        return selectRobotFromUID(robotUid);
+        return selectAgentFromUID(agentUid);
     }
 
     private void selectVisualNode(TransformableNode node) {
@@ -416,16 +416,16 @@ public class ARViewFragment extends Fragment {
         }
     }
 
-    private Robot selectRobotFromUID(int uid) {
-        Robot robot = robotListViewModel.getRobotFromApriltag(uid);
-        setSelectedRobot(robot);
-        return robot;
+    private Agent selectAgentFromUID(int uid) {
+        Agent agent = agentListViewModel.getAgentFromApriltag(uid);
+        setSelectedAgent(agent);
+        return agent;
     }
 
-    private void setRobotARInfoRenderable(TransformableNode tNode, Robot robot, Vector3 pos, Quaternion rot)
+    private void setAgentARInfoRenderable(TransformableNode tNode, Agent agent, Vector3 pos, Quaternion rot)
     {
         ViewRenderable.builder()
-                .setView(requireContext(), R.layout.ar_robot_base_info)
+                .setView(requireContext(), R.layout.ar_agent_base_info)
                 .build()
                 .thenAccept(viewRenderable -> {
                     viewRenderable.setShadowCaster(false);
@@ -437,27 +437,27 @@ public class ARViewFragment extends Fragment {
                                 .setTitle("Unrelevant AR Marker")
                                 .setMessage(alertMsg)
                                 .setPositiveButton("Yes", (dialog, whichButton) -> {
-                                    timerTextViews.computeIfPresent(robot, (k,v) -> null); // remove from list
-                                    AnchorNode arRobotNode = (AnchorNode) tNode.getParent();
-                                    arFragment.getArSceneView().getScene().removeChild(arRobotNode);
-                                    arRobotNode.getAnchor().detach();
-                                    arRobotNode.setParent(null);
-                                    // If deleting the current selected robot, notify the new value
-                                    if (currentSelectedRobot == robot) {
-                                        setSelectedRobot(null);
+                                    timerTextViews.computeIfPresent(agent, (k, v) -> null); // remove from list
+                                    AnchorNode arAgentNode = (AnchorNode) tNode.getParent();
+                                    arFragment.getArSceneView().getScene().removeChild(arAgentNode);
+                                    arAgentNode.getAnchor().detach();
+                                    arAgentNode.setParent(null);
+                                    // If deleting the current selected agent, notify the new value
+                                    if (currentSelectedAgent == agent) {
+                                        setSelectedAgent(null);
                                     }
                                 }).setNegativeButton("No", (dialog, whichButton) -> {
                                     // Do nothing.
                                 }).show();
                         return true;
                     });
-                    ((TextView)viewRenderable.getView().findViewById(R.id.robot_ar_name)).setText(robot.getName());
-                    TextView robotTimer = viewRenderable.getView().findViewById(R.id.last_update_timer);
-                    timerTextViews.computeIfPresent(robot, (k,v) -> robotTimer);
-                    timerTextViews.computeIfAbsent(robot, v -> robotTimer);
+                    ((TextView)viewRenderable.getView().findViewById(R.id.agent_ar_name)).setText(agent.getName());
+                    TextView agentTimer = viewRenderable.getView().findViewById(R.id.last_update_timer);
+                    timerTextViews.computeIfPresent(agent, (k, v) -> agentTimer);
+                    timerTextViews.computeIfAbsent(agent, v -> agentTimer);
 
                     TextView lastCommands = viewRenderable.getView().findViewById(R.id.lastCommands);
-                    ProtoMsgStorer lastCommandsStorer = robot.getSentCommandsStorer();
+                    ProtoMsgStorer lastCommandsStorer = agent.getSentCommandsStorer();
                     lastCommands.setText(lastCommandsStorer.getSimplifiedLoggingString(AR_SHOW_LAST_COMMANDS_COUNT));
                     lastCommandsStorer.addObserver((observable, object) -> {
                         lastCommands.setText(lastCommandsStorer.getSimplifiedLoggingString(AR_SHOW_LAST_COMMANDS_COUNT));

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".fragments.RobotDetailsViewFragment">
+    tools:context=".fragments.AgentDetailsViewFragment">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -16,14 +16,14 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_marginTop="10dp"
-            android:contentDescription="@string/roboticon"
+            android:contentDescription="@string/agenticon"
             app:srcCompat="@android:drawable/sym_def_app_icon" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/robot_name"
-            android:text="@string/robotname"
+            android:id="@+id/agent_name"
+            android:text="@string/agentname"
             android:layout_alignParentEnd="true"
             android:textSize="22sp"
             android:padding="10dp"/>
@@ -31,8 +31,8 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/robot_name"
-            android:id="@+id/robot_uid"
+            android:layout_below="@+id/agent_name"
+            android:id="@+id/agent_uid"
             android:text="@string/uid"
             android:layout_alignParentEnd="true"
             android:textSize="22sp"

@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 
-public class Robot extends Observable {
+public class Agent extends Observable {
 
     private String name;
     private int uid;
@@ -19,11 +19,11 @@ public class Robot extends Observable {
 
     private long lastUpdateTimeMillis;
 
-    public Robot(String name, int uid) {
+    public Agent(String name, int uid) {
         this(name, uid, new ArrayList<>());
     }
 
-    public Robot(String name, int uid, List<FunctionTemplate> commands) {
+    public Agent(String name, int uid, List<FunctionTemplate> commands) {
         lastUpdateTimeMillis = System.currentTimeMillis();
         this.name = name;
         this.uid = uid;
@@ -48,7 +48,7 @@ public class Robot extends Observable {
 
     @Override
     public String toString() {
-        return "Robot{" +
+        return "Agent{" +
                 "name='" + name + '\'' +
                 ", uid=" + uid +
                 '}';

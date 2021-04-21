@@ -8,7 +8,7 @@
     android:paddingBottom="5dp">
 
     <TextView
-        android:id="@+id/edit_robot_id"
+        android:id="@+id/edit_agent_id"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="5dp"
         android:background="@drawable/round_corner_grey"
@@ -27,7 +27,7 @@
         android:focusable="true"/>
 
     <TextView
-        android:id="@+id/edit_robot_tag_id"
+        android:id="@+id/edit_agent_tag_id"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="5dp"
         android:background="@drawable/round_corner_grey"
@@ -46,7 +46,7 @@
         android:focusable="true"/>
 
     <ImageView
-        android:id="@+id/edit_robot_id_delete"
+        android:id="@+id/edit_agent_id_delete"
         android:layout_width="25dp"
         android:layout_height="25dp"
         android:layout_marginEnd="10dp"
