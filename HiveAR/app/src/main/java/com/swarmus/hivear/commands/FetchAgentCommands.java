@@ -2,11 +2,11 @@ package com.swarmus.hivear.commands;
 
 import com.swarmus.hivear.MessageOuterClass;
 
-public class FetchRobotCommands extends GenericCommand{
+public class FetchAgentCommands extends GenericCommand{
     int uid;
     boolean isBuzz;
 
-    public FetchRobotCommands(int uid, boolean isBuzz) {
+    public FetchAgentCommands(int uid, boolean isBuzz) {
         this.uid = uid;
         this.isBuzz = isBuzz;
     }

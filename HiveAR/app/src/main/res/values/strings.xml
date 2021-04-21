@@ -10,8 +10,8 @@
     <string name="connect">Connect</string>
     <string name="connection">Connection</string>
     <string name="ar">AR</string>
-    <string name="roboticon">robotIcon</string>
-    <string name="robotname">RobotName</string>
+    <string name="agenticon">agentIcon</string>
+    <string name="agentname">AgentName</string>
     <string name="uid">#UID</string>
     <string name="command">Command</string>
     <string name="commands">Commands:</string>
@@ -19,8 +19,8 @@
     <string name="Settings">Settings</string>
     <string name="scan_qr_code">Scan QR Code</string>
     <string name="add_to_ar_database">Add to Current AR Database</string>
-    <string name="robot_name">Robot Name</string>
-    <string name="robot_description">Robot description</string>
+    <string name="agent_name">Agent Name</string>
+    <string name="agent_description">Agent description</string>
     <string name="ar_database_dir">arDatabase</string>
     <string name="current_active_database">Current Active Database:</string>
     <string name="ar_database_settings">Ar Database Settings</string>
@@ -39,6 +39,6 @@
     <string name="apriltag_id">Apriltag ID</string>
     <string name="hiveboard_id">Hiveboard ID</string>
     <string name="delete_config">Delete Config</string>
-    <string name="robot_board_id">Robot/Board ID</string>
+    <string name="agent_board_id">Agent/Board ID</string>
     <string name="last_commands_sent">Last commands sent:</string>
 </resources>

@@ -6,7 +6,7 @@
     android:padding="10dp">
 
     <EditText
-        android:id="@+id/edit_robot_id"
+        android:id="@+id/edit_agent_id"
         android:background="@drawable/round_corner_grey"
         android:layout_weight="1"
         android:hint="@string/hiveboard_id"
@@ -30,7 +30,7 @@
         android:layout_weight="1" />
 
     <EditText
-        android:id="@+id/edit_robot_tag_id"
+        android:id="@+id/edit_agent_tag_id"
         android:background="@drawable/round_corner_grey"
         android:layout_weight="1"
         android:hint="@string/apriltag_id"

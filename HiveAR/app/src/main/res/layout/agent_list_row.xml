@@ -10,28 +10,28 @@
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/robot_info_layout">
+        android:id="@+id/agent_info_layout">
 
         <TextView
-            android:id="@+id/robot_name"
+            android:id="@+id/agent_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:padding="16dp"
-            android:text="@string/robotname"
+            android:text="@string/agentname"
             android:textSize="22sp"
-            app:layout_constraintEnd_toStartOf="@id/robot_uid" />
+            app:layout_constraintEnd_toStartOf="@id/agent_uid" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/robot_uid"
+            android:id="@+id/agent_uid"
             android:padding="16dp"
             android:textSize="18sp"
             android:textStyle="bold"
             android:text="@string/uid"
             android:layout_alignParentEnd="true"
-            app:layout_constraintStart_toEndOf="@+id/robot_name" />
+            app:layout_constraintStart_toEndOf="@+id/agent_name" />
 
     </RelativeLayout>
 

@@ -6,50 +6,50 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.swarmus.hivear.MessageOuterClass;
+import com.swarmus.hivear.models.Agent;
 import com.swarmus.hivear.models.ProtoMsgStorer;
-import com.swarmus.hivear.models.Robot;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class RobotListViewModel extends ViewModel {
-    MutableLiveData<List<Robot>> robotList;
-    HashMap<Integer, Integer> apriltagIdConversionMap = new HashMap<>(); // Apriltag id, Robot/board id
-    MutableLiveData<ProtoMsgStorer> allRobotsMsgStorerMutableData;
+public class AgentListViewModel extends ViewModel {
+    MutableLiveData<List<Agent>> agentList;
+    HashMap<Integer, Integer> apriltagIdConversionMap = new HashMap<>(); // Apriltag id, Agent/board id
+    MutableLiveData<ProtoMsgStorer> allAgentsMsgStorerMutableData;
     ProtoMsgStorer protoMsgStorer;
     LocalSwarmAgentViewModel localSwarmAgentViewModel;
 
-    public RobotListViewModel() {
-        robotList = new MutableLiveData<>(new ArrayList<>());
+    public AgentListViewModel() {
+        agentList = new MutableLiveData<>(new ArrayList<>());
         protoMsgStorer = new ProtoMsgStorer(15, "All");
-        allRobotsMsgStorerMutableData = new MutableLiveData<>(protoMsgStorer);
+        allAgentsMsgStorerMutableData = new MutableLiveData<>(protoMsgStorer);
     }
 
     public void setLocalSwarmAgentViewModel(LocalSwarmAgentViewModel localSwarmAgentViewModel) {
         this.localSwarmAgentViewModel = localSwarmAgentViewModel;
     }
 
-    public LiveData<List<Robot>> getRobotList() { return robotList; }
+    public LiveData<List<Agent>> getAgentList() { return agentList; }
 
-    public void addRobot(Robot robot) {
-        ArrayList<Robot> robots = new ArrayList<>(robotList.getValue());
-        robots.add(robot);
-        robotList.setValue(robots);
+    public void addAgent(Agent agent) {
+        ArrayList<Agent> agents = new ArrayList<>(agentList.getValue());
+        agents.add(agent);
+        agentList.setValue(agents);
     }
 
-    // Get robot from apriltag. If conversion was set for this apriltag, get the corresponding robot,
-    // else try to get robot from aprilID as it might not have been set in the settings
-    public Robot getRobotFromApriltag(int aprilID) {
+    // Get agent from apriltag. If conversion was set for this apriltag, get the corresponding agent,
+    // else try to get agent from aprilID as it might not have been set in the settings
+    public Agent getAgentFromApriltag(int aprilID) {
         if (apriltagIdConversionMap.containsKey(aprilID)) {
-            return getRobotFromList(apriltagIdConversionMap.get(aprilID));
+            return getAgentFromList(apriltagIdConversionMap.get(aprilID));
         }
-        return getRobotFromList(aprilID);
+        return getAgentFromList(aprilID);
     }
 
-    public Robot getRobotFromList(@NonNull int uid) {
-        for (Robot robot : robotList.getValue()) {
-            if (robot.getUid() == uid) { return robot; }
+    public Agent getAgentFromList(@NonNull int uid) {
+        for (Agent agent : agentList.getValue()) {
+            if (agent.getUid() == uid) { return agent; }
         }
         return null;
     }
@@ -75,7 +75,7 @@ public class RobotListViewModel extends ViewModel {
         // Add to all msgs
         protoMsgStorer.addMsg(msg);
 
-        // Add to specific robots logging
+        // Add to specific agents logging
         int sourceID = msg.getSourceId();
         int destinationID = msg.getDestinationId();
 
@@ -86,22 +86,22 @@ public class RobotListViewModel extends ViewModel {
             }
         }
 
-        Robot sourceRobot = getRobotFromList(sourceID);
-        if (sourceRobot != null) { sourceRobot.getProtoMsgStorer().addMsg(msg); }
+        Agent sourceAgent = getAgentFromList(sourceID);
+        if (sourceAgent != null) { sourceAgent.getProtoMsgStorer().addMsg(msg); }
 
-        Robot destinationRobot = getRobotFromList(destinationID);
-        if (destinationRobot != null) { destinationRobot.getProtoMsgStorer().addMsg(msg); }
+        Agent destinationAgent = getAgentFromList(destinationID);
+        if (destinationAgent != null) { destinationAgent.getProtoMsgStorer().addMsg(msg); }
     }
 
     public void storeSentCommand(MessageOuterClass.Message msg) {
         if (msg == null) { return; }
 
-        // Add to destination robot
-        Robot destinationRobot = getRobotFromList(msg.getDestinationId());
-        if (destinationRobot != null) { destinationRobot.registerSendCommand(msg); }
+        // Add to destination agent
+        Agent destinationAgent = getAgentFromList(msg.getDestinationId());
+        if (destinationAgent != null) { destinationAgent.registerSendCommand(msg); }
     }
 
     public LiveData<ProtoMsgStorer> getProtoMsgStorer() {
-        return allRobotsMsgStorerMutableData;
+        return allAgentsMsgStorerMutableData;
     }
 }

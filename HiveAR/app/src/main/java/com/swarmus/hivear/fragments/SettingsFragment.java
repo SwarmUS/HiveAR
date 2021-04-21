@@ -16,18 +16,18 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.swarmus.hivear.R;
-import com.swarmus.hivear.viewmodels.RobotListViewModel;
+import com.swarmus.hivear.viewmodels.AgentListViewModel;
 
 public class SettingsFragment extends Fragment {
 
     LinearLayout layoutList;
-    RobotListViewModel robotListViewModel;
+    AgentListViewModel agentListViewModel;
     private static final int EMPTY_ID = -1;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        robotListViewModel = new ViewModelProvider(requireActivity()).get(RobotListViewModel.class);
+        agentListViewModel = new ViewModelProvider(requireActivity()).get(AgentListViewModel.class);
     }
 
     @Override
@@ -44,7 +44,7 @@ public class SettingsFragment extends Fragment {
         });
 
         // Create views from current list
-        robotListViewModel.getIDConversions().forEach((aprilID, robotID)->addView(robotID, aprilID));
+        agentListViewModel.getIDConversions().forEach((aprilID, agentID)->addView(agentID, aprilID));
 
         return view;
     }
@@ -55,16 +55,16 @@ public class SettingsFragment extends Fragment {
 
         AlertDialog alertDialog = new AlertDialog.Builder(requireContext())
                 .setTitle("Add conversion")
-                .setMessage("Associate apriltag ID to Robot/Board ID")
+                .setMessage("Associate apriltag ID to Agent/Board ID")
                 .setPositiveButton(android.R.string.yes, (dialogInterface, i) -> {
                     if (addNewConversion(dialogEdit)) {
-                        EditText robotIDET = dialogEdit.findViewById(R.id.edit_robot_id);
-                        EditText aprilIDET = dialogEdit.findViewById(R.id.edit_robot_tag_id);
+                        EditText agentIDET = dialogEdit.findViewById(R.id.edit_agent_id);
+                        EditText aprilIDET = dialogEdit.findViewById(R.id.edit_agent_tag_id);
 
-                        String robotIDStr = robotIDET.getText().toString();
+                        String agentIDStr = agentIDET.getText().toString();
                         String aprilIDStr = aprilIDET.getText().toString();
 
-                        addView(Integer.valueOf(robotIDStr), Integer.valueOf(aprilIDStr));
+                        addView(Integer.valueOf(agentIDStr), Integer.valueOf(aprilIDStr));
                     }
                 })
                 .setNegativeButton(android.R.string.no, null)
@@ -75,36 +75,36 @@ public class SettingsFragment extends Fragment {
     }
 
     private void addView(int boardIDValue, int aprilIDValue) {
-        final View robotIDConfigView = getLayoutInflater().inflate(R.layout.row_add_configuration, null, false);
+        final View agentIDConfigView = getLayoutInflater().inflate(R.layout.row_add_configuration, null, false);
 
-        TextView boardID = robotIDConfigView.findViewById(R.id.edit_robot_id);
+        TextView boardID = agentIDConfigView.findViewById(R.id.edit_agent_id);
         if (boardIDValue != EMPTY_ID) { boardID.setText(Integer.toString(boardIDValue)); }
 
-        TextView aprilID = robotIDConfigView.findViewById(R.id.edit_robot_tag_id);
+        TextView aprilID = agentIDConfigView.findViewById(R.id.edit_agent_tag_id);
         if (aprilIDValue != EMPTY_ID) { aprilID.setText(Integer.toString(aprilIDValue)); }
 
-        ImageView imageClose = robotIDConfigView.findViewById(R.id.edit_robot_id_delete);
-        imageClose.setOnClickListener(view -> removeView(robotIDConfigView));
+        ImageView imageClose = agentIDConfigView.findViewById(R.id.edit_agent_id_delete);
+        imageClose.setOnClickListener(view -> removeView(agentIDConfigView));
 
-        layoutList.addView(robotIDConfigView);
+        layoutList.addView(agentIDConfigView);
     }
 
     private void removeView(View view) {
-        // Do operations on robot here
+        // Do operations on agent here
         removeConversion(view);
         layoutList.removeView(view);
     }
 
     private boolean addNewConversion(View v) {
-        EditText robotIDET = v.findViewById(R.id.edit_robot_id);
-        EditText aprilIDET = v.findViewById(R.id.edit_robot_tag_id);
+        EditText agentIDET = v.findViewById(R.id.edit_agent_id);
+        EditText aprilIDET = v.findViewById(R.id.edit_agent_tag_id);
 
-        String robotIDStr = robotIDET.getText().toString();
+        String agentIDStr = agentIDET.getText().toString();
         String aprilIDStr = aprilIDET.getText().toString();
 
-        if (!robotIDStr.isEmpty() && !aprilIDStr.isEmpty()) {
+        if (!agentIDStr.isEmpty() && !aprilIDStr.isEmpty()) {
             // Notify user if couldn't add conversion
-            if (!robotListViewModel.addNewConversion(Integer.valueOf(robotIDStr), Integer.valueOf(aprilIDStr))) {
+            if (!agentListViewModel.addNewConversion(Integer.valueOf(agentIDStr), Integer.valueOf(aprilIDStr))) {
                 Toast.makeText(requireContext(), "Apriltag #" + aprilIDStr + " already defined", Toast.LENGTH_SHORT).show();
             }
             else {
@@ -118,10 +118,10 @@ public class SettingsFragment extends Fragment {
     }
 
     private void removeConversion(View v) {
-        TextView aprilID = v.findViewById(R.id.edit_robot_tag_id);
+        TextView aprilID = v.findViewById(R.id.edit_agent_tag_id);
         String aprilIDStr = aprilID.getText().toString();
         if (!aprilIDStr.isEmpty()) {
-            robotListViewModel.removeConversion(Integer.valueOf(aprilIDStr));
+            agentListViewModel.removeConversion(Integer.valueOf(aprilIDStr));
         }
     }
 }

@@ -9,8 +9,8 @@
         android:label="fragment_command_tabs"
         tools:layout="@layout/fragment_command_tabs">
         <action
-            android:id="@+id/action_commandTabs_to_robotDetailsViewFragment"
-            app:destination="@id/robotDetailsViewFragment" />
+            android:id="@+id/action_commandTabs_to_agentDetailsViewFragment"
+            app:destination="@id/agentDetailsViewFragment" />
     </fragment>
     <fragment
         android:id="@+id/ARViewFragment"
@@ -23,20 +23,20 @@
         android:label="connection_view_fragment"
         tools:layout="@layout/connection_view_fragment" />
     <fragment
-        android:id="@+id/robotDetailsViewFragment"
-        android:name="com.swarmus.hivear.fragments.RobotDetailsViewFragment"
-        android:label="robot_details_view_fragment"
-        tools:layout="@layout/robot_details_view_fragment" >
+        android:id="@+id/agentDetailsViewFragment"
+        android:name="com.swarmus.hivear.fragments.AgentDetailsViewFragment"
+        android:label="agent_details_view_fragment"
+        tools:layout="@layout/agent_details_view_fragment" >
         <argument
-            android:name="robotname"
+            android:name="agentname"
             app:argType="string"
-            android:defaultValue="Robot" />
+            android:defaultValue="Agent" />
         <argument
             android:name="uid"
             app:argType="integer"
             android:defaultValue="0" />
         <action
-            android:id="@+id/action_robotDetailsViewFragment_to_commandTabs"
+            android:id="@+id/action_agentDetailsViewFragment_to_commandTabs"
             app:destination="@id/commandTabs" />
     </fragment>
     <fragment
