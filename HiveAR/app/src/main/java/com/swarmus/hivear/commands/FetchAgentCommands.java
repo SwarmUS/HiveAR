@@ -3,11 +3,11 @@ package com.swarmus.hivear.commands;
 import com.swarmus.hivear.MessageOuterClass;
 
 public class FetchAgentCommands extends GenericCommand{
-    int uid;
+    int destinationID;
     boolean isBuzz;
 
-    public FetchAgentCommands(int uid, boolean isBuzz) {
-        this.uid = uid;
+    public FetchAgentCommands(int destinationID, boolean isBuzz) {
+        this.destinationID = destinationID;
         this.isBuzz = isBuzz;
     }
 
@@ -29,7 +29,7 @@ public class FetchAgentCommands extends GenericCommand{
                     .build();
             message = MessageOuterClass.Message.newBuilder()
                     .setRequest(request)
-                    .setDestinationId(uid)
+                    .setDestinationId(destinationID)
                     .setSourceId(swarmAgentID)
                     .build();
         }

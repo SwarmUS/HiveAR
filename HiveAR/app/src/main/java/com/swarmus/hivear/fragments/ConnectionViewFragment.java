@@ -25,6 +25,7 @@ import com.swarmus.hivear.R;
 import com.swarmus.hivear.activities.MainActivity;
 import com.swarmus.hivear.commands.MoveByCommand;
 import com.swarmus.hivear.models.CommunicationDevice;
+import com.swarmus.hivear.models.ProtoMsgStorer;
 import com.swarmus.hivear.models.SerialDevice;
 import com.swarmus.hivear.models.TCPDeviceServer;
 import com.swarmus.hivear.viewmodels.ProtoMsgViewModel;
@@ -57,7 +58,7 @@ public class ConnectionViewFragment extends Fragment {
         protoMsgViewModel.getProtoMsgStorerList().observe(getViewLifecycleOwner(), storers -> {
             ArrayList<String> storerNames = new ArrayList<>();
             storers.forEach(protoMsgStorer -> storerNames.add(protoMsgStorer.getUniqueName()));
-            ArrayAdapter<String> adapter =  new ArrayAdapter<>(requireActivity().getBaseContext(), android.R.layout.simple_spinner_dropdown_item, storerNames.toArray(new String[0]));
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(requireActivity().getBaseContext(), android.R.layout.simple_spinner_dropdown_item, storerNames.toArray(new String[0]));
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             dropdown.setAdapter(adapter);
             if (protoMsgViewModel.getCurrentProtoMsgStorer().getValue() != null) {
@@ -71,6 +72,10 @@ public class ConnectionViewFragment extends Fragment {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View currentView, int i, long l) {
                 protoMsgViewModel.setCurrentProtoMsgStorer( protoMsgViewModel.getProtoMsgStorerList().getValue().get(i));
+                ProtoMsgStorer currentProtoMsgStorer = protoMsgViewModel.getCurrentProtoMsgStorer().getValue();
+                updateMoveByCommands( currentProtoMsgStorer != null ?
+                        protoMsgViewModel.getCurrentProtoMsgStorer().getValue().getAgentID() :
+                        ProtoMsgStorer.NO_AGENT_ID);
             }
 
             @Override
@@ -82,13 +87,13 @@ public class ConnectionViewFragment extends Fragment {
 
         dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(MSG_LOGGING_LENGTH));
         // Align text correctly on change logging filter
-        protoMsgViewModel.getCurrentProtoMsgStorer().observe(getViewLifecycleOwner(), s -> { filterChanged(); });
+        protoMsgViewModel.getCurrentProtoMsgStorer().observe(getViewLifecycleOwner(), s -> filterChanged());
 
         // Init filter dropdown
         filterChanged();
 
         view.findViewById(R.id.hide_ui).setOnClickListener(v -> {
-            setInfoVisible(!isInfoVisible);
+            expandUI(!isInfoVisible);
         });
 
         view.findViewById(R.id.clean_text).setOnClickListener(v -> {
@@ -115,21 +120,6 @@ public class ConnectionViewFragment extends Fragment {
             updateCommunicationUI(switchCommunicationButton);
         });
 
-        upCommand = new MoveByCommand(1,0);
-        view.findViewById(R.id.upButton).setOnClickListener(v -> ((MainActivity)getActivity()).sendCommand(upCommand));
-
-        downCommand = new MoveByCommand(-1,0);
-        view.findViewById(R.id.downButton).setOnClickListener(v -> ((MainActivity)getActivity()).sendCommand(downCommand));
-
-        leftCommand = new MoveByCommand(0,1);
-        view.findViewById(R.id.leftButton).setOnClickListener(v -> ((MainActivity)getActivity()).sendCommand(leftCommand));
-
-        rightCommand = new MoveByCommand(0,-1);
-        view.findViewById(R.id.rightButton).setOnClickListener(v -> ((MainActivity)getActivity()).sendCommand(rightCommand));
-
-        stopCommand = new MoveByCommand(0,0);
-        view.findViewById(R.id.stopButton).setOnClickListener(v -> ((MainActivity)getActivity()).sendCommand(stopCommand));
-
         return view;
     }
 
@@ -139,7 +129,7 @@ public class ConnectionViewFragment extends Fragment {
         // Update fragment
         FloatingActionButton switchCommunicationButton = view.findViewById(R.id.switchCommunication);
         updateCommunicationUI(switchCommunicationButton);
-        setInfoVisible(false); // Disable UI at start
+        expandUI(false); // Disable UI at start
     }
 
     private void filterChanged() {
@@ -150,6 +140,44 @@ public class ConnectionViewFragment extends Fragment {
             protoMsgViewModel.getCurrentProtoMsgStorer().getValue().addObserver((observable, object) -> {
                 dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(MSG_LOGGING_LENGTH));
             });
+        }
+    }
+
+    private void updateMoveByCommands(int destinationID) {
+        if (destinationID == ProtoMsgStorer.NO_AGENT_ID) {
+            setMoveByVisible(false); // Always hide if no callbacks
+
+            upCommand = null;
+            getView().findViewById(R.id.upButton).setOnClickListener(null);
+
+            downCommand = null;
+            getView().findViewById(R.id.downButton).setOnClickListener(null);
+
+            leftCommand = null;
+            getView().findViewById(R.id.leftButton).setOnClickListener(null);
+
+            rightCommand = null;
+            getView().findViewById(R.id.rightButton).setOnClickListener(null);
+
+            stopCommand = null;
+            getView().findViewById(R.id.stopButton).setOnClickListener(null);
+        } else {
+            setMoveByVisible(isInfoVisible); // Show if current ui is expanded
+
+            upCommand = new MoveByCommand(1,0, destinationID);
+            getView().findViewById(R.id.upButton).setOnClickListener(v -> ((MainActivity)getActivity()).sendCommand(upCommand));
+
+            downCommand = new MoveByCommand(-1,0, destinationID);
+            getView().findViewById(R.id.downButton).setOnClickListener(v -> ((MainActivity)getActivity()).sendCommand(downCommand));
+
+            leftCommand = new MoveByCommand(0,1, destinationID);
+            getView().findViewById(R.id.leftButton).setOnClickListener(v -> ((MainActivity)getActivity()).sendCommand(leftCommand));
+
+            rightCommand = new MoveByCommand(0,-1, destinationID);
+            getView().findViewById(R.id.rightButton).setOnClickListener(v -> ((MainActivity)getActivity()).sendCommand(rightCommand));
+
+            stopCommand = new MoveByCommand(0,0, destinationID);
+            getView().findViewById(R.id.stopButton).setOnClickListener(v -> ((MainActivity)getActivity()).sendCommand(stopCommand));
         }
     }
 
@@ -167,23 +195,34 @@ public class ConnectionViewFragment extends Fragment {
         ft.replace(R.id.communicationContainer, currentFragment);
         ft.commit();
         // Invalidate view to update UI
-        setInfoVisible(true);
+        expandUI(true);
         getView().invalidate();
     }
 
-    private void setInfoVisible(boolean isVisible) {
+    private void expandUI(boolean isVisible) {
         this.isInfoVisible = isVisible;
 
-        View v = getView();
-
-        FloatingActionButton hideUI = v.findViewById(R.id.hide_ui);
+        FloatingActionButton hideUI = getView().findViewById(R.id.hide_ui);
         hideUI.setImageDrawable(ContextCompat.getDrawable(getContext(), isVisible ? R.drawable.open_full : R.drawable.close_full));
 
-        ConstraintLayout moveByLayout = v.findViewById(R.id.moveByArrows);
-        moveByLayout.setVisibility(isVisible ? View.VISIBLE : View.GONE);
+        setMoveByVisible(isVisible);
+        setCommunicationContainerVisible(isVisible);
 
-        FrameLayout fl = v.findViewById(R.id.communicationContainer);
+        getView().invalidate();
+    }
+
+    private void setMoveByVisible(boolean isVisible) {
+
+        isVisible &= protoMsgViewModel.getCurrentProtoMsgStorer().getValue() != null &&
+                     protoMsgViewModel.getCurrentProtoMsgStorer().getValue().getAgentID() != ProtoMsgStorer.NO_AGENT_ID;
+        ConstraintLayout moveByLayout = getView().findViewById(R.id.moveByArrows);
+        moveByLayout.setVisibility(isVisible ? View.VISIBLE : View.GONE);
+        getView().invalidate();
+    }
+
+    private void setCommunicationContainerVisible(boolean isVisible) {
+        FrameLayout fl = getView().findViewById(R.id.communicationContainer);
         fl.setVisibility(isVisible ? View.VISIBLE : View.GONE);
-        v.invalidate();
+        getView().invalidate();
     }
 }

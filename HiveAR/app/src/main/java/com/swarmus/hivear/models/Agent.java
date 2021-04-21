@@ -28,8 +28,8 @@ public class Agent extends Observable {
         this.name = name;
         this.uid = uid;
 
-        msgLogging = new ProtoMsgStorer(5, getUniqueName());
-        sentCommands = new ProtoMsgStorer(5, getUniqueName() + " Sent commands");
+        msgLogging = new ProtoMsgStorer(5, getUniqueName(), uid);
+        sentCommands = new ProtoMsgStorer(5, getUniqueName() + " Sent commands", uid);
 
         this.commands = new FunctionTemplateList();
         this.commands.addObserver((observable, o) -> {
