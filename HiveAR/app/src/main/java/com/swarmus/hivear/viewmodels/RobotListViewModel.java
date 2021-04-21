@@ -30,10 +30,7 @@ public class RobotListViewModel extends ViewModel {
         this.localSwarmAgentViewModel = localSwarmAgentViewModel;
     }
 
-    public LiveData<List<Robot>> getRobotList() {
-        if (robotList == null) {robotList = new MutableLiveData<>();}
-        return robotList;
-    }
+    public LiveData<List<Robot>> getRobotList() { return robotList; }
 
     public void addRobot(Robot robot) {
         ArrayList<Robot> robots = new ArrayList<>(robotList.getValue());

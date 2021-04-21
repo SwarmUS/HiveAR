@@ -130,12 +130,17 @@ public class SerialDevice extends CommunicationDevice {
     }
 
     public void setSelectedUsbDeviceName(String deviceName) {
-        if (!deviceName.equals(selectedDeviceName)) { endConnection(); }
-        selectedDeviceName = deviceName;
-        HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
-        device = deviceList.get(selectedDeviceName);
-        if (!manager.hasPermission(device)) {
-            manager.requestPermission(device, permissionIntent);
+        //Update if different only
+        if (!deviceName.equals(selectedDeviceName)) {
+            endConnection();
+            selectedDeviceName = deviceName;
+            HashMap<String, UsbDevice> deviceList = manager.getDeviceList();
+            if (deviceList != null) {
+                device = deviceList.get(selectedDeviceName);
+                if (device != null && !manager.hasPermission(device)) {
+                    manager.requestPermission(device, permissionIntent);
+                }
+            }
         }
     }
 

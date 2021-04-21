@@ -47,7 +47,6 @@ import com.swarmus.hivear.ar.CameraFacingNode;
 import com.swarmus.hivear.ar.AlwaysStraightNode;
 import com.swarmus.hivear.models.ProtoMsgStorer;
 import com.swarmus.hivear.models.Robot;
-import com.swarmus.hivear.viewmodels.CurrentArRobotViewModel;
 import com.swarmus.hivear.viewmodels.RobotListViewModel;
 import com.swarmus.hivear.utils.ConvertUtil;
 import com.swarmus.hivear.utils.MathUtil;
@@ -71,7 +70,8 @@ public class ARViewFragment extends Fragment {
     private final static double UPDATE_DETECTION_DISTANCE_THRESHOLD = 0.1;
 
     private RobotListViewModel robotListViewModel;
-    private CurrentArRobotViewModel currentArRobotViewModel;
+
+    private Robot currentSelectedRobot;
 
     private final Object frameImageInUseLock = new Object();
 
@@ -86,7 +86,6 @@ public class ARViewFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         robotListViewModel = new ViewModelProvider(requireActivity()).get(RobotListViewModel.class);
-        currentArRobotViewModel = new ViewModelProvider(requireActivity()).get(CurrentArRobotViewModel.class);
 
         timerHandler = new Handler();
         timerRunnable =  new Runnable() {
@@ -117,22 +116,26 @@ public class ARViewFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.ar_view_fragment, container, false);
-
-        CurrentArRobotViewModel currentArRobotViewModel = new ViewModelProvider(requireActivity()).get(CurrentArRobotViewModel.class);
-        currentArRobotViewModel.getSelectedRobot().observe(requireActivity(), robot -> setRobotUI(view, robot));
-
-        setRobotUI(view, currentArRobotViewModel.getSelectedRobot().getValue());
-
         configureARSession();
-
         return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        setRobotUI(null);
     }
 
     @Override
     public void onDestroyView() {
         timerHandler.removeCallbacks(timerRunnable);
-        currentArRobotViewModel.getSelectedRobot().setValue(null);
+        setSelectedRobot(null);
         super.onDestroyView();
+    }
+
+    private void setSelectedRobot(Robot robot) {
+        currentSelectedRobot = robot;
+        setRobotUI(robot);
     }
 
     private void initializeRenderables() {
@@ -204,13 +207,13 @@ public class ARViewFragment extends Fragment {
         }
     }
 
-    private void setRobotUI(View v, Robot robot) {
+    private void setRobotUI(Robot robot) {
         Boolean isRobotSelected = robot != null;
-        LinearLayout robotInfoLayout = v.findViewById(R.id.robot_ar_selected);
+        LinearLayout robotInfoLayout = getView().findViewById(R.id.robot_ar_selected);
         robotInfoLayout.setVisibility(isRobotSelected ? LinearLayout.VISIBLE : LinearLayout.GONE);
-        TextView robotName = v.findViewById(R.id.robot_ar_selected_name);
+        TextView robotName = getView().findViewById(R.id.robot_ar_selected_name);
         robotName.setText(isRobotSelected ? robot.getName() : "");
-        TextView robotUid = v.findViewById(R.id.robot_ar_selected_uid);
+        TextView robotUid = getView().findViewById(R.id.robot_ar_selected_uid);
         robotUid.setText(isRobotSelected ? Integer.toString(robot.getUid()) : "");
     }
 
@@ -384,7 +387,7 @@ public class ARViewFragment extends Fragment {
         uiNode.setParent(parent);
 
         // At creation, make node selected if none are currently selected
-        if (currentArRobotViewModel.getSelectedRobot().getValue() == null) {
+        if (currentSelectedRobot == null) {
             selectRobotFromAR(indicatorNode, robot.getUid());
         }
     }
@@ -415,8 +418,7 @@ public class ARViewFragment extends Fragment {
 
     private Robot selectRobotFromUID(int uid) {
         Robot robot = robotListViewModel.getRobotFromApriltag(uid);
-
-        currentArRobotViewModel.getSelectedRobot().setValue(robot);
+        setSelectedRobot(robot);
         return robot;
     }
 
@@ -440,8 +442,9 @@ public class ARViewFragment extends Fragment {
                                     arFragment.getArSceneView().getScene().removeChild(arRobotNode);
                                     arRobotNode.getAnchor().detach();
                                     arRobotNode.setParent(null);
-                                    if (currentArRobotViewModel.getSelectedRobot().getValue().equals(robot)) {
-                                        currentArRobotViewModel.getSelectedRobot().setValue(null);
+                                    // If deleting the current selected robot, notify the new value
+                                    if (currentSelectedRobot == robot) {
+                                        setSelectedRobot(null);
                                     }
                                 }).setNegativeButton("No", (dialog, whichButton) -> {
                                     // Do nothing.

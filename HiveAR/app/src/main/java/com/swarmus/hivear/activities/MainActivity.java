@@ -338,11 +338,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateSerialDevices(HashMap<String, String> deviceMap) {
         SerialSettingsViewModel serialSettingsViewModel = new ViewModelProvider(this).get(SerialSettingsViewModel.class);
-        MutableLiveData<HashMap<String, String>> devices = serialSettingsViewModel.getDevices();
-        devices.setValue(deviceMap);
-        if (!devices.getValue().isEmpty()) {
-            serialSettingsViewModel.getSelectedDevice().setValue(devices.getValue().values().iterator().next());
-        }
+        serialSettingsViewModel.setDevices(deviceMap);
+        serialSettingsViewModel.setSelectedDevice(
+                deviceMap == null || deviceMap.isEmpty() ?
+                        "" :
+                        deviceMap.values().iterator().next());
     }
 
     private final BroadcastReceiver deviceConnectionStatusReceiver = new BroadcastReceiver() {
