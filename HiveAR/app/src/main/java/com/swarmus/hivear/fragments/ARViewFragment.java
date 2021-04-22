@@ -18,6 +18,8 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.ar.core.Anchor;
+import com.google.ar.core.CameraConfig;
+import com.google.ar.core.CameraConfigFilter;
 import com.google.ar.core.CameraIntrinsics;
 import com.google.ar.core.Config;
 import com.google.ar.core.Frame;
@@ -43,24 +45,25 @@ import com.google.ar.sceneform.ux.TransformableNode;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.apriltag.ApriltagDetection;
 import com.swarmus.hivear.apriltag.ApriltagNative;
-import com.swarmus.hivear.ar.CameraFacingNode;
 import com.swarmus.hivear.ar.AlwaysStraightNode;
+import com.swarmus.hivear.ar.CameraFacingNode;
 import com.swarmus.hivear.models.ProtoMsgStorer;
 import com.swarmus.hivear.models.Robot;
-import com.swarmus.hivear.viewmodels.CurrentArRobotViewModel;
-import com.swarmus.hivear.viewmodels.RobotListViewModel;
 import com.swarmus.hivear.utils.ConvertUtil;
 import com.swarmus.hivear.utils.MathUtil;
+import com.swarmus.hivear.viewmodels.CurrentArRobotViewModel;
+import com.swarmus.hivear.viewmodels.RobotListViewModel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 public class ARViewFragment extends Fragment {
 
     private static final String TAG = ARViewFragment.class.getName();
-    private static final double APRIL_TAG_SCALE_M = 8*0.021; // 8 bits large of 2.1 cm each
+    private static final double APRIL_TAG_SCALE_M = 0.1/*8*0.021*/; // 8 bits large of 2.1 cm each
 
     private ArFragment arFragment;
     private ModelRenderable arrowRenderable;
@@ -185,9 +188,16 @@ public class ARViewFragment extends Fragment {
                     e.printStackTrace();
                 }
             }
+            CameraConfigFilter filter = new CameraConfigFilter(session);
+            filter.setDepthSensorUsage(EnumSet.of(CameraConfig.DepthSensorUsage.DO_NOT_USE));
+            filter.setTargetFps(EnumSet.of(CameraConfig.TargetFps.TARGET_FPS_30));
+            filter.setFacingDirection(CameraConfig.FacingDirection.BACK);
+            session.setCameraConfig(session.getSupportedCameraConfigs(filter).get(0));
             Config config = new Config(session);
             config.setUpdateMode(Config.UpdateMode.LATEST_CAMERA_IMAGE);
-            config.setFocusMode(Config.FocusMode.AUTO);
+            config.setFocusMode(Config.FocusMode.FIXED);
+            config.setDepthMode(Config.DepthMode.DISABLED);
+            config.setInstantPlacementMode(Config.InstantPlacementMode.DISABLED);
             config.setPlaneFindingMode(Config.PlaneFindingMode.HORIZONTAL);
             config.setLightEstimationMode(Config.LightEstimationMode.DISABLED);
             session.configure(config);
@@ -385,7 +395,7 @@ public class ARViewFragment extends Fragment {
         });
 
         CameraFacingNode uiNode = new CameraFacingNode(arFragment.getArSceneView().getScene().getCamera());
-        setRobotARInfoRenderable(uiNode, arRobotRootNode, robot, indicatorNode.getLocalPosition(), indicatorNode.getLocalRotation());
+        setRobotARInfoRenderable(uiNode, arRobotRootNode, robot);
         uiNode.setName(AR_INDICATOR_UI);
         uiNode.setParent(arRobotRootNode);
 
@@ -423,7 +433,7 @@ public class ARViewFragment extends Fragment {
         }
     }
 
-    private void setRobotARInfoRenderable(CameraFacingNode tNode, TransformableNode parent, Robot robot, Vector3 pos, Quaternion rot)
+    private void setRobotARInfoRenderable(CameraFacingNode tNode, TransformableNode parent, Robot robot)
     {
         ViewRenderable.builder()
                 .setView(getContext(), R.layout.ar_robot_base_info)
@@ -468,7 +478,7 @@ public class ARViewFragment extends Fragment {
 
                     // Set in AR
                     Vector3 offset = new Vector3(0f, (float)(2 * APRIL_TAG_SCALE_M), 0f);
-                    tNode.setLocalPosition(Vector3.add(pos, offset));
+                    tNode.setWorldPosition(Vector3.add(parent.getWorldPosition(), offset));
                     tNode.setRenderable(viewRenderable);
                 })
                 .exceptionally(
