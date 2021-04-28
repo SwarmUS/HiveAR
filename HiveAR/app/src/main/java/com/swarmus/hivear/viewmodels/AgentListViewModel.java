@@ -17,13 +17,13 @@ public class AgentListViewModel extends ViewModel {
     MutableLiveData<List<Agent>> agentList;
     HashMap<Integer, Integer> apriltagIdConversionMap = new HashMap<>(); // Apriltag id, Agent/board id
     MutableLiveData<ProtoMsgStorer> allAgentsMsgStorerMutableData;
-    ProtoMsgStorer protoMsgStorer;
+    ProtoMsgStorer allProtoMsgStorer;
     LocalSwarmAgentViewModel localSwarmAgentViewModel;
 
     public AgentListViewModel() {
         agentList = new MutableLiveData<>(new ArrayList<>());
-        protoMsgStorer = new ProtoMsgStorer(15, "All");
-        allAgentsMsgStorerMutableData = new MutableLiveData<>(protoMsgStorer);
+        allProtoMsgStorer = new ProtoMsgStorer(15, "All", ProtoMsgStorer.NO_AGENT_ID);
+        allAgentsMsgStorerMutableData = new MutableLiveData<>(allProtoMsgStorer);
     }
 
     public void setLocalSwarmAgentViewModel(LocalSwarmAgentViewModel localSwarmAgentViewModel) {
@@ -73,7 +73,7 @@ public class AgentListViewModel extends ViewModel {
         if (msg == null) { return; }
 
         // Add to all msgs
-        protoMsgStorer.addMsg(msg);
+        allProtoMsgStorer.addMsg(msg);
 
         // Add to specific agents logging
         int sourceID = msg.getSourceId();
