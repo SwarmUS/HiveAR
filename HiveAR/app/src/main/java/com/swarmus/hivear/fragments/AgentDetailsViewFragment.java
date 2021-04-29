@@ -67,7 +67,7 @@ public class AgentDetailsViewFragment extends Fragment {
             agent.addObserver((observable, o) -> agentCommandsVM.setList(agent.getCommands()));
 
             agentBuzzCommandsVM.setList(agent.getBuzzCommands());
-            agent.addObserver(((observable, o) -> agentBuzzCommandsVM.setList(agent.getBuzzCommands())));
+            agent.getCommands().addObserver(((observable, o) -> agentBuzzCommandsVM.setList(agent.getBuzzCommands())));
 
             commandViewPagerAdapter.addFragment(new CommandList(agentCommandsVM,
                             agent.getUid()),

@@ -185,7 +185,7 @@ public class ConnectionViewFragment extends Fragment {
         CommunicationDevice communicationDevice = ((MainActivity)getActivity()).getCurrentCommunicationDevice();
         Fragment currentFragment;
         if (communicationDevice instanceof SerialDevice) {
-            currentFragment = new UartSettingsFragment();
+            currentFragment = new UsbSettingsFragment();
             button.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.usb_icon));
         } else {
             currentFragment = new TcpSettingsFragment(((TCPDeviceServer)communicationDevice).getServerAddress(), ((TCPDeviceServer)communicationDevice).getServerPort());
