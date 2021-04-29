@@ -18,6 +18,8 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.ar.core.Anchor;
+import com.google.ar.core.CameraConfig;
+import com.google.ar.core.CameraConfigFilter;
 import com.google.ar.core.CameraIntrinsics;
 import com.google.ar.core.Config;
 import com.google.ar.core.Frame;
@@ -53,6 +55,7 @@ import com.swarmus.hivear.viewmodels.AgentListViewModel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -188,9 +191,17 @@ public class ARViewFragment extends Fragment {
                     e.printStackTrace();
                 }
             }
+            CameraConfigFilter filter = new CameraConfigFilter(session);
+            filter.setDepthSensorUsage(EnumSet.of(CameraConfig.DepthSensorUsage.DO_NOT_USE));
+            filter.setTargetFps(EnumSet.of(CameraConfig.TargetFps.TARGET_FPS_30));
+            filter.setFacingDirection(CameraConfig.FacingDirection.BACK);
+            // Set configuration that matches the filter
+            session.setCameraConfig(session.getSupportedCameraConfigs(filter).get(0));
             Config config = new Config(session);
             config.setUpdateMode(Config.UpdateMode.LATEST_CAMERA_IMAGE);
             config.setFocusMode(Config.FocusMode.AUTO);
+            config.setDepthMode(Config.DepthMode.DISABLED);
+            config.setInstantPlacementMode(Config.InstantPlacementMode.DISABLED);
             config.setPlaneFindingMode(Config.PlaneFindingMode.HORIZONTAL);
             config.setLightEstimationMode(Config.LightEstimationMode.DISABLED);
             session.configure(config);
@@ -388,7 +399,7 @@ public class ARViewFragment extends Fragment {
         });
 
         CameraFacingNode uiNode = new CameraFacingNode(arFragment.getArSceneView().getScene().getCamera());
-        setAgentARInfoRenderable(uiNode, arAgentRootNode, agent, indicatorNode.getLocalPosition(), indicatorNode.getLocalRotation());
+        setAgentARInfoRenderable(uiNode, arAgentRootNode, agent);
         uiNode.setName(AR_INDICATOR_UI);
         uiNode.setParent(arAgentRootNode);
 
@@ -426,7 +437,7 @@ public class ARViewFragment extends Fragment {
         }
     }
 
-    private void setAgentARInfoRenderable(CameraFacingNode tNode, TransformableNode parent, Agent agent, Vector3 pos, Quaternion rot)
+    private void setAgentARInfoRenderable(CameraFacingNode tNode, TransformableNode parent, Agent agent)
     {
         ViewRenderable.builder()
                 .setView(getContext(), R.layout.ar_agent_base_info)
@@ -472,7 +483,7 @@ public class ARViewFragment extends Fragment {
 
                     // Set in AR
                     Vector3 offset = new Vector3(0f, (float)(2 * APRIL_TAG_SCALE_M), 0f);
-                    tNode.setLocalPosition(Vector3.add(pos, offset));
+                    tNode.setLocalPosition(Vector3.add(parent.getWorldPosition(), offset));
                     tNode.setRenderable(viewRenderable);
                 })
                 .exceptionally(
