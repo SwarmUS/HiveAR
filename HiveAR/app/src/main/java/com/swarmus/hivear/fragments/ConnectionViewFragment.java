@@ -42,7 +42,6 @@ public class ConnectionViewFragment extends Fragment {
     private ProtoMsgViewModel protoMsgViewModel;
     private TextView dataReceived;
 
-    private FragmentManager fragmentManager;
     private static final int MSG_LOGGING_LENGTH = 10;
     private boolean isInfoVisible = false;
 
@@ -50,11 +49,61 @@ public class ConnectionViewFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.connection_view_fragment, container, false);
 
-        fragmentManager = getChildFragmentManager();
-
         protoMsgViewModel = new ViewModelProvider(requireActivity()).get(ProtoMsgViewModel.class);
+        dataReceived = view.findViewById(R.id.dataReceived);
 
-        Spinner dropdown = view.findViewById(R.id.loggingFilter);
+        return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        initRobotSelectionDropdown();
+        initLoggerTextView();
+        // Init filter dropdown
+        filterChanged();
+
+        initButtonCallbacks();
+
+        // Update fragment
+        FloatingActionButton switchCommunicationButton = view.findViewById(R.id.switchCommunication);
+        updateCommunicationUI(switchCommunicationButton);
+        expandUI(false); // Disable UI at start
+    }
+
+    private void initButtonCallbacks() {
+        getView().findViewById(R.id.hide_ui).setOnClickListener(v -> {
+            expandUI(!isInfoVisible);
+        });
+
+        getView().findViewById(R.id.clean_text).setOnClickListener(v -> {
+            protoMsgViewModel.clearLogs();
+            dataReceived.setText("");
+        });
+
+        getView().findViewById(R.id.connectButton).setOnClickListener(v -> {
+            CommunicationDevice communicationDevice = ((MainActivity)getActivity()).getCurrentCommunicationDevice();
+            if (communicationDevice != null) {
+                communicationDevice.establishConnection();
+            }
+        });
+        getView().findViewById(R.id.disconnectButton).setOnClickListener(v -> {
+            CommunicationDevice communicationDevice = ((MainActivity)getActivity()).getCurrentCommunicationDevice();
+            if (communicationDevice != null) {
+                communicationDevice.endConnection();
+            }
+        });
+
+        FloatingActionButton switchCommunicationButton = getView().findViewById(R.id.switchCommunication);
+        switchCommunicationButton.setOnClickListener(v -> {
+            ((MainActivity)getActivity()).switchCurrentCommunicationDevice();
+            updateCommunicationUI(switchCommunicationButton);
+        });
+    }
+
+    private void initRobotSelectionDropdown() {
+        Spinner dropdown = getView().findViewById(R.id.loggingFilter);
         protoMsgViewModel.getProtoMsgStorerList().observe(getViewLifecycleOwner(), storers -> {
             ArrayList<String> storerNames = new ArrayList<>();
             storers.forEach(protoMsgStorer -> storerNames.add(protoMsgStorer.getUniqueName()));
@@ -81,55 +130,13 @@ public class ConnectionViewFragment extends Fragment {
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {}
         });
+    }
 
-        dataReceived = view.findViewById(R.id.dataReceived);
+    private void initLoggerTextView() {
         dataReceived.setMovementMethod(new ScrollingMovementMethod());
-
         dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(MSG_LOGGING_LENGTH));
         // Align text correctly on change logging filter
         protoMsgViewModel.getCurrentProtoMsgStorer().observe(getViewLifecycleOwner(), s -> filterChanged());
-
-        // Init filter dropdown
-        filterChanged();
-
-        view.findViewById(R.id.hide_ui).setOnClickListener(v -> {
-            expandUI(!isInfoVisible);
-        });
-
-        view.findViewById(R.id.clean_text).setOnClickListener(v -> {
-            protoMsgViewModel.clearLogs();
-            dataReceived.setText("");
-        });
-
-        view.findViewById(R.id.connectButton).setOnClickListener(v -> {
-            CommunicationDevice communicationDevice = ((MainActivity)getActivity()).getCurrentCommunicationDevice();
-            if (communicationDevice != null) {
-                communicationDevice.establishConnection();
-            }
-        });
-        view.findViewById(R.id.disconnectButton).setOnClickListener(v -> {
-            CommunicationDevice communicationDevice = ((MainActivity)getActivity()).getCurrentCommunicationDevice();
-            if (communicationDevice != null) {
-                communicationDevice.endConnection();
-            }
-        });
-
-        FloatingActionButton switchCommunicationButton = view.findViewById(R.id.switchCommunication);
-        switchCommunicationButton.setOnClickListener(v -> {
-            ((MainActivity)getActivity()).switchCurrentCommunicationDevice();
-            updateCommunicationUI(switchCommunicationButton);
-        });
-
-        return view;
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        // Update fragment
-        FloatingActionButton switchCommunicationButton = view.findViewById(R.id.switchCommunication);
-        updateCommunicationUI(switchCommunicationButton);
-        expandUI(false); // Disable UI at start
     }
 
     private void filterChanged() {
@@ -191,7 +198,7 @@ public class ConnectionViewFragment extends Fragment {
             currentFragment = new TcpSettingsFragment(((TCPDeviceServer)communicationDevice).getServerAddress(), ((TCPDeviceServer)communicationDevice).getServerPort());
             button.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.wifi_icon));
         }
-        FragmentTransaction ft = fragmentManager.beginTransaction();
+        FragmentTransaction ft = getChildFragmentManager().beginTransaction();
         ft.replace(R.id.communicationContainer, currentFragment);
         ft.commit();
         // Invalidate view to update UI
