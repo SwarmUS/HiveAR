@@ -35,7 +35,7 @@ public class CommandTabs extends Fragment {
         viewPager = view.findViewById(R.id.viewPager);
 
         CommandViewPagerAdapter commandViewPagerAdapter = new CommandViewPagerAdapter(getChildFragmentManager());
-        commandViewPagerAdapter.addFragment(new SwarmSummaryViewFragment(), SwarmSummaryViewFragment.TAB_TITLE);
+        commandViewPagerAdapter.addFragment(new SwarmAgentListFragment(), SwarmAgentListFragment.TAB_TITLE);
 
         BroadcastInfoViewModel broadcastInfoViewModel = new ViewModelProvider(requireActivity()).get(BroadcastInfoViewModel.class);
         CommandList broadcastList = new CommandList(broadcastInfoViewModel, LocalSwarmAgentViewModel.BROADCAST_AGENT_ID);
