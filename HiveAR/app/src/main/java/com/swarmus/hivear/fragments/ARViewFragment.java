@@ -323,6 +323,7 @@ public class ARViewFragment extends Fragment {
                 node = new AnchorNode(anchor);
                 node.setName(debugIdName);
                 node.setRenderable(xyzRenderable);
+                node.setParent(arFragment.getArSceneView().getScene());
             } else {
                 node = (AnchorNode) n;
             }
