@@ -483,8 +483,8 @@ public class ARViewFragment extends Fragment {
                     });
 
                     // Set in AR
-                    Vector3 offset = new Vector3(0f, (float)(2 * APRIL_TAG_SCALE_M), 0f);
-                    tNode.setLocalPosition(Vector3.add(parent.getWorldPosition(), offset));
+                    Vector3 offset = new Vector3(0f, (float)(4 * APRIL_TAG_SCALE_M), 0f);
+                    tNode.setWorldPosition(Vector3.add(parent.getWorldPosition(), offset));
                     tNode.setRenderable(viewRenderable);
                 })
                 .exceptionally(
