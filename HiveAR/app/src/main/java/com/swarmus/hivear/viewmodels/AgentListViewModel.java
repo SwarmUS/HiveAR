@@ -26,6 +26,11 @@ public class AgentListViewModel extends ViewModel {
         allAgentsMsgStorerMutableData = new MutableLiveData<>(allProtoMsgStorer);
     }
 
+    public void clearAgentList() {
+        agentList.setValue(new ArrayList<>());
+        allProtoMsgStorer.clear();
+    }
+
     public void setLocalSwarmAgentViewModel(LocalSwarmAgentViewModel localSwarmAgentViewModel) {
         this.localSwarmAgentViewModel = localSwarmAgentViewModel;
     }

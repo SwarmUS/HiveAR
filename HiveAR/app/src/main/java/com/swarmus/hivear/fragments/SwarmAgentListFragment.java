@@ -9,8 +9,11 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.swarmus.hivear.R;
+import com.swarmus.hivear.activities.MainActivity;
 import com.swarmus.hivear.adapters.ViewAgentListAdapter;
+import com.swarmus.hivear.commands.UpdateAgentsList;
 import com.swarmus.hivear.viewmodels.AgentListViewModel;
 
 public class SwarmAgentListFragment extends Fragment {
@@ -24,6 +27,12 @@ public class SwarmAgentListFragment extends Fragment {
         updateAgentListView(view);
         AgentListViewModel agentListViewModel = new ViewModelProvider(requireActivity()).get(AgentListViewModel.class);
         agentListViewModel.getAgentList().observe(requireActivity(), agents -> updateAgentListView(view));
+
+        FloatingActionButton updateAgentsListButton = view.findViewById(R.id.updateAgentList);
+        UpdateAgentsList updateAgentsList = new UpdateAgentsList();
+        updateAgentsListButton.setOnClickListener(v -> {
+            ((MainActivity)requireActivity()).sendCommand(updateAgentsList);
+        });
 
         return view;
     }
