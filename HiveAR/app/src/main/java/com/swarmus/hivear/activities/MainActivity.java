@@ -94,7 +94,6 @@ public class MainActivity extends AppCompatActivity {
         maybeEnableAr(); // Hide AR tab if not possible to do AR
         setUpNavigation();
         setUpCommmunication();
-        updateAgents();
     }
 
     @Override
@@ -221,6 +220,10 @@ public class MainActivity extends AppCompatActivity {
         agentListViewModel.setLocalSwarmAgentViewModel(localSwarmAgentViewModel);
 
         protoMsgViewModel = new ViewModelProvider(this).get(ProtoMsgViewModel.class);
+        registerDefaultProtoMsgStorers();
+    }
+
+    private void registerDefaultProtoMsgStorers() {
         // Register all agents logging filter first
         protoMsgViewModel.registerNewProtoMsgStorer(agentListViewModel.getProtoMsgStorer().getValue());
         // Register local logging second
@@ -311,6 +314,7 @@ public class MainActivity extends AppCompatActivity {
         TcpSettingsViewModel tcpSettingsViewModel = new ViewModelProvider(this).get(TcpSettingsViewModel.class);
         final Observer<String> ipAddressObserver = s -> ((TCPDeviceServer)tcpDevice).setServerAddress(s);
         tcpSettingsViewModel.getIpAddress().observe(this, ipAddressObserver);
+        tcpSettingsViewModel.setIpAddress(ip);
 
         final Observer<Integer> portObserver = p -> ((TCPDeviceServer)tcpDevice).setServerPort(p);
         tcpSettingsViewModel.getPort().observe(this, portObserver);
@@ -475,9 +479,34 @@ public class MainActivity extends AppCompatActivity {
                                 default:
                                     break;
                             }
+                        } else if (msg.getResponse().hasHivemindHost()) {
+                            switch (msg.getResponse().getHivemindHost().getResponseCase()) {
+                                case AGENTS_LIST:
+                                    // If we get a response, remove all previous entries and use the new ones
+                                    agentListViewModel.clearAgentList();
+                                    protoMsgViewModel.clearProtoMsgStorers();
+                                    registerDefaultProtoMsgStorers();
+
+                                    List<Integer> agentsList =
+                                            msg.getResponse().getHivemindHost().getAgentsList().getAgentsList();
+                                    for (int agentId : agentsList) {
+                                        // Register new agent
+                                        Agent agent =
+                                                new Agent("Agent #" + Integer.toString(agentId), agentId);
+                                        agentListViewModel.addAgent(agent);
+                                        protoMsgViewModel.registerNewProtoMsgStorer(agent.getProtoMsgStorer());
+
+                                        // Fetch agent commands
+                                        sendCommand(new FetchAgentCommands(agentId, false));
+                                        sendCommand(new FetchAgentCommands(agentId, true));
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
                         }
                     } else if(msg.hasGreeting()) {
-                        int agentID = msg.getGreeting().getId();
+                        int agentID = msg.getGreeting().getAgentId();
                         localSwarmAgentViewModel.setLocalSwarmAgentID(agentID);
                         // Ask what buzz functions are exposed to device
                         FetchAgentCommands fetchLocalBuzzCommands = new FetchAgentCommands(agentID, true);
@@ -568,19 +597,6 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    // TODO update when new details will be available
-    private void updateAgents()
-    {
-        // TODO Retrieve all agents in the swarm
-        Agent agent1 = new Agent("pioneer_0", 1);
-        agentListViewModel.addAgent(agent1);
-        protoMsgViewModel.registerNewProtoMsgStorer(agent1.getProtoMsgStorer());
-
-        Agent agent2 = new Agent("pioneer_1", 2);
-        agentListViewModel.addAgent(agent2);
-        protoMsgViewModel.registerNewProtoMsgStorer(agent2.getProtoMsgStorer());
-    }
-
     public CommunicationDevice getCurrentCommunicationDevice() {return currentCommunicationDevice;}
 
     public void switchCurrentCommunicationDevice() {
@@ -641,7 +657,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void sendGreet() {
         MessageOuterClass.Greeting greeting = MessageOuterClass.Greeting.newBuilder()
-                .setId(0) // TEMP
+                .setAgentId(0) // TEMP
                 .build();
 
         MessageOuterClass.Message msg = MessageOuterClass.Message.newBuilder()

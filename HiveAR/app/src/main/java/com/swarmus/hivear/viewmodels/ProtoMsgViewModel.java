@@ -44,6 +44,12 @@ public class ProtoMsgViewModel extends ViewModel {
         allProtoMsgStorer.setValue(protoMsgStorers);
     }
 
+    public void clearProtoMsgStorers() {
+        clearLogs();
+        allProtoMsgStorer.setValue(new ArrayList<>());
+        currentProtoMsgStorer.setValue(null);
+    }
+
     public LiveData<List<ProtoMsgStorer>> getProtoMsgStorerList() {return allProtoMsgStorer;}
 
     public LiveData<ProtoMsgStorer> getCurrentProtoMsgStorer() {
