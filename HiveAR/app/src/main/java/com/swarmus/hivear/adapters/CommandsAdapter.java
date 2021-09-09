@@ -126,9 +126,9 @@ public class CommandsAdapter extends RecyclerView.Adapter<CommandsAdapter.Comman
             EditText argInput = argViewBinding.getRoot().findViewById(R.id.command_argument_value);
 
             if (arg.getArgumentType().equals(Integer.class)) {
-                argInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+                argInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
             } else if (arg.getArgumentType().equals(Float.class)) {
-                argInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+                argInput.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_NUMBER_FLAG_SIGNED);
             } else {
                 continue;
             }

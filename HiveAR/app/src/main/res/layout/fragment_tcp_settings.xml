@@ -12,30 +12,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/IPTextInputLayout"
+        <TextView
+            android:id="@+id/IPText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/IPTextInputEditText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/ip_address"
-                android:inputType="number|numberDecimal"
-                android:digits="0123456789."
-                android:imeOptions="actionNext"
-                android:autofillHints="XXX.XXX.XXX.XXX"/>
-        </com.google.android.material.textfield.TextInputLayout>
+            app:layout_constraintTop_toTopOf="parent"/>
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/IPTextInputLayout">
+            app:layout_constraintTop_toBottomOf="@+id/IPText">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/PortTextInputEditText"
