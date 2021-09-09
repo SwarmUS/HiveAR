@@ -7,6 +7,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -33,52 +34,10 @@ public class TcpSettingsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_tcp_settings, container, false);
 
         tcpSettingsViewModel = new ViewModelProvider(requireActivity(), new ViewModelProvider.NewInstanceFactory()).get(TcpSettingsViewModel.class);
-        TextInputEditText ipInputEditText = view.findViewById(R.id.IPTextInputEditText);
+        TextView ipText = view.findViewById(R.id.IPText);
 
-        if (ipInputEditText != null) {
-            // IP text input filtering
-            InputFilter[] filters = new InputFilter[1];
-            filters[0] = (source, start, end, dest, dstart, dend) -> {
-                if (end > start) {
-                    String destTxt = dest.toString();
-                    String resultingTxt = destTxt.substring(0, dstart)
-                            + source.subSequence(start, end)
-                            + destTxt.substring(dend);
-                    if (!resultingTxt
-                            .matches("^\\d{1,3}(\\.(\\d{1,3}(\\.(\\d{1,3}(\\.(\\d{1,3})?)?)?)?)?)?")) {
-                        return "";
-                    } else {
-                        String[] splits = resultingTxt.split("\\.");
-                        for (String split : splits) {
-                            if (Integer.parseInt(split) > 255) {
-                                return "";
-                            }
-                        }
-                    }
-                }
-                return null;
-            };
-            ipInputEditText.setFilters(filters);
-
-            ipInputEditText.setText(ip);
-
-            ipInputEditText.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
-
-                @Override
-                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
-
-                @Override
-                public void afterTextChanged(Editable editable) {
-                    tcpSettingsViewModel.setIpAddress(
-                            Objects.requireNonNull(ipInputEditText.getText()).toString());
-                }
-            });
-
-            ipInputEditText.setOnFocusChangeListener((view1, b) -> {
-                if (b) {ipInputEditText.setSelection(ipInputEditText.getText().length());}
-            });
+        if (ipText != null) {
+            ipText.setText(ip);
         }
 
         TextInputEditText portInputEditText = view.findViewById(R.id.PortTextInputEditText);
