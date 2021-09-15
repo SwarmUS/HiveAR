@@ -41,4 +41,9 @@
     <string name="delete_config">Delete Config</string>
     <string name="agent_board_id">Agent/Board ID</string>
     <string name="last_commands_sent">Last commands sent:</string>
+    <string name="network_emitter">Network Emitter</string>
+    <string name="network_receiver">Network Receiver</string>
+    <string name="network_password">Network Password</string>
+    <string name="network_ssid">Network SSID</string>
+    <string name="configure_hiveboard">Configure HiveBoard</string>
 </resources>
