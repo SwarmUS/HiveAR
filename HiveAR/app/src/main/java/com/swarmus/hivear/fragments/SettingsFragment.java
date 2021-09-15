@@ -20,6 +20,7 @@ import com.swarmus.hivear.viewmodels.AgentListViewModel;
 
 public class SettingsFragment extends Fragment {
 
+    public static final String TAB_TITLE = "April Tags";
     LinearLayout layoutList;
     AgentListViewModel agentListViewModel;
     private static final int EMPTY_ID = -1;
