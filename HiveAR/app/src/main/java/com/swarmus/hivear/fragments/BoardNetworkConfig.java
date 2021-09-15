@@ -11,12 +11,17 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.RadioGroup;
+import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.swarmus.hivear.R;
+import com.swarmus.hivear.activities.MainActivity;
+import com.swarmus.hivear.commands.SendNetworkConfigComand;
 import com.swarmus.hivear.viewmodels.AgentListViewModel;
 import com.swarmus.hivear.viewmodels.BoardNetworkConfigViewModel;
+import com.swarmus.hivear.viewmodels.LocalSwarmAgentViewModel;
 
 public class BoardNetworkConfig extends Fragment {
     public static final String TAB_TITLE = "Board Network";
@@ -38,6 +43,7 @@ public class BoardNetworkConfig extends Fragment {
         TextInputEditText ssidInput = v.findViewById(R.id.networkSSIDInputField);
         TextInputEditText pswdInput = v.findViewById(R.id.networkPSWDInputField);
         RadioGroup networkRole = v.findViewById(R.id.networkRole);
+        CheckBox isNetworkMesh = v.findViewById(R.id.isNetworkMesh);
 
         if (ssidInput != null)
         {
@@ -83,7 +89,8 @@ public class BoardNetworkConfig extends Fragment {
             if (configureBoardButton == null ||
                     ssidInput == null ||
                     pswdInput == null ||
-                    networkRole == null)
+                    networkRole == null ||
+                    isNetworkMesh == null)
             {
                 return;
             }
@@ -103,7 +110,33 @@ public class BoardNetworkConfig extends Fragment {
             if (!ssid.isEmpty())
             {
                 // send to board
-                boolean isReceiver = networkRole.getCheckedRadioButtonId() == R.id.isReceiver;
+                boolean isEmitter = networkRole.getCheckedRadioButtonId() == R.id.isEmitter;
+
+                LocalSwarmAgentViewModel localSwarmAgentViewModel =
+                        new ViewModelProvider(requireActivity()).get(LocalSwarmAgentViewModel.class);
+
+                int localId = localSwarmAgentViewModel.getLocalSwarmAgentID().getValue();
+                // If invalid, don't send
+                if (localId != LocalSwarmAgentViewModel.DEFAULT_SWARM_AGENT_ID)
+                {
+                    SendNetworkConfigComand sendNetworkConfigComand = new SendNetworkConfigComand(
+                            localSwarmAgentViewModel.getLocalSwarmAgentID().getValue(),
+                            ssid,
+                            pswd,
+                            isEmitter,
+                            isNetworkMesh.isChecked());
+
+                    ((MainActivity)requireActivity()).sendCommand(sendNetworkConfigComand);
+                }
+                else
+                {
+                    Toast.makeText(requireContext(), "Board not identified, couldn't send config", Toast.LENGTH_SHORT).show();
+                }
+
+            }
+            else
+            {
+                Toast.makeText(requireContext(), "Need at least an SSID to configure", Toast.LENGTH_SHORT).show();
             }
         });
 

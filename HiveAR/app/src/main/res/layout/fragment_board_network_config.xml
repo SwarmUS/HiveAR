@@ -59,6 +59,15 @@
             android:paddingEnd="10dp"/>
     </RadioGroup>
 
+    <CheckBox
+        android:id="@+id/isNetworkMesh"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="10dp"
+        android:text="@string/use_as_mesh_network"
+        android:textSize="16sp"
+        android:checked="false"/>
+
     <Button
         android:id="@+id/configureBoardNetwork"
         android:layout_width="wrap_content"
