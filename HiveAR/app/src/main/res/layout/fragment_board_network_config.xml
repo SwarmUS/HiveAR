@@ -33,31 +33,14 @@
             android:inputType="textShortMessage" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <RadioGroup
-        android:id="@+id/networkRole"
-        android:layout_width="match_parent"
+    <CheckBox
+        android:id="@+id/isRouter"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <RadioButton
-            android:id="@+id/isEmitter"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/network_emitter"
-            android:textSize="16sp"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"
-            android:checked="true"/>
-
-        <RadioButton
-            android:id="@+id/isReceiver"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/network_receiver"
-            android:textSize="16sp"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp"/>
-    </RadioGroup>
+        android:paddingStart="10dp"
+        android:text="@string/is_routor_there_should_only_be_one_"
+        android:textSize="16sp"
+        android:checked="false"/>
 
     <CheckBox
         android:id="@+id/isNetworkMesh"

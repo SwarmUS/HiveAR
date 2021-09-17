@@ -42,7 +42,7 @@ public class BoardNetworkConfig extends Fragment {
         Button configureBoardButton = v.findViewById(R.id.configureBoardNetwork);
         TextInputEditText ssidInput = v.findViewById(R.id.networkSSIDInputField);
         TextInputEditText pswdInput = v.findViewById(R.id.networkPSWDInputField);
-        RadioGroup networkRole = v.findViewById(R.id.networkRole);
+        CheckBox isRouter = v.findViewById(R.id.isRouter);
         CheckBox isNetworkMesh = v.findViewById(R.id.isNetworkMesh);
 
         if (ssidInput != null)
@@ -89,7 +89,7 @@ public class BoardNetworkConfig extends Fragment {
             if (configureBoardButton == null ||
                     ssidInput == null ||
                     pswdInput == null ||
-                    networkRole == null ||
+                    isRouter == null ||
                     isNetworkMesh == null)
             {
                 return;
@@ -109,9 +109,6 @@ public class BoardNetworkConfig extends Fragment {
 
             if (!ssid.isEmpty())
             {
-                // send to board
-                boolean isEmitter = networkRole.getCheckedRadioButtonId() == R.id.isEmitter;
-
                 LocalSwarmAgentViewModel localSwarmAgentViewModel =
                         new ViewModelProvider(requireActivity()).get(LocalSwarmAgentViewModel.class);
 
@@ -123,7 +120,7 @@ public class BoardNetworkConfig extends Fragment {
                             localSwarmAgentViewModel.getLocalSwarmAgentID().getValue(),
                             ssid,
                             pswd,
-                            isEmitter,
+                            isRouter.isChecked(),
                             isNetworkMesh.isChecked());
 
                     ((MainActivity)requireActivity()).sendCommand(sendNetworkConfigComand);

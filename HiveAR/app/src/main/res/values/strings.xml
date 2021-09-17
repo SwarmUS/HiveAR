@@ -46,7 +46,6 @@
     <string name="network_password">Network Password</string>
     <string name="network_ssid">Network SSID</string>
     <string name="configure_hiveboard">Configure HiveBoard</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="use_as_mesh_network">Use as Mesh Network</string>
+    <string name="is_routor_there_should_only_be_one_">Is Routor (There should only be one)</string>
 </resources>
