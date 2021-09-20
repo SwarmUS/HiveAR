@@ -20,8 +20,10 @@ jobs:
           distribution: 'adopt'
       - name: Validate Gradle wrapper
         uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b
+      - name: Checkout pheromone
+        run: git submodule update --init
       - name: Build with Gradle
-        run: HiveAR/gradlew.bat build --stacktrace
+        run: HiveAR/gradlew.bat assembleDebug --stacktrace
       - name : Upload APK
         uses: actions/upload-artifact@v2
         with:
