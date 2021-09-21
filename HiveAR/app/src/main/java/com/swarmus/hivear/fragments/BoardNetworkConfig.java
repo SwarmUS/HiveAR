@@ -80,7 +80,7 @@ public class BoardNetworkConfig extends Fragment {
                 }
             });
 
-            pswdInput.setText(boardNetworkConfigViewModel.getNetworkSSID().getValue());
+            pswdInput.setText(boardNetworkConfigViewModel.getNetworkPSWD().getValue());
         }
 
         configureBoardButton.setOnClickListener(view -> {
