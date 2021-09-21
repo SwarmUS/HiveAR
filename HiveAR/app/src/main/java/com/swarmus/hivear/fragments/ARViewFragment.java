@@ -18,6 +18,8 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.ar.core.Anchor;
+import com.google.ar.core.CameraConfig;
+import com.google.ar.core.CameraConfigFilter;
 import com.google.ar.core.CameraIntrinsics;
 import com.google.ar.core.Config;
 import com.google.ar.core.Frame;
@@ -53,21 +55,23 @@ import com.swarmus.hivear.viewmodels.AgentListViewModel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 public class ARViewFragment extends Fragment {
 
     private static final String TAG = ARViewFragment.class.getName();
-    private static final double APRIL_TAG_SCALE_M = 0.211;
+    private static final double APRIL_TAG_SCALE_M = 0.1; // 10 cm width
 
     private ArFragment arFragment;
     private ModelRenderable arrowRenderable;
     private ModelRenderable xyzRenderable;
     private final static String AR_INDICATOR_NAME = "ARIndicator";
     private final static String AR_INDICATOR_UI = "AR Agent Info";
+    private final static String AR_AGENT_ROOT = "Agent Root";
 
-    private final static double UPDATE_DETECTION_DISTANCE_THRESHOLD = 0.1;
+    private final static double UPDATE_DETECTION_DISTANCE_THRESHOLD = 0.2;
 
     private AgentListViewModel agentListViewModel;
 
@@ -108,7 +112,7 @@ public class ARViewFragment extends Fragment {
         timerHandler.postDelayed(timerRunnable, 1000); // evaluate each second
 
         // Initialize the apriltag detector for family 36h11
-        ApriltagNative.apriltag_init("tag36h11", 1, 2, 0, 16);
+        ApriltagNative.apriltag_init("tag36h11", 3, 2, 0, 16);
 
         initializeRenderables();
     }
@@ -187,9 +191,17 @@ public class ARViewFragment extends Fragment {
                     e.printStackTrace();
                 }
             }
+            CameraConfigFilter filter = new CameraConfigFilter(session);
+            filter.setDepthSensorUsage(EnumSet.of(CameraConfig.DepthSensorUsage.DO_NOT_USE));
+            filter.setTargetFps(EnumSet.of(CameraConfig.TargetFps.TARGET_FPS_30));
+            filter.setFacingDirection(CameraConfig.FacingDirection.BACK);
+            // Set configuration that matches the filter
+            session.setCameraConfig(session.getSupportedCameraConfigs(filter).get(0));
             Config config = new Config(session);
             config.setUpdateMode(Config.UpdateMode.LATEST_CAMERA_IMAGE);
             config.setFocusMode(Config.FocusMode.AUTO);
+            config.setDepthMode(Config.DepthMode.DISABLED);
+            config.setInstantPlacementMode(Config.InstantPlacementMode.DISABLED);
             config.setPlaneFindingMode(Config.PlaneFindingMode.HORIZONTAL);
             config.setLightEstimationMode(Config.LightEstimationMode.DISABLED);
             session.configure(config);
@@ -311,6 +323,7 @@ public class ARViewFragment extends Fragment {
                 node = new AnchorNode(anchor);
                 node.setName(debugIdName);
                 node.setRenderable(xyzRenderable);
+                node.setParent(arFragment.getArSceneView().getScene());
             } else {
                 node = (AnchorNode) n;
             }
@@ -371,61 +384,64 @@ public class ARViewFragment extends Fragment {
     }
 
     private void initARIndicator(AnchorNode parent, Agent agent) {
-        AlwaysStraightNode indicatorNode = new AlwaysStraightNode(arFragment.getTransformationSystem());
+        TransformableNode arAgentRootNode = new TransformableNode(arFragment.getTransformationSystem());
+        arAgentRootNode.setName(AR_AGENT_ROOT);
+        arAgentRootNode.getRotationController().setEnabled(false);
+        arAgentRootNode.getTranslationController().setEnabled(false);
+        arAgentRootNode.setParent(parent);
+        AlwaysStraightNode indicatorNode = new AlwaysStraightNode();
         indicatorNode.setRenderable(arrowRenderable);
         indicatorNode.setName(AR_INDICATOR_NAME);
         indicatorNode.setLocalPosition(new Vector3(0f, (float)(APRIL_TAG_SCALE_M / 2), 0f));
-        indicatorNode.setParent(parent);
+        indicatorNode.setParent(arAgentRootNode);
         indicatorNode.setOnTouchListener((hitTestResult, motionEvent) -> {
-            selectAgentFromAR(indicatorNode, agent.getUid());
+            selectAgentFromAR(arAgentRootNode, agent);
             return false;
         });
 
-        TransformableNode uiNode = new CameraFacingNode(arFragment.getTransformationSystem(),
-                arFragment.getArSceneView().getScene().getCamera());
-        setAgentARInfoRenderable(uiNode, agent, indicatorNode.getLocalPosition(), indicatorNode.getLocalRotation());
-        uiNode.setParent(parent);
+        CameraFacingNode uiNode = new CameraFacingNode(arFragment.getArSceneView().getScene().getCamera());
+        setAgentARInfoRenderable(uiNode, arAgentRootNode, agent);
+        uiNode.setName(AR_INDICATOR_UI);
+        uiNode.setParent(arAgentRootNode);
 
         // At creation, make node selected if none are currently selected
         if (currentSelectedAgent == null) {
-            selectAgentFromAR(indicatorNode, agent.getUid());
+            selectAgentFromAR(arAgentRootNode, agent);
         }
     }
 
-    private Agent selectAgentFromAR(TransformableNode node, int agentUid) {
+    private void selectAgentFromAR(TransformableNode node, Agent agent) {
         selectVisualNode(node);
-        return selectAgentFromUID(agentUid);
+        currentSelectedAgent = agent;
     }
 
     private void selectVisualNode(TransformableNode node) {
         for (Node child : arFragment.getArSceneView().getScene().getChildren()) {
             if (child instanceof AnchorNode) {
-                TransformableNode n = (TransformableNode)child.findByName(AR_INDICATOR_NAME);
-                if (n != null) {
-                    Boolean isSelected = n == node;
-                    ModelRenderable renderableCopy = (ModelRenderable) n.getRenderable().makeCopy();
-                    Color selectedColor = new Color(android.graphics.Color.rgb(isSelected ? 0 : 255, isSelected ? 255 : 0, 0));
-                    renderableCopy.getMaterial().setFloat3("baseColorTint", selectedColor);
-                    n.setRenderable(renderableCopy);
-                    n.select();
+                TransformableNode robotRootNode = (TransformableNode)child.findByName(AR_AGENT_ROOT);
+                if (robotRootNode != null) {
+                    AlwaysStraightNode indicatorNode = (AlwaysStraightNode) robotRootNode.findByName(AR_INDICATOR_NAME);
+                    CameraFacingNode uiNode = (CameraFacingNode)robotRootNode.findByName(AR_INDICATOR_UI);
+                    if (indicatorNode != null && uiNode != null) {
+                        Boolean isSelected = node == robotRootNode;
+                        ModelRenderable renderableCopy = (ModelRenderable) indicatorNode.getRenderable().makeCopy();
+                        Color selectedColor = new Color(android.graphics.Color.rgb(isSelected ? 0 : 255, isSelected ? 255 : 0, 0));
+                        renderableCopy.getMaterial().setFloat3("baseColorTint", selectedColor);
+                        indicatorNode.setRenderable(renderableCopy);
+                        if (isSelected) { arFragment.getTransformationSystem().selectNode(robotRootNode); }
 
-                    // Disable selected visualizer
-                    arFragment.getTransformationSystem().getSelectionVisualizer().removeSelectionVisual(n);
+                        // Disable selected visualizer
+                        arFragment.getTransformationSystem().getSelectionVisualizer().removeSelectionVisual(robotRootNode);
+                    }
                 }
             }
         }
     }
 
-    private Agent selectAgentFromUID(int uid) {
-        Agent agent = agentListViewModel.getAgentFromApriltag(uid);
-        setSelectedAgent(agent);
-        return agent;
-    }
-
-    private void setAgentARInfoRenderable(TransformableNode tNode, Agent agent, Vector3 pos, Quaternion rot)
+    private void setAgentARInfoRenderable(CameraFacingNode tNode, TransformableNode parent, Agent agent)
     {
         ViewRenderable.builder()
-                .setView(requireContext(), R.layout.ar_agent_base_info)
+                .setView(getContext(), R.layout.ar_agent_base_info)
                 .build()
                 .thenAccept(viewRenderable -> {
                     viewRenderable.setShadowCaster(false);
@@ -451,10 +467,13 @@ public class ARViewFragment extends Fragment {
                                 }).show();
                         return true;
                     });
+                    viewRenderable.getView().findViewById(R.id.ar_view_layout).setOnClickListener(view -> {
+                        selectAgentFromAR(parent, agent);
+                    });
                     ((TextView)viewRenderable.getView().findViewById(R.id.agent_ar_name)).setText(agent.getName());
-                    TextView agentTimer = viewRenderable.getView().findViewById(R.id.last_update_timer);
-                    timerTextViews.computeIfPresent(agent, (k, v) -> agentTimer);
-                    timerTextViews.computeIfAbsent(agent, v -> agentTimer);
+                    TextView robotTimer = viewRenderable.getView().findViewById(R.id.last_update_timer);
+                    timerTextViews.computeIfPresent(agent, (k,v) -> robotTimer);
+                    timerTextViews.computeIfAbsent(agent, v -> robotTimer);
 
                     TextView lastCommands = viewRenderable.getView().findViewById(R.id.lastCommands);
                     ProtoMsgStorer lastCommandsStorer = agent.getSentCommandsStorer();
@@ -464,9 +483,8 @@ public class ARViewFragment extends Fragment {
                     });
 
                     // Set in AR
-                    tNode.setName(AR_INDICATOR_UI);
-                    Vector3 offset = new Vector3(0f, 0.4f, 0f);
-                    tNode.setLocalPosition(Vector3.add(pos, offset));
+                    Vector3 offset = new Vector3(0f, (float)(4 * APRIL_TAG_SCALE_M), 0f);
+                    tNode.setWorldPosition(Vector3.add(parent.getWorldPosition(), offset));
                     tNode.setRenderable(viewRenderable);
                 })
                 .exceptionally(
