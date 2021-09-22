@@ -104,7 +104,7 @@ public class BoardNetworkConfig extends Fragment {
             String pswd = "";
             if (pswdInput.getText() != null)
             {
-                pswd = ssidInput.getText().toString();
+                pswd = pswdInput.getText().toString();
             }
 
             if (!ssid.isEmpty())
