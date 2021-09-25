@@ -10,7 +10,7 @@
         android:title="@string/ar"
         android:icon="@android:drawable/ic_menu_camera"/>
     <item
-        android:id="@+id/settingsFragment"
+        android:id="@+id/settingsFragmentTabLayout"
         android:icon="@android:drawable/ic_menu_preferences"
         android:title="@string/Settings" />
 

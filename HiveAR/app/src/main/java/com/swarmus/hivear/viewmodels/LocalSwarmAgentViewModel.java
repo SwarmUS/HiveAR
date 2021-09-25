@@ -22,8 +22,13 @@ public class LocalSwarmAgentViewModel extends CommandListVM {
 
     public LiveData<Integer> getLocalSwarmAgentID() { return swarmAgentID; }
 
-    public void setLocalSwarmAgentID(int id) {
-        swarmAgentID.setValue(id);
+    public void setLocalSwarmAgentID(int id, boolean fromMainThread) {
+        if (fromMainThread) {
+            swarmAgentID.setValue(id);
+        }
+        else {
+            swarmAgentID.postValue(id);
+        }
         // Erase last storer on new id associated to local agent
         protoMsgStorer = new ProtoMsgStorer(STORER_MAX_CAPACITY, LOCAL_STORER_NAME, id);
     }

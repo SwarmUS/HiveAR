@@ -40,9 +40,9 @@
             app:destination="@id/commandTabs" />
     </fragment>
     <fragment
-        android:id="@+id/settingsFragment"
-        android:name="com.swarmus.hivear.fragments.SettingsFragment"
-        android:label="fragment_settings"
-        tools:layout="@layout/fragment_settings" >
+        android:id="@+id/settingsFragmentTabLayout"
+        android:name="com.swarmus.hivear.fragments.SettingsTabLayout"
+        android:label="settings_tab_layout"
+        tools:layout="@layout/fragment_settings_tab_layout" >
     </fragment>
 </navigation>

@@ -395,7 +395,9 @@ public class MainActivity extends AppCompatActivity {
         public void onDisconnect() {
             Log.d(TAG, "End of Connection");
             currentCommunicationDevice.broadCastConnectionStatus(ConnectionStatus.notConnected);
-            localSwarmAgentViewModel.setLocalSwarmAgentID(LocalSwarmAgentViewModel.DEFAULT_SWARM_AGENT_ID);
+            localSwarmAgentViewModel.setLocalSwarmAgentID(
+                    LocalSwarmAgentViewModel.DEFAULT_SWARM_AGENT_ID,
+                    false);
         }
 
         @Override
@@ -507,7 +509,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     } else if(msg.hasGreeting()) {
                         int agentID = msg.getGreeting().getAgentId();
-                        localSwarmAgentViewModel.setLocalSwarmAgentID(agentID);
+                        localSwarmAgentViewModel.setLocalSwarmAgentID(agentID, true);
                         // Ask what buzz functions are exposed to device
                         FetchAgentCommands fetchLocalBuzzCommands = new FetchAgentCommands(agentID, true);
                         sendCommand(fetchLocalBuzzCommands);
