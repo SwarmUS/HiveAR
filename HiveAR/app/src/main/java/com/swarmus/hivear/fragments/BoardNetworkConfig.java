@@ -25,7 +25,9 @@ import com.swarmus.hivear.viewmodels.LocalSwarmAgentViewModel;
 
 public class BoardNetworkConfig extends Fragment {
     public static final String TAB_TITLE = "Board Network";
-    BoardNetworkConfigViewModel boardNetworkConfigViewModel;
+    private BoardNetworkConfigViewModel boardNetworkConfigViewModel;
+
+    private static final int PASSWORD_MIN_LENGTH = 8;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -99,41 +101,43 @@ public class BoardNetworkConfig extends Fragment {
             if (ssidInput.getText() != null)
             {
                 ssid = ssidInput.getText().toString();
+                if (ssid == null || ssid.isEmpty()) {
+                    Toast.makeText(requireContext(), "Need at least an SSID to configure", Toast.LENGTH_SHORT).show();
+                    return;
+                }
             }
 
             String pswd = "";
             if (pswdInput.getText() != null)
             {
                 pswd = pswdInput.getText().toString();
+                if (pswd == null || pswd.isEmpty() || pswd.length() < PASSWORD_MIN_LENGTH) {
+                    Toast.makeText(requireContext(),
+                            String.format("Password must contains at least %d characters", PASSWORD_MIN_LENGTH),
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
             }
 
-            if (!ssid.isEmpty())
+            LocalSwarmAgentViewModel localSwarmAgentViewModel =
+                    new ViewModelProvider(requireActivity()).get(LocalSwarmAgentViewModel.class);
+
+            int localId = localSwarmAgentViewModel.getLocalSwarmAgentID().getValue();
+            // If invalid, don't send
+            if (localId != LocalSwarmAgentViewModel.DEFAULT_SWARM_AGENT_ID)
             {
-                LocalSwarmAgentViewModel localSwarmAgentViewModel =
-                        new ViewModelProvider(requireActivity()).get(LocalSwarmAgentViewModel.class);
+                SendNetworkConfigComand sendNetworkConfigComand = new SendNetworkConfigComand(
+                        localSwarmAgentViewModel.getLocalSwarmAgentID().getValue(),
+                        ssid,
+                        pswd,
+                        isRouter.isChecked(),
+                        isNetworkMesh.isChecked());
 
-                int localId = localSwarmAgentViewModel.getLocalSwarmAgentID().getValue();
-                // If invalid, don't send
-                if (localId != LocalSwarmAgentViewModel.DEFAULT_SWARM_AGENT_ID)
-                {
-                    SendNetworkConfigComand sendNetworkConfigComand = new SendNetworkConfigComand(
-                            localSwarmAgentViewModel.getLocalSwarmAgentID().getValue(),
-                            ssid,
-                            pswd,
-                            isRouter.isChecked(),
-                            isNetworkMesh.isChecked());
-
-                    ((MainActivity)requireActivity()).sendCommand(sendNetworkConfigComand);
-                }
-                else
-                {
-                    Toast.makeText(requireContext(), "Board not identified, couldn't send config", Toast.LENGTH_SHORT).show();
-                }
-
+                ((MainActivity)requireActivity()).sendCommand(sendNetworkConfigComand);
             }
             else
             {
-                Toast.makeText(requireContext(), "Need at least an SSID to configure", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), "Board not identified, couldn't send config", Toast.LENGTH_SHORT).show();
             }
         });
 

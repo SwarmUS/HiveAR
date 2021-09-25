@@ -43,7 +43,7 @@
     <string name="last_commands_sent">Last commands sent:</string>
     <string name="network_emitter">Network Emitter</string>
     <string name="network_receiver">Network Receiver</string>
-    <string name="network_password">Network Password</string>
+    <string name="network_password">Network Password (min. 8 characters)</string>
     <string name="network_ssid">Network SSID</string>
     <string name="configure_hiveboard">Configure HiveBoard</string>
     <string name="use_as_mesh_network">Use as Mesh Network</string>
