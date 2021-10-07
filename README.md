@@ -50,7 +50,7 @@ In order to be able to connect to a server running in the emulator, you will nee
 ```bash
 telnet localhost 5554
 auth <TOKEN>
-redir tcp:<SYSTEM_PORT>:<EMULATOR_PORT>
+redir add tcp:<SYSTEM_PORT>:<EMULATOR_PORT>
 ```
 This will route any packet sent to the host's TCP port SYSTEM_PORT to TCP port EMULATOR_PORT of the emulated android device.
 
