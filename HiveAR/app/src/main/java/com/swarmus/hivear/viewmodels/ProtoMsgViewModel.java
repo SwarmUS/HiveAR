@@ -65,7 +65,7 @@ public class ProtoMsgViewModel extends ViewModel {
     }
 
     public void clearLogs() {
-        if (currentProtoMsgStorer != null) {
+        if (currentProtoMsgStorer != null && currentProtoMsgStorer.getValue() != null) {
             currentProtoMsgStorer.getValue().clear();
         }
     }
