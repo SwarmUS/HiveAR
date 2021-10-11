@@ -29,7 +29,7 @@
             android:text="@={function_arg.value}"
             android:textSize="16sp"
             android:importantForAutofill="no"
-            android:textAlignment="textEnd"/>
+            android:textAlignment="center"/>
 
     </LinearLayout>
 </layout>
