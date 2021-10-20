@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -42,6 +43,8 @@ public class ConnectionViewFragment extends Fragment {
     private ProtoMsgViewModel protoMsgViewModel;
     private TextView dataReceived;
 
+    private CheckBox detailedLogsCB;
+
     private static final int MSG_LOGGING_LENGTH = 10;
     private boolean isInfoVisible = false;
 
@@ -51,6 +54,7 @@ public class ConnectionViewFragment extends Fragment {
 
         protoMsgViewModel = new ViewModelProvider(requireActivity()).get(ProtoMsgViewModel.class);
         dataReceived = view.findViewById(R.id.dataReceived);
+        detailedLogsCB = view.findViewById(R.id.detailedLogs);
 
         return view;
     }
@@ -75,6 +79,10 @@ public class ConnectionViewFragment extends Fragment {
     private void initButtonCallbacks() {
         getView().findViewById(R.id.hide_ui).setOnClickListener(v -> {
             expandUI(!isInfoVisible);
+        });
+
+        detailedLogsCB.setOnCheckedChangeListener((compoundButton, checked) -> {
+            filterChanged();
         });
 
         getView().findViewById(R.id.clean_text).setOnClickListener(v -> {
@@ -134,18 +142,21 @@ public class ConnectionViewFragment extends Fragment {
 
     private void initLoggerTextView() {
         dataReceived.setMovementMethod(new ScrollingMovementMethod());
-        dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(MSG_LOGGING_LENGTH));
+        dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(
+                MSG_LOGGING_LENGTH, detailedLogsCB.isChecked()));
         // Align text correctly on change logging filter
         protoMsgViewModel.getCurrentProtoMsgStorer().observe(getViewLifecycleOwner(), s -> filterChanged());
     }
 
     private void filterChanged() {
         if (protoMsgViewModel.getCurrentProtoMsgStorer().getValue() != null) {
-            dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(MSG_LOGGING_LENGTH));
+            dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(
+                    MSG_LOGGING_LENGTH, detailedLogsCB.isChecked()));
 
             // Align text on new message
             protoMsgViewModel.getCurrentProtoMsgStorer().getValue().addObserver((observable, object) -> {
-                dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(MSG_LOGGING_LENGTH));
+                dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(MSG_LOGGING_LENGTH,
+                        detailedLogsCB.isChecked()));
             });
         }
     }
