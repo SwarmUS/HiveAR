@@ -62,7 +62,7 @@ import java.util.concurrent.TimeUnit;
 public class ARViewFragment extends Fragment {
 
     private static final String TAG = ARViewFragment.class.getName();
-    private static final double APRIL_TAG_SCALE_M = 0.12; // 12 cm width
+    private static final double APRIL_TAG_SCALE_M = 0.112; // 12 cm width
 
     private ArFragment arFragment;
     private ModelRenderable arrowRenderable;
