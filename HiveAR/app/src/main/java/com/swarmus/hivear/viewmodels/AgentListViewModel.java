@@ -22,7 +22,7 @@ public class AgentListViewModel extends ViewModel {
 
     public AgentListViewModel() {
         agentList = new MutableLiveData<>(new ArrayList<>());
-        allProtoMsgStorer = new ProtoMsgStorer(15, "All", ProtoMsgStorer.NO_AGENT_ID);
+        allProtoMsgStorer = new ProtoMsgStorer(30, "All", ProtoMsgStorer.NO_AGENT_ID);
         allAgentsMsgStorerMutableData = new MutableLiveData<>(allProtoMsgStorer);
     }
 
