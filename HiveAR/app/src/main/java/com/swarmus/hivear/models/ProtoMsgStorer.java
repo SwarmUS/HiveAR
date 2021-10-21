@@ -1,6 +1,7 @@
 package com.swarmus.hivear.models;
 
 import com.swarmus.hivear.MessageOuterClass;
+import com.swarmus.hivear.viewmodels.ProtoMsgViewModel;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -45,6 +46,51 @@ public class ProtoMsgStorer extends Observable {
             loggingString += msgQueue.get(i).toString() + "\n";
         }
 
+        return loggingString;
+    }
+
+    public String getLoggingStringShort(int nbToRetrieve) {
+        String loggingString = "";
+
+        nbToRetrieve = Math.min(nbToRetrieve, msgQueue.size());
+        nbToRetrieve = Math.max(nbToRetrieve, 0);
+        for (int i = 0; i < nbToRetrieve; i++) {
+            MessageOuterClass.Message m = msgQueue.get(i);
+            int source = m.getSourceId();
+            int  destination  = m.getDestinationId();
+            String type = "";
+            switch (m.getMessageCase()) {
+                case REQUEST:
+                    type = ProtoMsgViewModel.requestPattern;
+                    break;
+                case RESPONSE:
+                    type = ProtoMsgViewModel.responsePattern;
+                    break;
+                case GREETING:
+                    type = ProtoMsgViewModel.greetingPattern;
+                    break;
+                case VM:
+                    type = ProtoMsgViewModel.vmPattern;
+                    break;
+                case NETWORK:
+                    type = ProtoMsgViewModel.networkPattern;
+                    break;
+                case INTERLOC:
+                    type = ProtoMsgViewModel.interlocPattern;
+                    break;
+                case HIVECONNECT_HIVEMIND:
+                    type = ProtoMsgViewModel.hiveconnectHivemindPattern;
+                    break;
+                case MESSAGE_NOT_SET:
+                    type = ProtoMsgViewModel.nullPattern;
+                    break;
+            }
+
+            loggingString += String.format("%s: from %d to %d.", type, source, destination);
+            if (i != nbToRetrieve - 1) {
+                loggingString += "\n";
+            }
+        }
         return loggingString;
     }
 
