@@ -58,7 +58,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:layout_weight="1"
-                    android:backgroundTint="@color/honeycomb"
+                    android:backgroundTint="@color/custom_push_button"
                     android:singleLine="true"
                     android:text="@string/connect" />
 
@@ -69,7 +69,7 @@
                     android:layout_marginStart="10dp"
                     android:layout_marginEnd="10dp"
                     android:layout_weight="1"
-                    android:backgroundTint="@color/honeycomb"
+                    android:backgroundTint="@color/custom_push_button"
                     android:singleLine="true"
                     android:text="@string/disconnect" />
             </LinearLayout>
@@ -80,6 +80,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="10dp"
                 android:clickable="true"
+                android:backgroundTint="@color/custom_push_button"
                 android:contentDescription="@string/switchcommunicationtype"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -93,7 +94,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
             android:background="@android:drawable/btn_dropdown"
-            android:backgroundTint="@color/honeycomb"
+            android:backgroundTint="@color/custom_push_button"
             android:spinnerMode="dropdown"
             app:layout_constraintHorizontal_bias="0.5"/>
 
@@ -110,6 +111,7 @@
                 android:layout_marginEnd="10dp"
                 android:contentDescription="Hide UI"
                 android:src="@drawable/delete"
+                android:backgroundTint="@color/custom_push_button"
                 app:layout_constraintBottom_toBottomOf="@+id/dataReceived"
                 app:layout_constraintEnd_toEndOf="parent" />
 
@@ -162,6 +164,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
+                android:backgroundTint="@color/custom_push_button"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
@@ -172,6 +175,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
+                android:backgroundTint="@color/custom_push_button"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toEndOf="@id/stopButton"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -181,6 +185,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="10dp"
+                android:backgroundTint="@color/custom_push_button"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/stopButton"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -189,6 +194,7 @@
                 android:id="@+id/stopButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:backgroundTint="@color/custom_push_button"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.5"
@@ -200,6 +206,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="10dp"
+                android:backgroundTint="@color/custom_push_button"
                 app:layout_constraintBottom_toTopOf="@+id/stopButton"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.5"
@@ -214,6 +221,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
         android:layout_marginBottom="10dp"
+        android:backgroundTint="@color/custom_push_button"
         android:contentDescription="Clear Text"
         android:src="@drawable/open_full"
         app:layout_constraintBottom_toBottomOf="parent"

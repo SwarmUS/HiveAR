@@ -55,6 +55,7 @@
         android:id="@+id/configureBoardNetwork"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:backgroundTint="@color/custom_push_button"
         android:text="@string/configure_hiveboard"
         android:layout_gravity="center"/>
 
