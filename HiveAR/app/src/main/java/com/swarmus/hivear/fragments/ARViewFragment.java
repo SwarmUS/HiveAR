@@ -62,7 +62,7 @@ import java.util.concurrent.TimeUnit;
 public class ARViewFragment extends Fragment {
 
     private static final String TAG = ARViewFragment.class.getName();
-    private static final double APRIL_TAG_SCALE_M = 0.1; // 10 cm width
+    private static final double APRIL_TAG_SCALE_M = 0.12; // 12 cm width
 
     private ArFragment arFragment;
     private ModelRenderable arrowRenderable;
@@ -71,7 +71,7 @@ public class ARViewFragment extends Fragment {
     private final static String AR_INDICATOR_UI = "AR Agent Info";
     private final static String AR_AGENT_ROOT = "Agent Root";
 
-    private final static double UPDATE_DETECTION_DISTANCE_THRESHOLD = 0.2;
+    private final static double UPDATE_DETECTION_DISTANCE_THRESHOLD = 1.0;
 
     private AgentListViewModel agentListViewModel;
 
@@ -112,7 +112,7 @@ public class ARViewFragment extends Fragment {
         timerHandler.postDelayed(timerRunnable, 1000); // evaluate each second
 
         // Initialize the apriltag detector for family 36h11
-        ApriltagNative.apriltag_init("tag36h11", 3, 2, 0, 16);
+        ApriltagNative.apriltag_init("tag36h11", 2, 3, 0, 16);
 
         initializeRenderables();
     }
@@ -269,6 +269,24 @@ public class ARViewFragment extends Fragment {
             if (detections.size() > 0) {
                 Log.i(TAG, "April tag detections count: " + detections.size());
                 for (ApriltagDetection detection : detections) {
+
+                    // Verify that agent is listed in known agents.
+                    if(agentListViewModel.getAgentFromApriltag(detection.id ) == null) {
+                        // If initialized and not showing, show new one
+                        if (currentToast != null && !currentToast.getView().isShown()) {
+                            currentToast.setText("Agent with id " + detection.id + " not registered in current swarm");
+                            currentToast.show();
+                        }
+                        // Initialize if was never created
+                        else {
+                            currentToast = Toast.makeText(requireContext(),
+                                    "Agent with id " + detection.id + " not registered in current swarm",
+                                    Toast.LENGTH_LONG);
+                            currentToast.show();
+                        }
+                        continue;
+                    }
+
                     float[] homogeneous_m = MathUtil.getHomogeneous(ConvertUtil.convertToFloatArray(detection.pose_r), ConvertUtil.convertToFloatArray(detection.pose_t));
 
                     // Change detection left handed CS to right handed CS
@@ -341,19 +359,6 @@ public class ARViewFragment extends Fragment {
     private void addOrUpdateAgentARVisual(@NonNull Frame frame, int id, Pose tagPose) {
         Agent agent = agentListViewModel.getAgentFromApriltag(id);
         if (agent == null) {
-
-            // If initialized and not showing, show new one
-            if (currentToast != null && !currentToast.getView().isShown()) {
-                currentToast.setText("Agent with id " + id + " not registered in current swarm");
-                currentToast.show();
-            }
-            // Initialize if was never created
-            else {
-                currentToast = Toast.makeText(requireContext(),
-                        "Agent with id " + id + " not registered in current swarm",
-                        Toast.LENGTH_LONG);
-                currentToast.show();
-            }
             return;
         }
 
