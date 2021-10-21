@@ -71,7 +71,8 @@ public class ARViewFragment extends Fragment {
     private final static String AR_INDICATOR_UI = "AR Agent Info";
     private final static String AR_AGENT_ROOT = "Agent Root";
 
-    private final static double UPDATE_DETECTION_DISTANCE_THRESHOLD = 1.0;
+    // Will visually update if detected marker is considered outside that range from previous detection
+    private final static double UPDATE_DETECTION_DISTANCE_THRESHOLD = 0.75;
 
     private AgentListViewModel agentListViewModel;
 
@@ -281,7 +282,7 @@ public class ARViewFragment extends Fragment {
                         else {
                             currentToast = Toast.makeText(requireContext(),
                                     "Agent with id " + detection.id + " not registered in current swarm",
-                                    Toast.LENGTH_LONG);
+                                    Toast.LENGTH_SHORT);
                             currentToast.show();
                         }
                         continue;
@@ -393,6 +394,9 @@ public class ARViewFragment extends Fragment {
         arAgentRootNode.setName(AR_AGENT_ROOT);
         arAgentRootNode.getRotationController().setEnabled(false);
         arAgentRootNode.getTranslationController().setEnabled(false);
+        arAgentRootNode.getScaleController().setMinScale(0.5f);
+        arAgentRootNode.getScaleController().setMaxScale(1.5f);
+        arAgentRootNode.setLocalScale(new Vector3(0.75f, 0.75f, 0.75f));
         arAgentRootNode.setParent(parent);
         AlwaysStraightNode indicatorNode = new AlwaysStraightNode();
         indicatorNode.setRenderable(arrowRenderable);
