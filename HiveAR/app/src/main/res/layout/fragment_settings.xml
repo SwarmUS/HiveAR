@@ -62,6 +62,7 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="10dp"
         android:layout_marginBottom="10dp"
+        android:backgroundTint="@color/custom_push_button"
         android:contentDescription="@string/add_configuration"
         android:src="@drawable/baseline_library_add_24"
         app:layout_constraintBottom_toBottomOf="parent"
