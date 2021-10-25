@@ -23,7 +23,14 @@ import com.swarmus.hivear.viewmodels.AgentBuzzCommandsVM;
 import com.swarmus.hivear.viewmodels.AgentCommandsVM;
 import com.swarmus.hivear.viewmodels.AgentListViewModel;
 
+import java.util.Observer;
+
 public class AgentDetailsViewFragment extends Fragment {
+    private AgentCommandsVM agentCommandsVM;
+    private AgentBuzzCommandsVM agentBuzzCommandsVM;
+    private Agent agent;
+    private Observer agentCommandObserver;
+    private Observer agentBuzzCommandObserver;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -57,17 +64,19 @@ public class AgentDetailsViewFragment extends Fragment {
             CommandViewPagerAdapter commandViewPagerAdapter = new CommandViewPagerAdapter(getChildFragmentManager());
 
             AgentListViewModel agentListViewModel = new ViewModelProvider(requireActivity()).get(AgentListViewModel.class);
-            Agent agent = agentListViewModel.getAgentFromList(args.getUid());
+            agent = agentListViewModel.getAgentFromList(args.getUid());
 
-            AgentCommandsVM agentCommandsVM = new ViewModelProvider(requireActivity()).get(AgentCommandsVM.class);
-            AgentBuzzCommandsVM agentBuzzCommandsVM = new ViewModelProvider(requireActivity()).get(AgentBuzzCommandsVM.class);
+            agentCommandsVM = new ViewModelProvider(requireActivity()).get(AgentCommandsVM.class);
+            agentBuzzCommandsVM = new ViewModelProvider(requireActivity()).get(AgentBuzzCommandsVM.class);
 
             // Bind current agent's function to view functions
             agentCommandsVM.setList(agent.getCommands());
-            agent.addObserver((observable, o) -> agentCommandsVM.setList(agent.getCommands()));
+            agentCommandObserver = (observable, o) -> agentCommandsVM.setList(agent.getCommands());
+            agent.getCommands().addObserver(agentCommandObserver);
 
             agentBuzzCommandsVM.setList(agent.getBuzzCommands());
-            agent.getCommands().addObserver(((observable, o) -> agentBuzzCommandsVM.setList(agent.getBuzzCommands())));
+            agentBuzzCommandObserver = (observable, o) -> agentCommandsVM.setList(agent.getBuzzCommands());
+            agent.getCommands().addObserver(agentBuzzCommandObserver);
 
             commandViewPagerAdapter.addFragment(new CommandList(agentCommandsVM,
                             agent.getUid()),
@@ -80,5 +89,14 @@ public class AgentDetailsViewFragment extends Fragment {
             viewPager.setAdapter(commandViewPagerAdapter);
             tabLayout.setupWithViewPager(viewPager);
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        agent.deleteObserver(agentCommandObserver);
+        agent.deleteObserver(agentBuzzCommandObserver);
+        agentCommandsVM.removeAllFunctions();
+        agentBuzzCommandsVM.removeAllFunctions();
     }
 }
