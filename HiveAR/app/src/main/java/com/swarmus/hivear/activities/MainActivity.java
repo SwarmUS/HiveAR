@@ -218,7 +218,6 @@ public class MainActivity extends AppCompatActivity {
 
         agentListViewModel = new ViewModelProvider(this).get(AgentListViewModel.class);
         agentListViewModel.setLocalSwarmAgentViewModel(localSwarmAgentViewModel);
-
         protoMsgViewModel = new ViewModelProvider(this).get(ProtoMsgViewModel.class);
         registerDefaultProtoMsgStorers();
     }
@@ -413,11 +412,9 @@ public class MainActivity extends AppCompatActivity {
             if (BROADCAST_PROTO_MSG_RECEIVED.equals(action)) {
                 MessageOuterClass.Message msg;
                 while ((msg = receivedMessages.poll()) != null) {
-                    // For logging purposes
-
-                    agentListViewModel.storeNewMsg(msg);
-
                     if (msg.hasResponse() && localSwarmAgentViewModel.isLocalSwarmAgentInitialized()) {
+                        // For logging purposes
+                        agentListViewModel.storeNewMsg(msg);
                         if (msg.getResponse().hasUserCall()) {
                             switch (msg.getResponse().getUserCall().getResponseCase()) {
                                 case FUNCTION_LIST_LENGTH:
@@ -510,10 +507,16 @@ public class MainActivity extends AppCompatActivity {
                     } else if(msg.hasGreeting()) {
                         int agentID = msg.getGreeting().getAgentId();
                         localSwarmAgentViewModel.setLocalSwarmAgentID(agentID, true);
+
+                        // For logging purposes
+                        agentListViewModel.storeNewMsg(msg);
+
                         // Ask what buzz functions are exposed to device
                         FetchAgentCommands fetchLocalBuzzCommands = new FetchAgentCommands(agentID, true);
                         sendCommand(fetchLocalBuzzCommands);
                     } else if (!localSwarmAgentViewModel.isLocalSwarmAgentInitialized()){ // If receiving data without initialized, send greet again
+                        // For logging purposes
+                        agentListViewModel.storeNewMsg(msg);
                         sendGreet();
                     }
                 }

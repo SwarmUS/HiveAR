@@ -14,7 +14,7 @@ public class ProtoMsgStorer extends Observable {
     private final LinkedList<MessageOuterClass.Message> msgQueue;
     private final int maxCapacity;
     private final String uniqueName; // Used to identify the current ProtoMsgStorer to show
-    private final int agentID;
+    private int agentID;
 
     private static final SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 
@@ -27,12 +27,18 @@ public class ProtoMsgStorer extends Observable {
 
     public int getAgentID() { return agentID; }
 
+    public void setAgentID(int id) {agentID = id;}
+
     // We add element as first of queue to be the first to show. (More useful for logging to see latest received)
     public void addMsg(MessageOuterClass.Message msg) {
         if (msgQueue.size() == maxCapacity) { msgQueue.removeLast(); }
         msgQueue.addFirst(msg);
         setChanged();
         notifyObservers();
+    }
+
+    public LinkedList<MessageOuterClass.Message> getRawMsgs() {
+        return msgQueue == null ? new LinkedList<>() : msgQueue;
     }
 
     public String getLoggingString(int nbToRetrieve) {

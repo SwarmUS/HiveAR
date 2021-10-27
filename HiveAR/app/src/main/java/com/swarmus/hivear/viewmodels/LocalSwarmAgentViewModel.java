@@ -6,7 +6,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.swarmus.hivear.models.ProtoMsgStorer;
 
 public class LocalSwarmAgentViewModel extends CommandListVM {
-    private static final int STORER_MAX_CAPACITY = 5;
+    private static final int STORER_MAX_CAPACITY = 15;
     private static final String LOCAL_STORER_NAME = "Local";
     private MutableLiveData<Integer> swarmAgentID;
     private ProtoMsgStorer protoMsgStorer;
@@ -29,8 +29,12 @@ public class LocalSwarmAgentViewModel extends CommandListVM {
         else {
             swarmAgentID.postValue(id);
         }
-        // Erase last storer on new id associated to local agent
-        protoMsgStorer = new ProtoMsgStorer(STORER_MAX_CAPACITY, LOCAL_STORER_NAME, id);
+        if (protoMsgStorer != null) {
+            protoMsgStorer.clear();
+            protoMsgStorer.setAgentID(id);
+        } else {
+            protoMsgStorer = new ProtoMsgStorer(STORER_MAX_CAPACITY, LOCAL_STORER_NAME, id);
+        }
     }
 
     public boolean isLocalSwarmAgentInitialized() {return getLocalSwarmAgentID().getValue() != DEFAULT_SWARM_AGENT_ID;}

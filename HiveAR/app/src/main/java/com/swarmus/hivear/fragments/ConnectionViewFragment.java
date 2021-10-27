@@ -29,6 +29,7 @@ import com.swarmus.hivear.models.CommunicationDevice;
 import com.swarmus.hivear.models.ProtoMsgStorer;
 import com.swarmus.hivear.models.SerialDevice;
 import com.swarmus.hivear.models.TCPDeviceServer;
+import com.swarmus.hivear.viewmodels.LocalSwarmAgentViewModel;
 import com.swarmus.hivear.viewmodels.ProtoMsgViewModel;
 
 import java.util.ArrayList;
@@ -131,9 +132,11 @@ public class ConnectionViewFragment extends Fragment {
             public void onItemSelected(AdapterView<?> adapterView, View currentView, int i, long l) {
                 protoMsgViewModel.setCurrentProtoMsgStorer( protoMsgViewModel.getProtoMsgStorerList().getValue().get(i));
                 ProtoMsgStorer currentProtoMsgStorer = protoMsgViewModel.getCurrentProtoMsgStorer().getValue();
-                updateMoveByCommands( currentProtoMsgStorer != null ?
-                        protoMsgViewModel.getCurrentProtoMsgStorer().getValue().getAgentID() :
-                        ProtoMsgStorer.NO_AGENT_ID);
+                LocalSwarmAgentViewModel localAgentVM = new ViewModelProvider(requireActivity()).get(LocalSwarmAgentViewModel.class);
+                updateMoveByCommands( currentProtoMsgStorer != null &&
+                        currentProtoMsgStorer.getAgentID() != localAgentVM.getLocalSwarmAgentID().getValue()?
+                            protoMsgViewModel.getCurrentProtoMsgStorer().getValue().getAgentID() :
+                            ProtoMsgStorer.NO_AGENT_ID);
             }
 
             @Override
