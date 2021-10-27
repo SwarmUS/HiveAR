@@ -29,6 +29,7 @@ import com.swarmus.hivear.models.CommunicationDevice;
 import com.swarmus.hivear.models.ProtoMsgStorer;
 import com.swarmus.hivear.models.SerialDevice;
 import com.swarmus.hivear.models.TCPDeviceServer;
+import com.swarmus.hivear.viewmodels.LocalSwarmAgentViewModel;
 import com.swarmus.hivear.viewmodels.ProtoMsgViewModel;
 
 import java.util.ArrayList;
@@ -46,6 +47,7 @@ public class ConnectionViewFragment extends Fragment {
     private CheckBox detailedLogsCB;
 
     private static final int MSG_LOGGING_LENGTH = 10;
+    private static final int MSG_SHORT_LOGGING_LENGTH = 30;
     private boolean isInfoVisible = false;
 
     @Override
@@ -130,9 +132,11 @@ public class ConnectionViewFragment extends Fragment {
             public void onItemSelected(AdapterView<?> adapterView, View currentView, int i, long l) {
                 protoMsgViewModel.setCurrentProtoMsgStorer( protoMsgViewModel.getProtoMsgStorerList().getValue().get(i));
                 ProtoMsgStorer currentProtoMsgStorer = protoMsgViewModel.getCurrentProtoMsgStorer().getValue();
-                updateMoveByCommands( currentProtoMsgStorer != null ?
-                        protoMsgViewModel.getCurrentProtoMsgStorer().getValue().getAgentID() :
-                        ProtoMsgStorer.NO_AGENT_ID);
+                LocalSwarmAgentViewModel localAgentVM = new ViewModelProvider(requireActivity()).get(LocalSwarmAgentViewModel.class);
+                updateMoveByCommands( currentProtoMsgStorer != null &&
+                        currentProtoMsgStorer.getAgentID() != localAgentVM.getLocalSwarmAgentID().getValue()?
+                            protoMsgViewModel.getCurrentProtoMsgStorer().getValue().getAgentID() :
+                            ProtoMsgStorer.NO_AGENT_ID);
             }
 
             @Override
@@ -142,20 +146,22 @@ public class ConnectionViewFragment extends Fragment {
 
     private void initLoggerTextView() {
         dataReceived.setMovementMethod(new ScrollingMovementMethod());
+        int logsCount = detailedLogsCB.isChecked() ? MSG_LOGGING_LENGTH : MSG_SHORT_LOGGING_LENGTH;
         dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(
-                MSG_LOGGING_LENGTH, detailedLogsCB.isChecked()));
+                logsCount, detailedLogsCB.isChecked()));
         // Align text correctly on change logging filter
         protoMsgViewModel.getCurrentProtoMsgStorer().observe(getViewLifecycleOwner(), s -> filterChanged());
     }
 
     private void filterChanged() {
         if (protoMsgViewModel.getCurrentProtoMsgStorer().getValue() != null) {
+            int logsCount = detailedLogsCB.isChecked() ? MSG_LOGGING_LENGTH : MSG_SHORT_LOGGING_LENGTH;
             dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(
-                    MSG_LOGGING_LENGTH, detailedLogsCB.isChecked()));
+                    logsCount, detailedLogsCB.isChecked()));
 
             // Align text on new message
             protoMsgViewModel.getCurrentProtoMsgStorer().getValue().addObserver((observable, object) -> {
-                dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(MSG_LOGGING_LENGTH,
+                dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(logsCount,
                         detailedLogsCB.isChecked()));
             });
         }

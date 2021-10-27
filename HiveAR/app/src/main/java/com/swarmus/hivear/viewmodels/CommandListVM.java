@@ -45,4 +45,14 @@ public abstract class CommandListVM extends ViewModel {
         functionTemplateList.remove(functionTemplate);
         commands.postValue(functionTemplateList);
     }
+
+    public void removeAllFunctions() {
+        functionTemplateList.clear();
+        commands.postValue(functionTemplateList);
+    }
+
+    public void unbindFunctionList() {
+        functionTemplateList = new FunctionTemplateList();
+        commands.postValue(functionTemplateList);
+    }
 }

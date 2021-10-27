@@ -29,6 +29,14 @@ public class AgentListViewModel extends ViewModel {
     public void clearAgentList() {
         agentList.setValue(new ArrayList<>());
         allProtoMsgStorer.clear();
+        // Keep local msgs
+        if (localSwarmAgentViewModel != null &&
+                localSwarmAgentViewModel.isLocalSwarmAgentInitialized() &&
+                localSwarmAgentViewModel.getProtoMsgStorer() != null) {
+            for(MessageOuterClass.Message m : localSwarmAgentViewModel.getProtoMsgStorer().getRawMsgs()) {
+                allProtoMsgStorer.addMsg(m);
+            }
+        }
     }
 
     public void setLocalSwarmAgentViewModel(LocalSwarmAgentViewModel localSwarmAgentViewModel) {
@@ -84,9 +92,9 @@ public class AgentListViewModel extends ViewModel {
         int sourceID = msg.getSourceId();
         int destinationID = msg.getDestinationId();
 
-        if (localSwarmAgentViewModel != null) {
+        if (localSwarmAgentViewModel != null && localSwarmAgentViewModel.isLocalSwarmAgentInitialized()) {
             int agentID = localSwarmAgentViewModel.getLocalSwarmAgentID().getValue();
-            if (agentID == (sourceID | destinationID) ) {
+            if (agentID == sourceID || agentID == destinationID) {
                 localSwarmAgentViewModel.getProtoMsgStorer().addMsg(msg);
             }
         }
