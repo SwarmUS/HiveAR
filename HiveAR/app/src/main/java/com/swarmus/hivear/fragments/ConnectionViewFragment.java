@@ -46,6 +46,7 @@ public class ConnectionViewFragment extends Fragment {
     private CheckBox detailedLogsCB;
 
     private static final int MSG_LOGGING_LENGTH = 10;
+    private static final int MSG_SHORT_LOGGING_LENGTH = 30;
     private boolean isInfoVisible = false;
 
     @Override
@@ -142,20 +143,22 @@ public class ConnectionViewFragment extends Fragment {
 
     private void initLoggerTextView() {
         dataReceived.setMovementMethod(new ScrollingMovementMethod());
+        int logsCount = detailedLogsCB.isChecked() ? MSG_LOGGING_LENGTH : MSG_SHORT_LOGGING_LENGTH;
         dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(
-                MSG_LOGGING_LENGTH, detailedLogsCB.isChecked()));
+                logsCount, detailedLogsCB.isChecked()));
         // Align text correctly on change logging filter
         protoMsgViewModel.getCurrentProtoMsgStorer().observe(getViewLifecycleOwner(), s -> filterChanged());
     }
 
     private void filterChanged() {
         if (protoMsgViewModel.getCurrentProtoMsgStorer().getValue() != null) {
+            int logsCount = detailedLogsCB.isChecked() ? MSG_LOGGING_LENGTH : MSG_SHORT_LOGGING_LENGTH;
             dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(
-                    MSG_LOGGING_LENGTH, detailedLogsCB.isChecked()));
+                    logsCount, detailedLogsCB.isChecked()));
 
             // Align text on new message
             protoMsgViewModel.getCurrentProtoMsgStorer().getValue().addObserver((observable, object) -> {
-                dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(MSG_LOGGING_LENGTH,
+                dataReceived.setText(protoMsgViewModel.getLastMsgsSpannable(logsCount,
                         detailedLogsCB.isChecked()));
             });
         }

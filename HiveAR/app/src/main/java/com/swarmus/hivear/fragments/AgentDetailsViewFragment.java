@@ -96,7 +96,7 @@ public class AgentDetailsViewFragment extends Fragment {
         super.onDestroyView();
         agent.deleteObserver(agentCommandObserver);
         agent.deleteObserver(agentBuzzCommandObserver);
-        agentCommandsVM.removeAllFunctions();
-        agentBuzzCommandsVM.removeAllFunctions();
+        agentCommandsVM.unbindFunctionList();
+        agentBuzzCommandsVM.unbindFunctionList();
     }
 }
