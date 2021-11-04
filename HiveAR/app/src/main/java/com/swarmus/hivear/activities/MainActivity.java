@@ -77,7 +77,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int DEFAULT_PORT = 700; // Agents in simulation in range 7001+
 
-    private boolean userRequestedInstall = true;
     private boolean arEnabled = false;
 
     Handler handler = new Handler();
@@ -99,57 +98,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (!arEnabled) {
-            Exception exception = null;
-            String message = null;
-            try {
-                switch (ArCoreApk.getInstance().requestInstall(this, !userRequestedInstall)) {
-                    case INSTALL_REQUESTED:
-                        userRequestedInstall = false;
-                        return;
-                    case INSTALLED:
-                        break;
-                }
-
-                arEnabled = true;
-                // ARCore requires camera permissions to operate. If we did not yet obtain runtime
-                // permission on Android M and above, now is a good time to ask the user for it.
-                if (!CameraPermissionHelper.hasCameraPermission(this)) {
-                    CameraPermissionHelper.requestCameraPermission(this);
-                    return;
-                }
-
-            } catch (UnavailableDeviceNotCompatibleException e) {
-                message = "This device does not support AR";
-                exception = e;
-            } catch (Exception e) {
-                message = "Failed to create AR session";
-                exception = e;
-            }
-
-            if (message != null) {
-                Toast.makeText(this, message, Toast.LENGTH_LONG)
-                        .show();
-                Log.e("ARCore", "Exception creating session", exception);
-                return;
-            }
-        }
 
         //start handler as activity become visible
         handler.postDelayed( runnable = () -> {
             currentCommunicationDevice.performConnectionCheck();
             handler.postDelayed(runnable, delay);
         }, delay);
-    }
-
-    @Override
-    protected void onPostResume() {
-        super.onPostResume();
-
-        // ARCore requires camera permission to operate.
-        if (!CameraPermissionHelper.hasCameraPermission(this)) {
-            CameraPermissionHelper.requestCameraPermission(this);
-        }
     }
 
     // If onPause() is not included the threads will double up when you reload the activity
@@ -163,13 +117,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
         if (!CameraPermissionHelper.hasCameraPermission(this)) {
-            Toast.makeText(this, "Camera permission is needed to run this application", Toast.LENGTH_LONG)
+            Toast.makeText(this, "Camera permission is needed to run AR. Ar features will be turned off.", Toast.LENGTH_LONG)
                     .show();
-            if (!CameraPermissionHelper.shouldShowRequestPermissionRationale(this)) {
-                // Permission denied with checking "Do not ask again".
-                CameraPermissionHelper.launchPermissionSettings(this);
-            }
-            finish();
+            hideAr();
         }
     }
 
@@ -229,16 +179,59 @@ public class MainActivity extends AppCompatActivity {
         protoMsgViewModel.registerNewProtoMsgStorer(localSwarmAgentViewModel.getProtoMsgStorer());
     }
 
+    private void hideAr() {
+        // Device isn't currently able to use ARCore
+        // Hide AR view
+        bottomNavigationView = findViewById(R.id.bottom_nav_view);
+        bottomNavigationView.getMenu().removeItem(R.id.ARViewFragment);
+    }
+
     private void maybeEnableAr() {
         ArCoreApk.Availability availability = ArCoreApk.getInstance().checkAvailability(this);
         if (availability.isTransient()) {
             // Continue to query availability at 5Hz while compatibility is checked in the background.
             new Handler().postDelayed(this::maybeEnableAr, 200);
         }
-        if (!availability.isSupported()) {
-            bottomNavigationView = findViewById(R.id.bottom_nav_view);
-            // Show or not the AR view
-            bottomNavigationView.getMenu().removeItem(R.id.ARViewFragment);
+        else {
+            switch (availability) {
+                case UNKNOWN_ERROR:
+                case UNKNOWN_CHECKING:
+                case UNKNOWN_TIMED_OUT:
+                    Toast.makeText(
+                            getApplicationContext(),
+                            "Cannot detect ARCore on device. AR features will be turned off.",
+                            Toast.LENGTH_LONG).show();
+                    break;
+                case UNSUPPORTED_DEVICE_NOT_CAPABLE:
+                    Toast.makeText(
+                            getApplicationContext(),
+                            "Device doesn't support ARCore. AR features will be turned off.",
+                            Toast.LENGTH_LONG).show();
+                    break;
+                case SUPPORTED_NOT_INSTALLED:
+                    Toast.makeText(
+                            getApplicationContext(),
+                            "ARCore supported but not installed. AR features will be turned off until installed.",
+                            Toast.LENGTH_LONG).show();
+                    break;
+                case SUPPORTED_APK_TOO_OLD:
+                    Toast.makeText(
+                            getApplicationContext(),
+                            "ARCore version too old, please update",
+                            Toast.LENGTH_LONG).show();
+                    break;
+                case SUPPORTED_INSTALLED:
+                    arEnabled = true;
+                    if (!CameraPermissionHelper.hasCameraPermission(this)) {
+                        // Permission denied with checking "Do not ask again".
+                        CameraPermissionHelper.requestCameraPermission(this);
+                    }
+                    break;
+            }
+
+            if (!arEnabled) {
+                hideAr();
+            }
         }
     }
 
