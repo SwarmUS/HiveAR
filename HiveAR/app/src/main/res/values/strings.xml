@@ -47,5 +47,5 @@
     <string name="network_ssid">Network SSID</string>
     <string name="configure_hiveboard">Configure HiveBoard</string>
     <string name="use_as_mesh_network">Use as Mesh Network</string>
-    <string name="is_routor_there_should_only_be_one_">Is Routor (There should only be one)</string>
+    <string name="is_router_there_should_only_be_one_">Is Router (There should only be one)</string>
 </resources>
