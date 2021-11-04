@@ -62,7 +62,7 @@ import java.util.concurrent.TimeUnit;
 public class ARViewFragment extends Fragment {
 
     private static final String TAG = ARViewFragment.class.getName();
-    private static final double APRIL_TAG_SCALE_M = 0.112; // 12 cm width
+    private static final double APRIL_TAG_SCALE_M = 0.112; // 11.2 cm width
 
     private ArFragment arFragment;
     private ModelRenderable arrowRenderable;
@@ -72,7 +72,7 @@ public class ARViewFragment extends Fragment {
     private final static String AR_AGENT_ROOT = "Agent Root";
 
     // Will visually update if detected marker is considered outside that range from previous detection
-    private final static double UPDATE_DETECTION_DISTANCE_THRESHOLD = 0.75;
+    private final static double UPDATE_DETECTION_DISTANCE_THRESHOLD = 0.45;
 
     private AgentListViewModel agentListViewModel;
 
