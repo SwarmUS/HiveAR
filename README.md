@@ -6,6 +6,7 @@ It is also able to send command to this swarm and to observe informations in rea
 
 * `Android Studio 4.1+` to open android project with gradle dependencies.
 * Android smartphone or emulator. (emulator has some limitation linked to serial communication)
+* 'ARCore' installed from Google Play Store to use AR features.
 
 ## Building 
 First, clone the repo with command:
