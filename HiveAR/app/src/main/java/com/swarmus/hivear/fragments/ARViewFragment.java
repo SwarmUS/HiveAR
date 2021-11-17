@@ -16,6 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.ar.core.Anchor;
 import com.google.ar.core.CameraConfig;
@@ -43,11 +44,13 @@ import com.google.ar.sceneform.ux.BaseTransformableNode;
 import com.google.ar.sceneform.ux.SelectionVisualizer;
 import com.google.ar.sceneform.ux.TransformableNode;
 import com.swarmus.hivear.R;
+import com.swarmus.hivear.adapters.CommandsAdapter;
 import com.swarmus.hivear.apriltag.ApriltagDetection;
 import com.swarmus.hivear.apriltag.ApriltagNative;
 import com.swarmus.hivear.ar.AlwaysStraightNode;
 import com.swarmus.hivear.ar.CameraFacingNode;
 import com.swarmus.hivear.models.Agent;
+import com.swarmus.hivear.models.FunctionTemplateList;
 import com.swarmus.hivear.models.ProtoMsgStorer;
 import com.swarmus.hivear.utils.ConvertUtil;
 import com.swarmus.hivear.utils.MathUtil;
@@ -218,14 +221,32 @@ public class ARViewFragment extends Fragment {
         }
     }
 
+    private void updateCommands(Agent agent) {
+        Boolean isAgentSelected = agent != null;
+        RecyclerView recyclerView = getView().findViewById(R.id.commandsContainer);
+        if (recyclerView != null)
+        {
+            recyclerView.setVisibility(isAgentSelected ? LinearLayout.VISIBLE : LinearLayout.GONE);
+            if (agent.getCommands() != null) {
+                CommandsAdapter commandsAdapter =
+                        new CommandsAdapter(requireContext(), agent.getUid(), agent.getCommands());
+                recyclerView.setAdapter(commandsAdapter);
+                recyclerView.setHasFixedSize(false);
+            }
+        }
+    }
+
     private void setAgentUI(Agent agent) {
         Boolean isAgentSelected = agent != null;
+
         LinearLayout agentInfoLayout = getView().findViewById(R.id.agent_ar_selected);
         agentInfoLayout.setVisibility(isAgentSelected ? LinearLayout.VISIBLE : LinearLayout.GONE);
         TextView agentName = getView().findViewById(R.id.agent_ar_selected_name);
         agentName.setText(isAgentSelected ? agent.getName() : "");
         TextView agentUid = getView().findViewById(R.id.agent_ar_selected_uid);
         agentUid.setText(isAgentSelected ? Integer.toString(agent.getUid()) : "");
+
+        updateCommands(agent);
     }
 
     private void getAprilTags() {
@@ -307,7 +328,7 @@ public class ARViewFragment extends Fragment {
 
                     // Add AR visualization
                     // Uncomment to see 3 axis for debugging
-                    //addOrUpdateIdARVisualDebug(frame, detection.id, tagPose);
+                    addOrUpdateIdARVisualDebug(frame, detection.id, tagPose);
                     addOrUpdateAgentARVisual(frame, detection.id, tagPose);
                 }
             }
@@ -420,6 +441,7 @@ public class ARViewFragment extends Fragment {
     private void selectAgentFromAR(TransformableNode node, Agent agent) {
         selectVisualNode(node);
         currentSelectedAgent = agent;
+        setAgentUI(agent);
     }
 
     private void selectVisualNode(TransformableNode node) {
