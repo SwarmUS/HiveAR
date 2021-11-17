@@ -182,13 +182,10 @@ public class ARViewFragment extends Fragment {
             if (session == null) {
                 try {
                     session = new Session(requireContext());
-                } catch (UnavailableArcoreNotInstalledException e) {
-                    e.printStackTrace();
-                } catch (UnavailableApkTooOldException e) {
-                    e.printStackTrace();
-                } catch (UnavailableSdkTooOldException e) {
-                    e.printStackTrace();
-                } catch (UnavailableDeviceNotCompatibleException e) {
+                } catch (UnavailableArcoreNotInstalledException |
+                        UnavailableApkTooOldException |
+                        UnavailableSdkTooOldException |
+                        UnavailableDeviceNotCompatibleException e) {
                     e.printStackTrace();
                 }
             }
@@ -200,11 +197,12 @@ public class ARViewFragment extends Fragment {
             session.setCameraConfig(session.getSupportedCameraConfigs(filter).get(0));
             Config config = new Config(session);
             config.setUpdateMode(Config.UpdateMode.LATEST_CAMERA_IMAGE);
-            config.setFocusMode(Config.FocusMode.AUTO);
+            config.setFocusMode(Config.FocusMode.FIXED);
             config.setDepthMode(Config.DepthMode.DISABLED);
             config.setInstantPlacementMode(Config.InstantPlacementMode.DISABLED);
             config.setPlaneFindingMode(Config.PlaneFindingMode.HORIZONTAL);
             config.setLightEstimationMode(Config.LightEstimationMode.DISABLED);
+            config.setAugmentedFaceMode(Config.AugmentedFaceMode.DISABLED);
             session.configure(config);
             arFragment.getArSceneView().setupSession(session);
             arFragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> getAprilTags());
