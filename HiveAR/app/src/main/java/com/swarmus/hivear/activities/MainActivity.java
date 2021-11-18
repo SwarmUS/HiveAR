@@ -489,8 +489,8 @@ public class MainActivity extends AppCompatActivity {
                                         protoMsgViewModel.registerNewProtoMsgStorer(agent.getProtoMsgStorer());
 
                                         // Fetch agent commands
-                                        sendCommand(new FetchAgentCommands(agentId, false));
-                                        sendCommand(new FetchAgentCommands(agentId, true));
+                                        //sendCommand(new FetchAgentCommands(agentId, false));
+                                        //sendCommand(new FetchAgentCommands(agentId, true));
                                     }
                                     break;
                                 default:
