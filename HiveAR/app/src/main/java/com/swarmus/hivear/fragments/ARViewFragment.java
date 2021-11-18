@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -16,6 +17,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.LinearSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.ar.core.Anchor;
@@ -44,7 +47,7 @@ import com.google.ar.sceneform.ux.BaseTransformableNode;
 import com.google.ar.sceneform.ux.SelectionVisualizer;
 import com.google.ar.sceneform.ux.TransformableNode;
 import com.swarmus.hivear.R;
-import com.swarmus.hivear.adapters.CommandsAdapter;
+import com.swarmus.hivear.adapters.ARCommandsAdapter;
 import com.swarmus.hivear.apriltag.ApriltagDetection;
 import com.swarmus.hivear.apriltag.ApriltagNative;
 import com.swarmus.hivear.ar.AlwaysStraightNode;
@@ -223,16 +226,23 @@ public class ARViewFragment extends Fragment {
 
     private void updateCommands(Agent agent) {
         Boolean isAgentSelected = agent != null;
-        RecyclerView recyclerView = getView().findViewById(R.id.commandsContainer);
-        if (recyclerView != null)
+        RecyclerView commandsContainer = getView().findViewById(R.id.commandsContainer);
+        if (commandsContainer != null)
         {
-            recyclerView.setVisibility(isAgentSelected ? LinearLayout.VISIBLE : LinearLayout.GONE);
-            if (agent.getCommands() != null) {
-                CommandsAdapter commandsAdapter =
-                        new CommandsAdapter(requireContext(), agent.getUid(), agent.getCommands());
-                recyclerView.setAdapter(commandsAdapter);
-                recyclerView.setHasFixedSize(false);
+            LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false);
+            linearLayoutManager.setStackFromEnd(true);
+            commandsContainer.setLayoutManager(linearLayoutManager);
+            commandsContainer.setVisibility(isAgentSelected ? LinearLayout.VISIBLE : LinearLayout.GONE);
+            if (isAgentSelected && agent.getCommands() != null) {
+                ARCommandsAdapter commandsAdapter =
+                        new ARCommandsAdapter(requireContext(), agent.getUid(), agent.getCommands());
+                commandsContainer.setAdapter(commandsAdapter);
+                commandsContainer.setHasFixedSize(false);
             }
+
+            commandsContainer.setOnFlingListener(null);
+            LinearSnapHelper snapHelper = new LinearSnapHelper();
+            snapHelper.attachToRecyclerView(commandsContainer);
         }
     }
 

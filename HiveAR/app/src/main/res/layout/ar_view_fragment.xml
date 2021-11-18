@@ -41,7 +41,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/uid"
-                android:textAlignment="viewEnd"
+                android:textAlignment="center"
                 android:textSize="20sp"
                 android:layout_weight="1"
                 android:id="@+id/agent_ar_selected_uid"
@@ -60,8 +60,7 @@
             android:id="@+id/commandsContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
+            android:orientation="horizontal"/>
     </LinearLayout>
 
 </FrameLayout>
