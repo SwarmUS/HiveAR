@@ -8,6 +8,8 @@
     app:cardCornerRadius="2dp"
     app:cardElevation="0dp"
     app:cardUseCompatPadding="true"
+    app:contentPaddingLeft="10dp"
+    app:contentPaddingRight="10dp"
     app:cardBackgroundColor="@android:color/transparent">
 
     <LinearLayout

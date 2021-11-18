@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.CameraConfig;
 import com.google.ar.core.CameraConfigFilter;
@@ -47,11 +48,13 @@ import com.google.ar.sceneform.ux.BaseTransformableNode;
 import com.google.ar.sceneform.ux.SelectionVisualizer;
 import com.google.ar.sceneform.ux.TransformableNode;
 import com.swarmus.hivear.R;
+import com.swarmus.hivear.activities.MainActivity;
 import com.swarmus.hivear.adapters.ARCommandsAdapter;
 import com.swarmus.hivear.apriltag.ApriltagDetection;
 import com.swarmus.hivear.apriltag.ApriltagNative;
 import com.swarmus.hivear.ar.AlwaysStraightNode;
 import com.swarmus.hivear.ar.CameraFacingNode;
+import com.swarmus.hivear.commands.FetchAgentCommands;
 import com.swarmus.hivear.models.Agent;
 import com.swarmus.hivear.models.ProtoMsgStorer;
 import com.swarmus.hivear.utils.ConvertUtil;
@@ -62,6 +65,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Observer;
 import java.util.concurrent.TimeUnit;
 
 public class ARViewFragment extends Fragment {
@@ -91,6 +95,9 @@ public class ARViewFragment extends Fragment {
     private static final int AR_SHOW_LAST_COMMANDS_COUNT = 5;
 
     private static Toast currentToast;
+
+    private Observer agentCommandObserver;
+    private Observer agentBuzzCommandObserver;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -144,6 +151,21 @@ public class ARViewFragment extends Fragment {
     }
 
     private void setSelectedAgent(Agent agent) {
+        if (agentCommandObserver != null && agent != null) {
+            try {
+                agent.deleteObserver(agentCommandObserver);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (agentBuzzCommandObserver != null && agent != null) {
+            try {
+                agent.deleteObserver(agentBuzzCommandObserver);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         currentSelectedAgent = agent;
         setAgentUI(agent);
     }
@@ -235,9 +257,16 @@ public class ARViewFragment extends Fragment {
             linearLayoutManager.setStackFromEnd(true);
             commandsContainer.setLayoutManager(linearLayoutManager);
             commandsContainer.setVisibility(isAgentSelected ? LinearLayout.VISIBLE : LinearLayout.GONE);
+
             if (isAgentSelected && agent.getCommands() != null) {
+                agentCommandObserver = (observable, o) -> updateCommands(agent);
+                agent.getCommands().addObserver(agentCommandObserver);
+
+                agentBuzzCommandObserver = (observable, o) -> updateCommands(agent);
+                agent.getBuzzCommands().addObserver(agentBuzzCommandObserver);
+
                 ARCommandsAdapter commandsAdapter =
-                        new ARCommandsAdapter(requireContext(), agent.getUid(), agent.getCommands());
+                        new ARCommandsAdapter(requireContext(), agent.getUid(), agent.getCommands(), agent.getBuzzCommands());
                 commandsContainer.setAdapter(commandsAdapter);
                 commandsContainer.setHasFixedSize(false);
 
@@ -252,6 +281,16 @@ public class ARViewFragment extends Fragment {
 
     private void setAgentUI(Agent agent) {
         Boolean isAgentSelected = agent != null;
+
+        FloatingActionButton refreshCommands = getView().findViewById(R.id.refresh_agent_commands);
+        if (isAgentSelected) {
+            FetchAgentCommands fetchAgentCommands = new FetchAgentCommands(agent.getUid(), false);
+            FetchAgentCommands fetchAgentBuzzCommands = new FetchAgentCommands(agent.getUid(), true);
+            refreshCommands.setOnClickListener(v -> {
+                ((MainActivity)requireActivity()).sendCommand(fetchAgentCommands);
+                ((MainActivity)requireActivity()).sendCommand(fetchAgentBuzzCommands);
+            });
+        }
 
         LinearLayout agentInfoLayout = getView().findViewById(R.id.agent_ar_selected);
         agentInfoLayout.setVisibility(isAgentSelected ? LinearLayout.VISIBLE : LinearLayout.GONE);
@@ -463,6 +502,21 @@ public class ARViewFragment extends Fragment {
 
     private void selectAgentFromAR(TransformableNode node, Agent agent) {
         selectVisualNode(node);
+        if (agentCommandObserver != null && agent != null) {
+            try {
+                agent.deleteObserver(agentCommandObserver);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (agentBuzzCommandObserver != null && agent != null) {
+            try {
+                agent.deleteObserver(agentBuzzCommandObserver);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         currentSelectedAgent = agent;
         setAgentUI(agent);
     }

@@ -23,15 +23,18 @@ import com.swarmus.hivear.models.FunctionTemplateList;
 
 public class ARCommandsAdapter extends RecyclerView.Adapter<ARCommandsAdapter.ARCommandsVH> {
     private final FunctionTemplateList functionTemplateList;
+    private final FunctionTemplateList buzzFunctionTemplateList;
     private Context context;
     private int destinationId;
 
     public ARCommandsAdapter(@NonNull Context context,
                              int destinationId,
-                             FunctionTemplateList functionTemplateList) {
+                             FunctionTemplateList functionTemplateList,
+                             FunctionTemplateList buzzFunctionTemplateList) {
         this.context = context;
         this.destinationId = destinationId;
         this.functionTemplateList = functionTemplateList;
+        this.buzzFunctionTemplateList = buzzFunctionTemplateList;
     }
 
     @NonNull
@@ -43,9 +46,20 @@ public class ARCommandsAdapter extends RecyclerView.Adapter<ARCommandsAdapter.AR
 
     @Override
     public void onBindViewHolder(@NonNull ARCommandsVH holder, int position) {
-        if (functionTemplateList == null) {return;}
+        if (functionTemplateList == null && functionTemplateList == null) {return;}
 
-        FunctionTemplate function = functionTemplateList.at(position);
+        FunctionTemplate function = null;
+        if (functionTemplateList != null) {
+            if (position < functionTemplateList.size()) {
+                function = functionTemplateList.at(position);
+            }
+            else {
+                function = buzzFunctionTemplateList.at(position - functionTemplateList.size());
+            }
+        }
+        else {
+            function = buzzFunctionTemplateList.at(position);
+        }
 
         holder.commandNameTV.setText(function.getName());
         holder.commandNameTV.setCompoundDrawablesWithIntrinsicBounds(
@@ -54,8 +68,9 @@ public class ARCommandsAdapter extends RecyclerView.Adapter<ARCommandsAdapter.AR
                 function.isBuzzFunction() ? R.drawable.ic_buzz : 0,
                 0);
 
+        FunctionTemplate finalFunction = function;
         holder.commandSendButton.setOnClickListener(view -> {
-            ((MainActivity)context).sendCommand(function, destinationId);
+            ((MainActivity)context).sendCommand(finalFunction, destinationId);
         });
 
         LayoutInflater inflater = (LayoutInflater)
@@ -106,10 +121,10 @@ public class ARCommandsAdapter extends RecyclerView.Adapter<ARCommandsAdapter.AR
 
     @Override
     public int getItemCount() {
-        if (functionTemplateList != null) {
-            return functionTemplateList.size();
-        }
-        else { return 0; }
+        int count = 0;
+        count += functionTemplateList != null ? functionTemplateList.size() : 0;
+        count += buzzFunctionTemplateList != null ? buzzFunctionTemplateList.size() : 0;
+        return count;
     }
 
     @Override
