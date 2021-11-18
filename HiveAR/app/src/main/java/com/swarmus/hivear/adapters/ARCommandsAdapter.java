@@ -12,8 +12,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.databinding.DataBindingUtil;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelStoreOwner;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -22,14 +20,11 @@ import com.swarmus.hivear.activities.MainActivity;
 import com.swarmus.hivear.models.FunctionTemplate;
 import com.swarmus.hivear.models.FunctionTemplateArgument;
 import com.swarmus.hivear.models.FunctionTemplateList;
-import com.swarmus.hivear.viewmodels.BroadcastInfoViewModel;
 
 public class ARCommandsAdapter extends RecyclerView.Adapter<ARCommandsAdapter.ARCommandsVH> {
     private final FunctionTemplateList functionTemplateList;
     private Context context;
     private int destinationId;
-    private ViewGroup parentGroup;
-    private final BroadcastInfoViewModel broadcastInfoViewModel;
 
     public ARCommandsAdapter(@NonNull Context context,
                              int destinationId,
@@ -37,14 +32,12 @@ public class ARCommandsAdapter extends RecyclerView.Adapter<ARCommandsAdapter.AR
         this.context = context;
         this.destinationId = destinationId;
         this.functionTemplateList = functionTemplateList;
-        this.broadcastInfoViewModel = new ViewModelProvider((ViewModelStoreOwner)context).get(BroadcastInfoViewModel.class);
     }
 
     @NonNull
     @Override
     public ARCommandsVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.ar_command_card, parent, false);
-        parentGroup = (ViewGroup)view;
         return new ARCommandsVH(view);
     }
 

@@ -255,6 +255,15 @@ public class ARViewFragment extends Fragment {
 
         LinearLayout agentInfoLayout = getView().findViewById(R.id.agent_ar_selected);
         agentInfoLayout.setVisibility(isAgentSelected ? LinearLayout.VISIBLE : LinearLayout.GONE);
+        agentInfoLayout.setOnLongClickListener(v -> {
+            ConstraintLayout commandsLayout = getView().findViewById(R.id.agent_ar_commands_view);
+            boolean isShown = isAgentSelected &&
+                    agentInfoLayout.getVisibility() == LinearLayout.VISIBLE &&
+                    commandsLayout.getVisibility() == LinearLayout.GONE;
+            commandsLayout.setVisibility(isShown ? LinearLayout.VISIBLE : LinearLayout.GONE);
+
+            return false;
+        });
         TextView agentName = getView().findViewById(R.id.agent_ar_selected_name);
         agentName.setText(isAgentSelected ? agent.getName() : "");
         TextView agentUid = getView().findViewById(R.id.agent_ar_selected_uid);
@@ -342,7 +351,7 @@ public class ARViewFragment extends Fragment {
 
                     // Add AR visualization
                     // Uncomment to see 3 axis for debugging
-                    addOrUpdateIdARVisualDebug(frame, detection.id, tagPose);
+                    //addOrUpdateIdARVisualDebug(frame, detection.id, tagPose);
                     addOrUpdateAgentARVisual(frame, detection.id, tagPose);
                 }
             }
@@ -497,7 +506,7 @@ public class ARViewFragment extends Fragment {
                                 .setMessage(alertMsg)
                                 .setPositiveButton("Yes", (dialog, whichButton) -> {
                                     timerTextViews.computeIfPresent(agent, (k, v) -> null); // remove from list
-                                    AnchorNode arAgentNode = (AnchorNode) tNode.getParent();
+                                    AnchorNode arAgentNode = (AnchorNode) tNode.getParent().getParent();
                                     arFragment.getArSceneView().getScene().removeChild(arAgentNode);
                                     arAgentNode.getAnchor().detach();
                                     arAgentNode.setParent(null);
