@@ -12,55 +12,56 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <LinearLayout
-        android:id="@+id/agent_ar_full_info"
+    <LinearLayout xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="horizontal"
+        android:id="@+id/agent_ar_selected"
+        android:padding="5dp"
+        android:background="@drawable/corner_grey">
 
-        <LinearLayout xmlns:tools="http://schemas.android.com/tools"
-            android:layout_width="match_parent"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:id="@+id/agent_ar_selected"
-            android:padding="5dp"
-            android:background="@drawable/round_corner_grey">
+            android:text="@string/agentname"
+            android:paddingStart="10dp"
+            android:textSize="20sp"
+            android:textAlignment="viewStart"
+            android:layout_weight="1"
+            android:id="@+id/agent_ar_selected_name"
+            android:layout_gravity="center"/>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/agentname"
-                android:paddingStart="10dp"
-                android:textSize="20sp"
-                android:textAlignment="viewStart"
-                android:layout_weight="1"
-                android:id="@+id/agent_ar_selected_name"
-                android:layout_gravity="center"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/uid"
+            android:textAlignment="center"
+            android:textSize="20sp"
+            android:layout_weight="1"
+            android:id="@+id/agent_ar_selected_uid"
+            android:layout_gravity="center"/>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/uid"
-                android:textAlignment="center"
-                android:textSize="20sp"
-                android:layout_weight="1"
-                android:id="@+id/agent_ar_selected_uid"
-                android:layout_gravity="center"/>
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/custom_push_button"
+            android:contentDescription="@string/update_commands"
+            android:src="@android:drawable/stat_notify_sync"/>
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:backgroundTint="@color/custom_push_button"
-                android:contentDescription="@string/update_commands"
-                android:src="@android:drawable/stat_notify_sync"/>
+    </LinearLayout>
 
-        </LinearLayout>
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/agent_ar_commands_view"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_gravity="bottom"
+        android:background="@drawable/corner_grey">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/commandsContainer"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:orientation="horizontal"/>
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>

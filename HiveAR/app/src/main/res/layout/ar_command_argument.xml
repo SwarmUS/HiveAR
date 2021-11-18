@@ -12,7 +12,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:weightSum="2"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:background="@android:color/transparent">
 
         <TextView
             android:id="@+id/command_argument_name"
@@ -25,7 +26,8 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1">
+            android:layout_weight="1"
+            android:background="@android:color/transparent">
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/decrease_value"
@@ -36,12 +38,14 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/remove" />
+                app:srcCompat="@drawable/remove"
+                android:foregroundTint="@color/custom_push_button"/>
 
-            <EditText
+            <TextView
                 android:id="@+id/command_argument_value"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
+                android:gravity="center"
                 android:focusable="false"
                 android:focusableInTouchMode="false"
                 android:importantForAutofill="no"
@@ -63,7 +67,8 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/add" />
+                app:srcCompat="@drawable/add"
+                android:foregroundTint="@color/custom_push_button"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </LinearLayout>

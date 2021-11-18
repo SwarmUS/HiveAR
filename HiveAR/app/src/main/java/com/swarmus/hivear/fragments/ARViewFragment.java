@@ -7,7 +7,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,6 +14,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -53,7 +53,6 @@ import com.swarmus.hivear.apriltag.ApriltagNative;
 import com.swarmus.hivear.ar.AlwaysStraightNode;
 import com.swarmus.hivear.ar.CameraFacingNode;
 import com.swarmus.hivear.models.Agent;
-import com.swarmus.hivear.models.FunctionTemplateList;
 import com.swarmus.hivear.models.ProtoMsgStorer;
 import com.swarmus.hivear.utils.ConvertUtil;
 import com.swarmus.hivear.utils.MathUtil;
@@ -226,9 +225,12 @@ public class ARViewFragment extends Fragment {
 
     private void updateCommands(Agent agent) {
         Boolean isAgentSelected = agent != null;
+        ConstraintLayout commandsLayout = getView().findViewById(R.id.agent_ar_commands_view);
         RecyclerView commandsContainer = getView().findViewById(R.id.commandsContainer);
-        if (commandsContainer != null)
+        if (commandsLayout != null && commandsContainer != null)
         {
+            commandsLayout.setVisibility(LinearLayout.GONE);
+
             LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false);
             linearLayoutManager.setStackFromEnd(true);
             commandsContainer.setLayoutManager(linearLayoutManager);
@@ -238,6 +240,8 @@ public class ARViewFragment extends Fragment {
                         new ARCommandsAdapter(requireContext(), agent.getUid(), agent.getCommands());
                 commandsContainer.setAdapter(commandsAdapter);
                 commandsContainer.setHasFixedSize(false);
+
+                commandsLayout.setVisibility(agent.getCommands().size() > 0 ? LinearLayout.VISIBLE : LinearLayout.GONE);
             }
 
             commandsContainer.setOnFlingListener(null);
