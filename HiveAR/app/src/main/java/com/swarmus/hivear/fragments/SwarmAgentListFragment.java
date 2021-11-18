@@ -1,5 +1,7 @@
 package com.swarmus.hivear.fragments;
+
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,6 +32,9 @@ public class SwarmAgentListFragment extends Fragment {
         UpdateAgentsList updateAgentsList = new UpdateAgentsList();
         updateAgentsListButton.setOnClickListener(v -> {
             ((MainActivity)requireActivity()).sendCommand(updateAgentsList);
+
+            Handler handler = new Handler();
+            handler.postDelayed(() -> updateAgentListView(view), 100);
         });
 
         return view;
@@ -41,7 +46,7 @@ public class SwarmAgentListFragment extends Fragment {
         {
             ViewAgentListAdapter viewAgentListAdapter = new ViewAgentListAdapter(agentListViewModel.getAgentList().getValue());
             recyclerView.setAdapter(viewAgentListAdapter);
-            recyclerView.setHasFixedSize(true);
+            recyclerView.setHasFixedSize(false);
         }
     }
 }
