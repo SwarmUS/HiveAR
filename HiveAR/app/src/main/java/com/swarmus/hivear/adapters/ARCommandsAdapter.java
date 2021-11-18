@@ -2,6 +2,7 @@ package com.swarmus.hivear.adapters;
 
 import android.content.Context;
 import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -88,10 +89,12 @@ public class ARCommandsAdapter extends RecyclerView.Adapter<ARCommandsAdapter.AR
                     int value = Integer.parseInt(arg.getValue());
                     argInput.setText(String.valueOf(value - 1));
                 }
-
-                if (arg.getArgumentType().equals(Float.class)) {
+                else if (arg.getArgumentType().equals(Float.class)) {
                     float value = Float.parseFloat(arg.getValue());
                     argInput.setText(String.valueOf(value - 0.5));
+                }
+                else {
+                    Log.i("AR commands", "command argument not supported in AR, don't handle click behavior");
                 }
             });
 
@@ -101,10 +104,12 @@ public class ARCommandsAdapter extends RecyclerView.Adapter<ARCommandsAdapter.AR
                     int value = Integer.parseInt(arg.getValue());
                     argInput.setText(String.valueOf(value + 1));
                 }
-
-                if (arg.getArgumentType().equals(Float.class)) {
+                else if (arg.getArgumentType().equals(Float.class)) {
                     float value = Float.parseFloat(arg.getValue());
                     argInput.setText(String.valueOf(value + 0.5));
+                }
+                else {
+                    Log.i("AR commands", "command argument not supported in AR, don't handle click behavior");
                 }
             });
 
