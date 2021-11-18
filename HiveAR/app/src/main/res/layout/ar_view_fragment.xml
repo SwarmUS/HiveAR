@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     tools:context=".fragments.ARViewFragment">
 
@@ -17,8 +17,8 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:id="@+id/agent_ar_selected"
-        android:padding="10dp"
-        android:background="@drawable/round_corner_grey">
+        android:padding="5dp"
+        android:background="@drawable/corner_grey">
 
         <TextView
             android:layout_width="wrap_content"
@@ -28,17 +28,41 @@
             android:textSize="20sp"
             android:textAlignment="viewStart"
             android:layout_weight="1"
-            android:id="@+id/agent_ar_selected_name"/>
+            android:id="@+id/agent_ar_selected_name"
+            android:layout_gravity="center"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/uid"
-            android:textAlignment="viewEnd"
+            android:textAlignment="center"
             android:textSize="20sp"
             android:layout_weight="1"
-            android:id="@+id/agent_ar_selected_uid"/>
+            android:id="@+id/agent_ar_selected_uid"
+            android:layout_gravity="center"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/refresh_agent_commands"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/custom_push_button"
+            android:contentDescription="@string/update_commands"
+            android:src="@android:drawable/stat_notify_sync"/>
 
     </LinearLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/agent_ar_commands_view"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_gravity="bottom"
+        android:background="@drawable/corner_grey">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/commandsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>
