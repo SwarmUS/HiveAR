@@ -495,19 +495,11 @@ public class ARViewFragment extends Fragment {
     private void selectAgentFromAR(TransformableNode node, Agent agent) {
         selectVisualNode(node);
         if (agentCommandObserver != null && agent != null) {
-            try {
-                agent.deleteObserver(agentCommandObserver);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            agent.deleteObserver(agentCommandObserver);
         }
 
         if (agentBuzzCommandObserver != null && agent != null) {
-            try {
-                agent.deleteObserver(agentBuzzCommandObserver);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            agent.deleteObserver(agentBuzzCommandObserver);
         }
         currentSelectedAgent = agent;
         setAgentUI(agent);
