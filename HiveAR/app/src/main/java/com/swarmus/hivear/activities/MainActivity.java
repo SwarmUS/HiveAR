@@ -25,7 +25,6 @@ import androidx.navigation.ui.NavigationUI;
 import com.google.android.material.badge.BadgeDrawable;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.ar.core.ArCoreApk;
-import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.swarmus.hivear.MessageOuterClass;
 import com.swarmus.hivear.R;
@@ -487,10 +486,6 @@ public class MainActivity extends AppCompatActivity {
                                                 new Agent("Agent #" + Integer.toString(agentId), agentId);
                                         agentListViewModel.addAgent(agent);
                                         protoMsgViewModel.registerNewProtoMsgStorer(agent.getProtoMsgStorer());
-
-                                        // Fetch agent commands
-                                        sendCommand(new FetchAgentCommands(agentId, false));
-                                        sendCommand(new FetchAgentCommands(agentId, true));
                                     }
                                     break;
                                 default:
