@@ -65,16 +65,19 @@ public class ARCommandsAdapter extends RecyclerView.Adapter<ARCommandsAdapter.AR
             function = buzzFunctionTemplateList.at(position);
         }
 
-        WindowManager wm = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
-        assert wm != null;
-        Display display = wm.getDefaultDisplay();
-        DisplayMetrics metrics = new DisplayMetrics();
-        assert display != null;
-        display.getMetrics(metrics);
-        int width = (int)(metrics.widthPixels * 0.9f);
-
         ViewGroup.LayoutParams layoutParams = holder.cardView.getLayoutParams();
-        layoutParams.width = width;
+        
+        WindowManager wm = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
+        if (wm != null) {
+            Display display = wm.getDefaultDisplay();
+            DisplayMetrics metrics = new DisplayMetrics();
+            if (display != null) {
+                display.getMetrics(metrics);
+                int width = (int)(metrics.widthPixels * 0.9f);
+                layoutParams.width = width;
+            }
+        }
+        
         holder.cardView.setLayoutParams(layoutParams);
 
         holder.commandNameTV.setText(function.getName());
