@@ -12,4 +12,6 @@
     <color name="connection_established_no_swarm">#FFEB3B</color>
     <color name="ar_overlay_background">#BE535353</color>
     <color name="grey">#303030</color>
+    <color name="status_good">#1AFF00</color>
+    <color name="status_bad">#FF0000</color>
 </resources>

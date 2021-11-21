@@ -7,6 +7,17 @@
     android:background="@drawable/round_corner_grey"
     android:padding="10dp">
 
+    <ImageView
+        android:id="@+id/status_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/status"
+        app:layout_constraintBottom_toBottomOf="@id/agent_ar_name"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/agent_ar_name"
+        android:tint="@color/status_good"
+        app:srcCompat="@android:drawable/ic_notification_overlay"/>
+
     <TextView
         android:id="@+id/agent_ar_name"
         android:layout_width="wrap_content"
@@ -16,18 +27,8 @@
         android:text="@string/agentname"
         android:textAlignment="viewStart"
         android:textSize="20sp"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@id/status_image"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageView
-        android:id="@+id/status_image"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:contentDescription="@string/status"
-        app:layout_constraintBottom_toBottomOf="@id/agent_ar_name"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/agent_ar_name"
-        app:srcCompat="@android:drawable/ic_notification_overlay" />
 
     <TextView
         android:id="@+id/last_update_timer"
