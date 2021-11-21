@@ -2,10 +2,13 @@ package com.swarmus.hivear.adapters;
 
 import android.content.Context;
 import android.text.InputType;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -61,6 +64,21 @@ public class ARCommandsAdapter extends RecyclerView.Adapter<ARCommandsAdapter.AR
         else {
             function = buzzFunctionTemplateList.at(position);
         }
+
+        ViewGroup.LayoutParams layoutParams = holder.cardView.getLayoutParams();
+        
+        WindowManager wm = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
+        if (wm != null) {
+            Display display = wm.getDefaultDisplay();
+            DisplayMetrics metrics = new DisplayMetrics();
+            if (display != null) {
+                display.getMetrics(metrics);
+                int width = (int)(metrics.widthPixels * 0.9f);
+                layoutParams.width = width;
+            }
+        }
+        
+        holder.cardView.setLayoutParams(layoutParams);
 
         holder.commandNameTV.setText(function.getName());
         holder.commandNameTV.setCompoundDrawablesWithIntrinsicBounds(
