@@ -98,6 +98,7 @@ public class ARViewFragment extends Fragment {
 
     private Observer agentCommandObserver;
     private Observer agentBuzzCommandObserver;
+    private boolean showARCommands = false;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -239,8 +240,16 @@ public class ARViewFragment extends Fragment {
 
     private void updateCommands(Agent agent) {
         Boolean isAgentSelected = agent != null;
+
         ConstraintLayout commandsLayout = getView().findViewById(R.id.agent_ar_commands_view);
         RecyclerView commandsContainer = getView().findViewById(R.id.commandsContainer);
+
+        String noCommandsMsg = "No commands to show for selected agent";
+        FloatingActionButton showCommandsButton = getView().findViewById(R.id.show_commands);
+        if (showCommandsButton != null) {
+            showCommandsButton.setOnClickListener(v -> Toast.makeText(requireContext(), noCommandsMsg, Toast.LENGTH_SHORT).show());
+        }
+
         if (commandsLayout != null && commandsContainer != null)
         {
             commandsLayout.setVisibility(LinearLayout.GONE);
@@ -251,6 +260,17 @@ public class ARViewFragment extends Fragment {
             commandsContainer.setVisibility(isAgentSelected ? LinearLayout.VISIBLE : LinearLayout.GONE);
 
             if (isAgentSelected && agent.getCommands() != null) {
+                boolean hasCommands = agent.getCommands().size() > 0;
+
+                if (hasCommands) {
+                    if (showCommandsButton != null) {
+                        showCommandsButton.setOnClickListener(v -> {
+                            showARCommands = !showARCommands;
+                            commandsLayout.setVisibility(showARCommands ? LinearLayout.VISIBLE : LinearLayout.GONE);
+                        });
+                    }
+                }
+
                 agentCommandObserver = (observable, o) -> updateCommands(agent);
                 agent.getCommands().addObserver(agentCommandObserver);
 
@@ -262,7 +282,7 @@ public class ARViewFragment extends Fragment {
                 commandsContainer.setAdapter(commandsAdapter);
                 commandsContainer.setHasFixedSize(false);
 
-                commandsLayout.setVisibility(agent.getCommands().size() > 0 ? LinearLayout.VISIBLE : LinearLayout.GONE);
+                commandsLayout.setVisibility(showARCommands ? LinearLayout.VISIBLE : LinearLayout.GONE);
             }
 
             commandsContainer.setOnFlingListener(null);
@@ -281,24 +301,16 @@ public class ARViewFragment extends Fragment {
             refreshCommands.setOnClickListener(v -> {
                 ((MainActivity)requireActivity()).sendCommand(fetchAgentCommands);
                 ((MainActivity)requireActivity()).sendCommand(fetchAgentBuzzCommands);
+                showARCommands = true; // User wants to refresh functions. Show them if possible
             });
         }
 
         LinearLayout agentInfoLayout = getView().findViewById(R.id.agent_ar_selected);
         agentInfoLayout.setVisibility(isAgentSelected ? LinearLayout.VISIBLE : LinearLayout.GONE);
-        agentInfoLayout.setOnLongClickListener(v -> {
-            ConstraintLayout commandsLayout = getView().findViewById(R.id.agent_ar_commands_view);
-            boolean isShown = isAgentSelected &&
-                    agentInfoLayout.getVisibility() == LinearLayout.VISIBLE &&
-                    commandsLayout.getVisibility() == LinearLayout.GONE;
-            commandsLayout.setVisibility(isShown ? LinearLayout.VISIBLE : LinearLayout.GONE);
-
-            return false;
-        });
         TextView agentName = getView().findViewById(R.id.agent_ar_selected_name);
         agentName.setText(isAgentSelected ? agent.getName() : "");
         TextView agentUid = getView().findViewById(R.id.agent_ar_selected_uid);
-        agentUid.setText(isAgentSelected ? Integer.toString(agent.getUid()) : "");
+        agentUid.setText(isAgentSelected ? "ID: " + agent.getUid() : "");
 
         updateCommands(agent);
     }
@@ -519,6 +531,11 @@ public class ARViewFragment extends Fragment {
                         renderableCopy.getMaterial().setFloat3("baseColorTint", selectedColor);
                         indicatorNode.setRenderable(renderableCopy);
                         if (isSelected) { arFragment.getTransformationSystem().selectNode(robotRootNode); }
+                        ViewRenderable arUIRenderable = (ViewRenderable)uiNode.getRenderable();
+                        if (arUIRenderable != null) {
+                            ConstraintLayout arUI = arUIRenderable.getView().findViewById(R.id.ar_view_layout);
+                            arUI.setVisibility(isSelected ? LinearLayout.VISIBLE : LinearLayout.GONE);
+                        }
 
                         // Disable selected visualizer
                         arFragment.getTransformationSystem().getSelectionVisualizer().removeSelectionVisual(robotRootNode);
@@ -560,6 +577,10 @@ public class ARViewFragment extends Fragment {
                     viewRenderable.getView().findViewById(R.id.ar_view_layout).setOnClickListener(view -> {
                         selectAgentFromAR(parent, agent);
                     });
+
+                    ConstraintLayout arUI = viewRenderable.getView().findViewById(R.id.ar_view_layout);
+                    arUI.setVisibility(agent.getUid() == currentSelectedAgent.getUid() ? LinearLayout.VISIBLE : LinearLayout.GONE);
+
                     ((TextView)viewRenderable.getView().findViewById(R.id.agent_ar_name)).setText(agent.getName());
                     TextView robotTimer = viewRenderable.getView().findViewById(R.id.last_update_timer);
                     timerTextViews.computeIfPresent(agent, (k,v) -> robotTimer);
