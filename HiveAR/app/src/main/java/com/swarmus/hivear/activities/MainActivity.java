@@ -5,8 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Rect;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.format.Formatter;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -287,16 +290,11 @@ public class MainActivity extends AppCompatActivity {
     private void setUpTCPCommunication() {
         String ip = "0.0.0.0";
         try {
-            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
-                NetworkInterface intf = en.nextElement();
-                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
-                    InetAddress inetAddress = enumIpAddr.nextElement();
-                    if (!inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
-                        ip = inetAddress.getHostAddress();
-                    }
-                }
-            }
-        } catch (SocketException ex) {
+            WifiManager wifiMgr = (WifiManager) getSystemService(WIFI_SERVICE);
+            WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
+            int ipA = wifiInfo.getIpAddress();
+            ip = Formatter.formatIpAddress(ipA);
+        } catch (Exception ex) {
             Log.e("Network", "C: Cannot find host address", ex);
         }
 
