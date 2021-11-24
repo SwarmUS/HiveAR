@@ -141,7 +141,7 @@ public class ARViewFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        setAgentUI(null);
+        setAgentUI(null, null);
     }
 
     @Override
@@ -160,7 +160,7 @@ public class ARViewFragment extends Fragment {
             agent.deleteObserver(agentBuzzCommandObserver);
         }
         currentSelectedAgent = agent;
-        setAgentUI(agent);
+        setAgentUI(agent, null);
     }
 
     private void initializeRenderables() {
@@ -291,7 +291,7 @@ public class ARViewFragment extends Fragment {
         }
     }
 
-    private void setAgentUI(Agent agent) {
+    private void setAgentUI(Agent agent, Node transformableNode) {
         Boolean isAgentSelected = agent != null;
 
         FloatingActionButton refreshCommands = getView().findViewById(R.id.refresh_agent_commands);
@@ -303,6 +303,33 @@ public class ARViewFragment extends Fragment {
                 ((MainActivity)requireActivity()).sendCommand(fetchAgentBuzzCommands);
                 showARCommands = true; // User wants to refresh functions. Show them if possible
             });
+        }
+
+        if (transformableNode != null) {
+            getView().findViewById(R.id.agent_ar_selected).setOnLongClickListener(view -> {
+                // Open delete popup
+                String alertMsg = "Delete Current Selected AR Marker?";
+                new AlertDialog.Builder(requireContext())
+                        .setTitle("Unrelevant AR Marker")
+                        .setMessage(alertMsg)
+                        .setPositiveButton("Yes", (dialog, whichButton) -> {
+                            timerTextViews.computeIfPresent(agent, (k, v) -> null); // remove from list
+                            AnchorNode arAgentNode = (AnchorNode) transformableNode.getParent();
+                            arFragment.getArSceneView().getScene().removeChild(arAgentNode);
+                            arAgentNode.getAnchor().detach();
+                            arAgentNode.setParent(null);
+                            // If deleting the current selected agent, notify the new value
+                            if (currentSelectedAgent == agent) {
+                                setSelectedAgent(null);
+                            }
+                        }).setNegativeButton("No", (dialog, whichButton) -> {
+                    // Do nothing.
+                }).show();
+                return true;
+            });
+        } else {
+            // Remove callback if nothing is selected
+            getView().findViewById(R.id.agent_ar_selected).setOnLongClickListener(null);
         }
 
         LinearLayout agentInfoLayout = getView().findViewById(R.id.agent_ar_selected);
@@ -479,9 +506,9 @@ public class ARViewFragment extends Fragment {
         arAgentRootNode.setName(AR_AGENT_ROOT);
         arAgentRootNode.getRotationController().setEnabled(false);
         arAgentRootNode.getTranslationController().setEnabled(false);
-        arAgentRootNode.getScaleController().setMinScale(0.5f);
-        arAgentRootNode.getScaleController().setMaxScale(1.5f);
-        arAgentRootNode.setLocalScale(new Vector3(0.75f, 0.75f, 0.75f));
+        arAgentRootNode.getScaleController().setMinScale(0.25f);
+        arAgentRootNode.getScaleController().setMaxScale(1.0f);
+        arAgentRootNode.setLocalScale(new Vector3(0.5f, 0.5f, 0.5f));
         arAgentRootNode.setParent(parent);
         AlwaysStraightNode indicatorNode = new AlwaysStraightNode();
         indicatorNode.setRenderable(arrowRenderable);
@@ -514,7 +541,7 @@ public class ARViewFragment extends Fragment {
             agent.deleteObserver(agentBuzzCommandObserver);
         }
         currentSelectedAgent = agent;
-        setAgentUI(agent);
+        setAgentUI(agent, node);
     }
 
     private void selectVisualNode(TransformableNode node) {
@@ -553,27 +580,7 @@ public class ARViewFragment extends Fragment {
                 .thenAccept(viewRenderable -> {
                     viewRenderable.setShadowCaster(false);
                     viewRenderable.setShadowReceiver(false);
-                    viewRenderable.getView().findViewById(R.id.ar_view_layout).setOnLongClickListener(view -> {
-                        // Open delete popup
-                        String alertMsg = "Delete Current Selected AR Marker?";
-                        new AlertDialog.Builder(requireContext())
-                                .setTitle("Unrelevant AR Marker")
-                                .setMessage(alertMsg)
-                                .setPositiveButton("Yes", (dialog, whichButton) -> {
-                                    timerTextViews.computeIfPresent(agent, (k, v) -> null); // remove from list
-                                    AnchorNode arAgentNode = (AnchorNode) tNode.getParent().getParent();
-                                    arFragment.getArSceneView().getScene().removeChild(arAgentNode);
-                                    arAgentNode.getAnchor().detach();
-                                    arAgentNode.setParent(null);
-                                    // If deleting the current selected agent, notify the new value
-                                    if (currentSelectedAgent == agent) {
-                                        setSelectedAgent(null);
-                                    }
-                                }).setNegativeButton("No", (dialog, whichButton) -> {
-                                    // Do nothing.
-                                }).show();
-                        return true;
-                    });
+
                     viewRenderable.getView().findViewById(R.id.ar_view_layout).setOnClickListener(view -> {
                         selectAgentFromAR(parent, agent);
                     });
