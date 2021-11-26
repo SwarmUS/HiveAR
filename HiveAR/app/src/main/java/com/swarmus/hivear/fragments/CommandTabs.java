@@ -11,7 +11,9 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.material.tabs.TabLayout;
 import com.swarmus.hivear.R;
+import com.swarmus.hivear.activities.MainActivity;
 import com.swarmus.hivear.adapters.CommandViewPagerAdapter;
+import com.swarmus.hivear.commands.FetchAgentCommands;
 import com.swarmus.hivear.viewmodels.BroadcastInfoViewModel;
 import com.swarmus.hivear.viewmodels.LocalSwarmAgentViewModel;
 
@@ -38,14 +40,19 @@ public class CommandTabs extends Fragment {
         commandViewPagerAdapter.addFragment(new SwarmAgentListFragment(), SwarmAgentListFragment.TAB_TITLE);
 
         BroadcastInfoViewModel broadcastInfoViewModel = new ViewModelProvider(requireActivity()).get(BroadcastInfoViewModel.class);
-        CommandList broadcastList = new CommandList(broadcastInfoViewModel, LocalSwarmAgentViewModel.BROADCAST_AGENT_ID);
+        CommandList broadcastList = new CommandList(broadcastInfoViewModel, LocalSwarmAgentViewModel.BROADCAST_AGENT_ID, null);
         broadcastList.setBroadcastMode(true);
         commandViewPagerAdapter.addFragment(broadcastList,
                                             broadcastInfoViewModel.getListTitle());
 
         LocalSwarmAgentViewModel localSwarmAgentViewModel = new ViewModelProvider(requireActivity()).get(LocalSwarmAgentViewModel.class);
         commandViewPagerAdapter.addFragment(new CommandList(localSwarmAgentViewModel,
-                                                            localSwarmAgentViewModel.getLocalSwarmAgentID().getValue()),
+                        localSwarmAgentViewModel.getLocalSwarmAgentID().getValue(),
+                        v -> {
+                            FetchAgentCommands fetchLocalBuzzCommands =
+                                    new FetchAgentCommands(localSwarmAgentViewModel.getLocalSwarmAgentID().getValue(), true);
+                            ((MainActivity)requireActivity()).sendCommand(fetchLocalBuzzCommands);
+                        }),
                                             localSwarmAgentViewModel.getListTitle());
 
         viewPager.setAdapter(commandViewPagerAdapter);

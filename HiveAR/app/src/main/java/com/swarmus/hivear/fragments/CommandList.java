@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -11,6 +12,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.swarmus.hivear.R;
 import com.swarmus.hivear.adapters.CommandsAdapter;
 import com.swarmus.hivear.models.FunctionTemplateList;
@@ -23,10 +25,12 @@ public class CommandList extends Fragment {
     CommandListVM commandListVM;
     int destinationID;
     boolean isBroadcast = false;
+    private final  View.OnClickListener updateBehavior;
 
-    public CommandList(CommandListVM commandListVM, int destinationID) {
+    public CommandList(CommandListVM commandListVM, int destinationID, View.OnClickListener updateBehavior) {
         this.commandListVM = commandListVM;
         this.destinationID = destinationID;
+        this.updateBehavior = updateBehavior;
     }
 
     public void setBroadcastMode(boolean isBroadcast) {this.isBroadcast = isBroadcast;}
@@ -48,6 +52,11 @@ public class CommandList extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         commandListVM.getCommandList().observe(getViewLifecycleOwner(), this::updateCommands);
         updateCommands(commandListVM.getCommandList().getValue());
+        FloatingActionButton updateButton = view.findViewById(R.id.update);
+        if (updateButton != null) {
+            updateButton.setOnClickListener(updateBehavior);
+            updateButton.setVisibility(updateBehavior != null ? LinearLayout.VISIBLE : LinearLayout.GONE);
+        }
     }
 
     private void updateCommands(FunctionTemplateList commandList) {

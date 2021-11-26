@@ -79,11 +79,11 @@ public class AgentDetailsViewFragment extends Fragment {
             agent.getCommands().addObserver(agentBuzzCommandObserver);
 
             commandViewPagerAdapter.addFragment(new CommandList(agentCommandsVM,
-                            agent.getUid()),
+                            agent.getUid(), null),
                     agentCommandsVM.getListTitle());
 
             commandViewPagerAdapter.addFragment(new CommandList(agentBuzzCommandsVM,
-                            agent.getUid()),
+                            agent.getUid(), null),
                     agentBuzzCommandsVM.getListTitle());
 
             viewPager.setAdapter(commandViewPagerAdapter);
